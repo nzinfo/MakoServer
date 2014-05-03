@@ -10,6 +10,8 @@ CFLAGS += -DUSE_BASINTF
 #Enable forkpty and reverse proxy
 CFLAGS += -DBAS_LOADED
 
+CFLAGS += -DNDEBUG
+
 # if compiled as: make build=debug
 ifeq (debug,$(build))
 CFLAGS += -g

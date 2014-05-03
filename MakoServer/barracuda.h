@@ -7,6 +7,7 @@
 
 #ifndef _a_barracuda_h
 #define _a_barracuda_h
+#define BA_FILESIZE64
 #define lobject_c
 #define LUA_CORE
 #define BA_API
@@ -15,8 +16,6 @@
 #define BA_SHARKSSL
 #define SHARKSSL_API
 #define _Z_UTIL_H
-#define NDEBUG
-#define BA_FILESIZE64
 #define LUA_USE_LINUX
 #define _POSIX
 #define _REENTRANT
@@ -170,8 +169,9 @@ BA_API int baErr2HttpCode(int ecode);
 #define SHARKSSL_USE_3DES                                1
 #endif
 
+
 #ifndef SHARKSSL_USE_ARC4
-#define SHARKSSL_USE_ARC4                                1
+#define SHARKSSL_USE_ARC4                                0
 #endif
 
 
@@ -542,6 +542,11 @@ BA_API int baErr2HttpCode(int ecode);
 #endif
 
 
+#ifdef BA_64BIT
+#define UPTR U64
+#define SHARKSSL_ALIGNMENT 8
+#endif 
+
 
 #define HTTP_E_BASE 1 
 #ifndef SERVER_SOFTWARE_NAME
@@ -585,7 +590,9 @@ BA_API int baErr2HttpCode(int ecode);
 #define BALUA_API BA_API
 #endif
 
-
+#ifndef SHARKSSL_USE_SHA_512
+#define SHARKSSL_USE_SHA_512 1
+#endif
 
 
 #ifndef baAssert
@@ -2247,10 +2254,11 @@ typedef struct SharkSslDesCtx
 } SharkSslDesCtx;
 
 
+
 typedef enum
 {
-   SharkSslDesCtx_Decrypt,
-   SharkSslDesCtx_Encrypt
+   SharkSslDesCtx_Decrypt, 
+   SharkSslDesCtx_Encrypt 
 } SharkSslDesCtx_Type;
 #endif
 
@@ -2362,7 +2370,8 @@ SHARKSSL_API int   sharkssl_sha384(const U8*, U16, U8*);
 SHARKSSL_API void  SharkSslSha512Ctx_constructor(SharkSslSha512Ctx* ctx);
 
 
-#define SharkSslSha512Ctx_append(ctx, d, l) SharkSslSha384Ctx_append((SharkSslSha384Ctx*)ctx, d, l)
+#define SharkSslSha512Ctx_append(ctx, d, l) \
+   SharkSslSha384Ctx_append((SharkSslSha384Ctx*)ctx, d, l)
 
 
 SHARKSSL_API void  SharkSslSha512Ctx_finish(SharkSslSha512Ctx*, U8 digest[64]);
@@ -2379,7 +2388,8 @@ SHARKSSL_API void  SharkSslArc4Ctx_constructor(SharkSslArc4Ctx *ctx,
 #define SharkSslArc4Ctx_destructor(ctx) memset(ctx, 0, sizeof(SharkSslArc4Ctx))
 
 
-SHARKSSL_API void  SharkSslArc4Ctx_crypt(SharkSslArc4Ctx *ctx, U8 *input, U8 *output, U16 len);          
+SHARKSSL_API void  SharkSslArc4Ctx_crypt(
+   SharkSslArc4Ctx *ctx, U8 *input, U8 *output, U16 len);          
 #endif
 
 #if (SHARKSSL_USE_DES || SHARKSSL_USE_3DES)
@@ -2390,11 +2400,13 @@ SHARKSSL_API void  SharkSslDesCtx_constructor(SharkSslDesCtx *ctx,
 #define SharkSslDesCtx_destructor(ctx)  memset(ctx, 0, sizeof(SharkSslDesCtx))
 
 
-SHARKSSL_API void  SharkSslDesCtx_encrypt(SharkSslDesCtx *ctx, U8 input[8], U8 output[8]);
+SHARKSSL_API void  SharkSslDesCtx_encrypt(
+   SharkSslDesCtx *ctx, U8 input[8], U8 output[8]);
 #if SHARKSSL_USE_CAU
 
 
-SHARKSSL_API void  SharkSslDesCtx_decrypt(SharkSslDesCtx *ctx, U8 input[8], U8 output[8]);
+SHARKSSL_API void  SharkSslDesCtx_decrypt(
+   SharkSslDesCtx *ctx, U8 input[8], U8 output[8]);
 #else
 #define SharkSslDesCtx_decrypt(ctx,i,o) SharkSslDesCtx_encrypt((ctx),(i),(o))
 #endif
@@ -2439,7 +2451,8 @@ SHARKSSL_API void  SharkSslAesCtx_ctr_mode(SharkSslAesCtx *ctx, U8 ctr[16],
 SHARKSSL_API void  SharkSslAesGcmCtx_constructor(SharkSslAesGcmCtx *ctx,
                                                  const U8 *key, U8 keyLen);
 
-#define SharkSslAesGcmCtx_destructor(ctx) memset(ctx, 0, sizeof(SharkSslAesGcmCtx))
+#define SharkSslAesGcmCtx_destructor(ctx) \
+   memset(ctx, 0, sizeof(SharkSslAesGcmCtx))
 
 
 SHARKSSL_API int   SharkSslAesGcmCtx_encrypt(SharkSslAesGcmCtx *ctx, 
@@ -2544,76 +2557,150 @@ SHARKSSL_API int   SharkSslAesCcmCtx_decrypt(SharkSslAesCcmCtx *ctx,
   
 
 
+
+
+
 #define TLS_NULL_WITH_NULL_NULL                    0x0000
+
 #define TLS_RSA_WITH_NULL_MD5                      0x0001
+
 #define TLS_RSA_WITH_NULL_SHA                      0x0002
+
 #define TLS_RSA_WITH_RC4_128_MD5                   0x0004
+
 #define TLS_RSA_WITH_RC4_128_SHA                   0x0005
+
 #define TLS_RSA_WITH_DES_CBC_SHA                   0x0009
+
 #define TLS_RSA_WITH_3DES_EDE_CBC_SHA              0x000A
+
 #define TLS_DHE_RSA_WITH_DES_CBC_SHA               0x0015
+
 #define TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA          0x0016
+
 #define TLS_RSA_WITH_AES_128_CBC_SHA               0x002F
+
 #define TLS_DHE_RSA_WITH_AES_128_CBC_SHA           0x0033
+
 #define TLS_RSA_WITH_AES_256_CBC_SHA               0x0035
+
 #define TLS_DHE_RSA_WITH_AES_256_CBC_SHA           0x0039
+
 #define TLS_RSA_WITH_NULL_SHA256                   0x003B
+
 #define TLS_RSA_WITH_AES_128_CBC_SHA256            0x003C
+
 #define TLS_RSA_WITH_AES_256_CBC_SHA256            0x003D
+
 #define TLS_DHE_RSA_WITH_AES_128_CBC_SHA256        0x0067
+
 #define TLS_DHE_RSA_WITH_AES_256_CBC_SHA256        0x006B
+
 #define TLS_PSK_WITH_RC4_128_SHA                   0x008A
+
 #define TLS_PSK_WITH_3DES_EDE_CBC_SHA              0x008B
+
 #define TLS_PSK_WITH_AES_128_CBC_SHA               0x008C
+
 #define TLS_PSK_WITH_AES_256_CBC_SHA               0x008D
+
 #define TLS_RSA_WITH_AES_128_GCM_SHA256            0x009C
+
 #define TLS_RSA_WITH_AES_256_GCM_SHA384            0x009D
+
 #define TLS_DHE_RSA_WITH_AES_128_GCM_SHA256        0x009E
+
 #define TLS_DHE_RSA_WITH_AES_256_GCM_SHA384        0x009F
+
 #define TLS_ECDH_ECDSA_WITH_NULL_SHA               0xC001
+
 #define TLS_ECDH_ECDSA_WITH_RC4_128_SHA            0xC002
+
 #define TLS_ECDH_ECDSA_WITH_3DES_EDE_CBC_SHA       0xC003
+
 #define TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA        0xC004
+
 #define TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA        0xC005
+
 #define TLS_ECDHE_ECDSA_WITH_NULL_SHA              0xC006
+
 #define TLS_ECDHE_ECDSA_WITH_RC4_128_SHA           0xC007
+
 #define TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA      0xC008
+
 #define TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA       0xC009
+
 #define TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA       0xC00A
+
 #define TLS_ECDH_RSA_WITH_NULL_SHA                 0xC00B
+
 #define TLS_ECDH_RSA_WITH_RC4_128_SHA              0xC00C
+
 #define TLS_ECDH_RSA_WITH_3DES_EDE_CBC_SHA         0xC00D
+
 #define TLS_ECDH_RSA_WITH_AES_128_CBC_SHA          0xC00E
+
 #define TLS_ECDH_RSA_WITH_AES_256_CBC_SHA          0xC00F
+
 #define TLS_ECDHE_RSA_WITH_NULL_SHA                0xC010
+
 #define TLS_ECDHE_RSA_WITH_RC4_128_SHA             0xC011
+
 #define TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA        0xC012
+
 #define TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA         0xC013
+
 #define TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA         0xC014
+
 #define TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256    0xC023
+
 #define TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384    0xC024
+
 #define TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256     0xC025
+
 #define TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA384     0xC026
+
 #define TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256      0xC027
+
 #define TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384      0xC028
+
 #define TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256       0xC029
+
 #define TLS_ECDH_RSA_WITH_AES_256_CBC_SHA384       0xC02A
+
 #define TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256    0xC02B
+
 #define TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384    0xC02C
+
 #define TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256     0xC02D
+
 #define TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384     0xC02E
+
 #define TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256      0xC02F
+
 #define TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384      0xC030
+
 #define TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256       0xC031
+
 #define TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384       0xC032
+
 #define TLS_RSA_WITH_AES_128_CCM                   0xC09C
+
 #define TLS_RSA_WITH_AES_256_CCM                   0xC09D
+
 #define TLS_DHE_RSA_WITH_AES_128_CCM               0xC09E
+
 #define TLS_DHE_RSA_WITH_AES_256_CCM               0xC09F
+
 #define TLS_RSA_WITH_AES_128_CCM_8                 0xC0A0
+
 #define TLS_RSA_WITH_AES_256_CCM_8                 0xC0A1
+
 #define TLS_DHE_RSA_WITH_AES_128_CCM_8             0xC0A2
+
 #define TLS_DHE_RSA_WITH_AES_256_CCM_8             0xC0A3
+
+  
 
 
 
@@ -3230,7 +3317,13 @@ U8  SharkSslCon_isCAListEmpty(SharkSslCon *o);
 
 #if (SHARKSSL_SSL_SERVER_CODE && SHARKSSL_ENABLE_RSA)
 
-U8  SharkSslCon_favorRSA(SharkSslCon *o);
+
+
+#define SHARKSSL_SET_FAVOR_RSA      1  
+#define SHARKSSL_CLEAR_FAVOR_RSA    0
+
+
+U8  SharkSslCon_favorRSA(SharkSslCon *o, U8 flag);
 #endif  
 #endif  
 
@@ -3251,7 +3344,7 @@ SHARKSSL_API SharkSslSession *SharkSslCon_acquireSession(SharkSslCon *o);
 
 
 
-SHARKSSL_API U8    SharkSslCon_resumeSession(SharkSslCon *o, SharkSslSession *s); 
+SHARKSSL_API U8 SharkSslCon_resumeSession(SharkSslCon *o, SharkSslSession *s); 
 
 
 SHARKSSL_API U32   SharkSslSession_getLatestAccessTime(SharkSslSession *o);
@@ -3260,17 +3353,25 @@ SHARKSSL_API U32   SharkSslSession_getLatestAccessTime(SharkSslSession *o);
 
  
 
-#if (SHARKSSL_SSL_SERVER_CODE && SHARKSSL_ENABLE_CLIENT_AUTH && (SHARKSSL_ENABLE_RSA || SHARKSSL_ENABLE_ECDSA))
-U8 SharkSslCon_requestClientCert(SharkSslCon *o, const void *caList);
+#if (SHARKSSL_SSL_SERVER_CODE && SHARKSSL_ENABLE_CLIENT_AUTH && \
+    (SHARKSSL_ENABLE_RSA || SHARKSSL_ENABLE_ECDSA))
+
+SHARKSSL_API U8 SharkSslCon_requestClientCert(
+   SharkSslCon *o, const void *caList);
 #endif
 
 #if ((SHARKSSL_SSL_SERVER_CODE || SHARKSSL_SSL_CLIENT_CODE) && \
      SHARKSSL_ENABLE_SELECT_CIPHERSUITE)
-SHARKSSL_API U8 SharkSslCon_selectCiphersuite(SharkSslCon *o, U16 cipherSuite); 
+
+SHARKSSL_API U8 SharkSslCon_selectCiphersuite(SharkSslCon *o, U16 cipherSuite);
+
+
+SHARKSSL_API U8 SharkSslCon_clearCiphersuiteSelection(SharkSslCon *o); 
 #endif
 
 #if (SHARKSSL_SSL_SERVER_CODE && SHARKSSL_ENABLE_SECURE_RENEGOTIATION)
-U8 SharkSslCon_renegotiate(SharkSslCon *o);
+
+SHARKSSL_API U8 SharkSslCon_renegotiate(SharkSslCon *o);
 #endif
 
   
@@ -3510,6 +3611,7 @@ extern int basprintf(char* buf, const char* fmt, ...);
 
 
 
+#define BASLIB_VER "3334"
 
 
 
@@ -5241,7 +5343,7 @@ BA_API int HttpRequest_setUserObj(
 BA_API const char* HttpRequest_getParameter(
    HttpRequest* o, const char* paramName);
 BA_API HttpHeader* HttpRequest_getHeaders(HttpRequest* o, int* len);
-#ifdef BA_SHARKSSL
+#ifndef NO_SHARKSSL
 BA_API int HttpRequest_wsUpgrade(HttpRequest* o);
 #endif
 BA_API BaBool HttpRequest_enableKeepAlive(HttpRequest* o);
@@ -8276,7 +8378,7 @@ inline LoginTrackerNode* LoginTracker::find(HttpRequest* request) {
  
 
 
-#ifdef BA_SHARKSSL
+#ifndef NO_SHARKSSL
 void calculateHA1Hex(
    const char* realm, const char* uname, const char* pwd, U8 hexbuf[33]);
 #endif
@@ -9924,6 +10026,8 @@ inline void DigestAuthenticator::setStrictMode(bool enableStrictMode) {
 #define SHARKSSL_FLAG_CACHED_SESSION               0x00100000
 #define SHARKSSL_FLAG_HANDSHAKE_FINISHED           0x00200000
 #define SHARKSSL_FLAG_FAVOR_RSA                    0x00400000
+#define SHARKSSL_FLAG_ALREADY_DECRYPTED            0x00800000
+#define SHARKSSL_FLAG_NO_EXPLICIT_IV               0x01000000
 
 
 #define SHARKSSL_OP_INITIALIZE                     0x01
@@ -9951,6 +10055,7 @@ inline void DigestAuthenticator::setStrictMode(bool enableStrictMode) {
 #define SHARKSSL_CS_SHA384                         0x0100
 #define SHARKSSL_CS_SHA512                         0x0200
 #define SHARKSSL_CS_SUITE_B                        0x0400
+#define SHARKSSL_CS_NULL                           0x0800
 
 
 
@@ -10351,7 +10456,11 @@ void               SharkSslCon_destructor(SharkSslCon *o);
 
 SharkSslCon_RetVal SharkSslCon_buildFatalMessage(SharkSslCon*, U8);
 SharkSslCon_RetVal SharkSslCon_buildAlertMessage(SharkSslCon*, U8, U8);
+#if SHARKSSL_ENABLE_CLONE_CERTINFO
+SharkSslCon_RetVal SharkSslCon_processHandshake(SharkSslCon*, U8*, U16, U8);
+#else
 SharkSslCon_RetVal SharkSslCon_processHandshake(SharkSslCon*, U8*, U16*, U8);
+#endif
 SharkSslCon_RetVal SharkSslCon_processChangeCipherSpec(SharkSslCon*, U8*, U16);
 U8                *SharkSslCon_writeSslHeader(SharkSslCon*, U8, U8*, U16);
 U16                SharkSslCon_calcSharedSecretLen(SharkSslCon*, SharkSslCipherSuite*);
@@ -14074,7 +14183,7 @@ static const SharkSslCipherSuite sharkSslCipherSuiteList[] =
    SharkSslCon_aes_cbc,
    SharkSslCon_sha384,
    SHARKSSL_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384,
-   SHARKSSL_CS_EC |  SHARKSSL_CS_DHE | SHARKSSL_CS_DSA | SHARKSSL_CS_TLS12 | SHARKSSL_CS_SHA384,
+   SHARKSSL_CS_EC | SHARKSSL_CS_DHE | SHARKSSL_CS_DSA | SHARKSSL_CS_TLS12 | SHARKSSL_CS_SHA384,
    32, 16,  
    SHARKSSL_SHA384_MAC_LEN  
    },
@@ -14084,7 +14193,7 @@ static const SharkSslCipherSuite sharkSslCipherSuiteList[] =
    SharkSslCon_aes_gcm,
    SharkSslCon_sha256,
    SHARKSSL_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-   SHARKSSL_CS_EC |  SHARKSSL_CS_DHE | SHARKSSL_CS_DSA | SHARKSSL_CS_AEAD | SHARKSSL_CS_TLS12,
+   SHARKSSL_CS_EC | SHARKSSL_CS_DHE | SHARKSSL_CS_DSA | SHARKSSL_CS_AEAD | SHARKSSL_CS_TLS12,
    16, 
    0,  
    16  
@@ -14095,7 +14204,7 @@ static const SharkSslCipherSuite sharkSslCipherSuiteList[] =
    SharkSslCon_aes_cbc,
    SharkSslCon_sha256,
    SHARKSSL_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
-   SHARKSSL_CS_EC |  SHARKSSL_CS_DHE | SHARKSSL_CS_DSA | SHARKSSL_CS_TLS12,
+   SHARKSSL_CS_EC | SHARKSSL_CS_DHE | SHARKSSL_CS_DSA | SHARKSSL_CS_TLS12,
    16, 16, 
    SHARKSSL_SHA256_MAC_LEN
    },
@@ -14105,7 +14214,7 @@ static const SharkSslCipherSuite sharkSslCipherSuiteList[] =
    SharkSslCon_aes_cbc,
    SharkSslCon_sha1,
    SHARKSSL_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
-   SHARKSSL_CS_EC |  SHARKSSL_CS_DHE | SHARKSSL_CS_DSA,
+   SHARKSSL_CS_EC | SHARKSSL_CS_DHE | SHARKSSL_CS_DSA,
    32, 16,  
    SHARKSSL_SHA1_MAC_LEN
    },
@@ -14115,7 +14224,7 @@ static const SharkSslCipherSuite sharkSslCipherSuiteList[] =
    SharkSslCon_aes_cbc,
    SharkSslCon_sha1,
    SHARKSSL_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
-   SHARKSSL_CS_EC |  SHARKSSL_CS_DHE | SHARKSSL_CS_DSA,
+   SHARKSSL_CS_EC | SHARKSSL_CS_DHE | SHARKSSL_CS_DSA,
    16, 16,  
    SHARKSSL_SHA1_MAC_LEN
    },
@@ -14125,7 +14234,7 @@ static const SharkSslCipherSuite sharkSslCipherSuiteList[] =
    SharkSslCon_des_cbc,
    SharkSslCon_sha1,
    SHARKSSL_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA,
-   SHARKSSL_CS_EC |  SHARKSSL_CS_DHE | SHARKSSL_CS_DSA,
+   SHARKSSL_CS_EC | SHARKSSL_CS_DHE | SHARKSSL_CS_DSA,
    24,  8,
    SHARKSSL_SHA1_MAC_LEN
    },
@@ -14135,7 +14244,7 @@ static const SharkSslCipherSuite sharkSslCipherSuiteList[] =
    SharkSslCon_arc4,
    SharkSslCon_sha1,
    SHARKSSL_ECDHE_ECDSA_WITH_ARC4_128_SHA,
-   SHARKSSL_CS_EC |  SHARKSSL_CS_DHE | SHARKSSL_CS_DSA,
+   SHARKSSL_CS_EC | SHARKSSL_CS_DHE | SHARKSSL_CS_DSA,
    16,  0,  
    SHARKSSL_SHA1_MAC_LEN
    },
@@ -14145,7 +14254,7 @@ static const SharkSslCipherSuite sharkSslCipherSuiteList[] =
    SharkSslCon_null,
    SharkSslCon_sha1,
    SHARKSSL_ECDHE_ECDSA_WITH_NULL_SHA,
-   SHARKSSL_CS_EC |  SHARKSSL_CS_DHE | SHARKSSL_CS_DSA,
+   SHARKSSL_CS_EC | SHARKSSL_CS_DHE | SHARKSSL_CS_DSA | SHARKSSL_CS_NULL,
    0,   0,
    SHARKSSL_SHA1_MAC_LEN
    },
@@ -14241,7 +14350,7 @@ static const SharkSslCipherSuite sharkSslCipherSuiteList[] =
    SharkSslCon_null,
    SharkSslCon_sha1,
    SHARKSSL_ECDH_ECDSA_WITH_NULL_SHA,
-   SHARKSSL_CS_EC | SHARKSSL_CS_DSA,
+   SHARKSSL_CS_EC | SHARKSSL_CS_DSA | SHARKSSL_CS_NULL,
    0,   0,
    SHARKSSL_SHA1_MAC_LEN
    },
@@ -14337,7 +14446,7 @@ static const SharkSslCipherSuite sharkSslCipherSuiteList[] =
    SharkSslCon_null,
    SharkSslCon_sha1,
    SHARKSSL_ECDHE_RSA_WITH_NULL_SHA,
-   SHARKSSL_CS_EC | SHARKSSL_CS_DHE | SHARKSSL_CS_RSA,
+   SHARKSSL_CS_EC | SHARKSSL_CS_DHE | SHARKSSL_CS_RSA | SHARKSSL_CS_NULL,
    0,   0,
    SHARKSSL_SHA1_MAC_LEN
    },
@@ -14431,7 +14540,7 @@ static const SharkSslCipherSuite sharkSslCipherSuiteList[] =
    SharkSslCon_null,
    SharkSslCon_sha1,
    SHARKSSL_ECDH_RSA_WITH_NULL_SHA,
-   SHARKSSL_CS_EC | SHARKSSL_CS_RSA,
+   SHARKSSL_CS_EC | SHARKSSL_CS_RSA | SHARKSSL_CS_NULL,
    0,   0,
    SHARKSSL_SHA1_MAC_LEN
    },
@@ -14717,7 +14826,7 @@ static const SharkSslCipherSuite sharkSslCipherSuiteList[] =
    SharkSslCon_null,
    SharkSslCon_sha256,
    SHARKSSL_SSL_RSA_WITH_NULL_SHA256,
-   SHARKSSL_CS_RSA,
+   SHARKSSL_CS_RSA | SHARKSSL_CS_TLS12 | SHARKSSL_CS_NULL,
    0,   0, 
    SHARKSSL_SHA256_MAC_LEN
    },
@@ -14727,7 +14836,7 @@ static const SharkSslCipherSuite sharkSslCipherSuiteList[] =
    SharkSslCon_null,
    SharkSslCon_sha1,
    SHARKSSL_SSL_RSA_WITH_NULL_SHA,
-   SHARKSSL_CS_RSA,
+   SHARKSSL_CS_RSA | SHARKSSL_CS_NULL,
    0,   0,
    SHARKSSL_SHA1_MAC_LEN
    },
@@ -14737,7 +14846,7 @@ static const SharkSslCipherSuite sharkSslCipherSuiteList[] =
    SharkSslCon_null,
    SharkSslCon_md5,
    SHARKSSL_SSL_RSA_WITH_NULL_MD5,
-   SHARKSSL_CS_RSA,
+   SHARKSSL_CS_RSA | SHARKSSL_CS_NULL,
    0,   0,
    SHARKSSL_MD5_MAC_LEN
    },
@@ -15283,7 +15392,7 @@ SHARKSSL_API int HttpSharkSslServCon_setPort(HttpSharkSslServCon* o,
 
 SHARKSSL_API void HttpSharkSslServCon_destructor(HttpSharkSslServCon* o);
 
-int HttpSharkSslServCon_bindExec(
+SHARKSSL_API int HttpSharkSslServCon_bindExec(
    SoDispCon* con, SharkSsl* ssl, const char* host, int port);
 
 #ifdef __cplusplus
@@ -16895,6 +17004,8 @@ inline int HttpServerPipe::sendData(void* data, int len) {
 #define SHARKSSL_FLAG_CACHED_SESSION               0x00100000
 #define SHARKSSL_FLAG_HANDSHAKE_FINISHED           0x00200000
 #define SHARKSSL_FLAG_FAVOR_RSA                    0x00400000
+#define SHARKSSL_FLAG_ALREADY_DECRYPTED            0x00800000
+#define SHARKSSL_FLAG_NO_EXPLICIT_IV               0x01000000
 
 
 #define SHARKSSL_OP_INITIALIZE                     0x01
@@ -16922,6 +17033,7 @@ inline int HttpServerPipe::sendData(void* data, int len) {
 #define SHARKSSL_CS_SHA384                         0x0100
 #define SHARKSSL_CS_SHA512                         0x0200
 #define SHARKSSL_CS_SUITE_B                        0x0400
+#define SHARKSSL_CS_NULL                           0x0800
 
 
 
@@ -17322,7 +17434,11 @@ void               SharkSslCon_destructor(SharkSslCon *o);
 
 SharkSslCon_RetVal SharkSslCon_buildFatalMessage(SharkSslCon*, U8);
 SharkSslCon_RetVal SharkSslCon_buildAlertMessage(SharkSslCon*, U8, U8);
+#if SHARKSSL_ENABLE_CLONE_CERTINFO
+SharkSslCon_RetVal SharkSslCon_processHandshake(SharkSslCon*, U8*, U16, U8);
+#else
 SharkSslCon_RetVal SharkSslCon_processHandshake(SharkSslCon*, U8*, U16*, U8);
+#endif
 SharkSslCon_RetVal SharkSslCon_processChangeCipherSpec(SharkSslCon*, U8*, U16);
 U8                *SharkSslCon_writeSslHeader(SharkSslCon*, U8, U8*, U16);
 U16                SharkSslCon_calcSharedSecretLen(SharkSslCon*, SharkSslCipherSuite*);

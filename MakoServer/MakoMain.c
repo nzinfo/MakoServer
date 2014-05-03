@@ -10,7 +10,7 @@
  ****************************************************************************
  *            PROGRAM MODULE
  *
- *   $Id: MakoMain.c 3285 2014-01-20 20:37:56Z wini $
+ *   $Id: MakoMain.c 3333 2014-05-02 00:10:55Z wini $
  *
  *   COPYRIGHT:  Real Time Logic LLC, 2012 - 2014
  *
@@ -176,7 +176,7 @@ makovprintf(int isErr,const char* fmt, va_list argList)
       if(isErr)
       {
          va_copy(xList, argList);
-         vsyslog(LOG_PID, fmt, xList);
+         vsyslog(LOG_CRIT, fmt, xList);
          va_end(xList);
       }
 #endif
@@ -235,6 +235,7 @@ errQuit(const char* fmt, ...)
    makovprintf(TRUE, fmt, varg);
    va_end(varg);
    HttpTrace_flush();
+   if(logFp) fclose(logFp);
    exit(1);
 }
 
@@ -343,7 +344,7 @@ pxexit(int status, int pause)
 {
    if(pause)
    {
-      printf("\nPress <Enter> to continue.\n");
+      fprintf(stderr,"\nPress <Enter> to continue.\n");
       getchar();
    }
    exit(status);
@@ -490,6 +491,8 @@ sigTerm(int x)
    if(oneshot)
    {
       makoprintf(FALSE,"\nGot SIGTERM again; aborting...\n");
+      HttpTrace_flush();
+      if(logFp) fclose(logFp);
       abort();
    }
    oneshot=TRUE;
@@ -643,8 +646,8 @@ onunload(void)
    {
       if(lua_pcall(L, 0, 1, 0))
       {
-         printf("Error in 'onunload': %s\n",
-                lua_isstring(L,-1) ? lua_tostring(L, -1) : "?");
+         makoprintf(TRUE,"Error in 'onunload': %s\n",
+                    lua_isstring(L,-1) ? lua_tostring(L, -1) : "?");
       }
    }
 }
@@ -722,9 +725,9 @@ openAndLoadConf(const char* path,  HttpServerConfig* scfg, int isdir)
       {
          struct stat statBuf;
          if(isdir)
-            sprintf(name,"%s%smako.conf",path,LUA_DIRSEP);
+            basprintf(name,"%s%smako.conf",path,LUA_DIRSEP);
          else
-            sprintf(name,"%s",path);
+            basprintf(name,"%s",path);
          if( ! stat(name, &statBuf) )
          {
             const char* param=0;
@@ -853,7 +856,7 @@ createLuaGlobals(
    for(i=1 ; i < argc; i++)
    {
       lua_pushstring(L, argv[i]);
-      lua_rawseti(L, -2, i+1);
+      lua_rawseti(L, -2, i);
    }
    lua_setfield(L, -2, "argv");
 
@@ -1039,12 +1042,9 @@ openVmIo(IoIntf* rootIo,const char* execpath, const char* cfgfname)
      The following code opens the internal (embedded ZIP file), if
      finding/opening mako.zip fails.
    */
-
-   /*
-     #define BAIO_DISK // Test: Use filesystem, not internal ZIP for ../lsp dir
-   */
    {
 #if defined(BAIO_DISK)
+      /* Test only: Use filesystem, not internal ZIP for lsp dir */
       static const char* dirname="../../lsp";
       DiskIo* vmIo=(DiskIo)baMalloc(sizeof(DiskIo));
       DiskIo_constructor(vmIo);
@@ -1067,6 +1067,24 @@ openVmIo(IoIntf* rootIo,const char* execpath, const char* cfgfname)
 }
 
 
+static void
+checkEndian()
+{
+   U16 endian;
+   U8* ptr = (U8*)&endian;
+#ifdef B_LITTLE_ENDIAN
+   ptr[1]=0x11;
+   ptr[0]=0x22;
+#elif defined(B_BIG_ENDIAN)
+   ptr[0]=0x11;
+   ptr[1]=0x22;
+#else
+#error NO_ENDIAN
+#endif
+   if(endian != 0x1122)
+      errQuit("Panic!!! Wrong endian\n");
+} 
+
 
 void
 runMako(int isWinService, int argc, char* argv[], char* envp[])
@@ -1088,6 +1106,8 @@ runMako(int isWinService, int argc, char* argv[], char* envp[])
    int sMode=0; /* 0: nothing, 1: install, 2: installauto, 3: start now */ 
 #endif
 
+   checkEndian();
+
    dispatcher=&disp; /* The global ptr used by the CTRL-C signal handler */
    HttpTrace_setFLushCallback(writeHttpTrace);
    HttpServer_setErrHnd(serverErrHandler);
@@ -1100,7 +1120,7 @@ runMako(int isWinService, int argc, char* argv[], char* envp[])
    if( ! isWinService )
    {
       setCtrlCHandler();
-      printf("\n%s\n%s\n%s\n\n",MAKO_VNAME,MAKO_DATE,MAKO_CPR);
+      fprintf(stderr,"\n%s\n%s\n%s\n\n",MAKO_VNAME,MAKO_DATE,MAKO_CPR);
    }
    initUnix();
    if(isWinService)
@@ -1275,13 +1295,6 @@ runMako(int isWinService, int argc, char* argv[], char* envp[])
 #endif
 #endif
 
-   /* Create user/login tracker */
-   balua_usertracker_create(
-      L,
-      20, /* Tracker node size. */
-      4, /* Max number of login attempts. */
-      10*60); /* 10 minutes ban time if more than 4 login attempts in a row. */
-
    /* Dispatcher mutex must be locked when running the .openports script
     */
    ThreadMutex_set(&mutex);
@@ -1319,9 +1332,9 @@ runMako(int isWinService, int argc, char* argv[], char* envp[])
      requests are sent to the HttpServer object, where they are delegated to
      a Barracuda resource such as the WebDAV instance.
    */
-   SoDisp_run(&disp, -1); /*-1: Never returns unless CTRL-C handler sets exit*/
+   SoDisp_run(&disp, -1);/*-1: Never returns unless CTRL-C handler sets exit*/
 
-   /* Dispatcher mutex must be locked when terminating the following objects. */
+   /*Dispatcher mutex must be locked when terminating the following objects.*/
    ThreadMutex_set(&mutex);   
    onunload(); /* Graceful termination of Lua apps. See function above. */
    tShutdown(L,&mutex); /* Wait for threads to exit, if any */
@@ -1353,6 +1366,7 @@ runMako(int isWinService, int argc, char* argv[], char* envp[])
    HttpTrace_close();
    if(execpath) baFree(execpath);
    dispatcher=0; /* Ref-wait */
+   HttpTrace_flush();
    if(logFp) fclose(logFp);
    return;
 }

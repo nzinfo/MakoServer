@@ -3,6 +3,7 @@
  Remove any headers not part of your platform.
 */
 #include "string.h"
+#include "stddef.h"
 #include "stdlib.h"
 #include "time.h"
 #include "sys/types.h"
@@ -21,7 +22,6 @@
 #include "stdio.h"
 #include "stdarg.h"
 #include "ctype.h"
-#include "stddef.h"
 #include "sys/stat.h"
 #include "dirent.h"
 #include "limits.h"

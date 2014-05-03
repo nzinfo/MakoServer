@@ -33,6 +33,7 @@
  *
  */
 
+#define CRASH_HANDLER_URL "http://barracudadrive.com/crashhandler/"
 
 #include "mako.h"
 #ifndef USE_AMALGAMATED_BAS
