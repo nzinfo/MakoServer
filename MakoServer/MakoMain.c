@@ -34,6 +34,8 @@
  *
  */
 
+#include "mako.h"
+
 /* Version info */
 #include "MakoVer.h"
 
@@ -45,8 +47,6 @@
 #ifndef MAKO_CPR
 #define MAKO_CPR "Copyright (c) 2014 Real Time Logic.  All rights reserved."
 #endif
-
-#include "mako.h"
 
 /* The Mako Server can optionally use an embedded version of
  * mako.zip. The embedded ZIP file is a smaller version of mako.zip

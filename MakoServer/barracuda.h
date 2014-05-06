@@ -541,13 +541,6 @@ BA_API int baErr2HttpCode(int ecode);
 #endif
 #endif
 
-
-#ifdef BA_64BIT
-#define UPTR U64
-#define SHARKSSL_ALIGNMENT 8
-#endif 
-
-
 #define HTTP_E_BASE 1 
 #ifndef SERVER_SOFTWARE_NAME
 #define SERVER_SOFTWARE_NAME "BarracudaServer.com (Posix)"
@@ -593,6 +586,12 @@ BA_API int baErr2HttpCode(int ecode);
 #ifndef SHARKSSL_USE_SHA_512
 #define SHARKSSL_USE_SHA_512 1
 #endif
+
+
+#ifdef BA_64BIT
+#define UPTR U64
+#define SHARKSSL_ALIGNMENT 4
+#endif 
 
 
 #ifndef baAssert
@@ -3611,7 +3610,7 @@ extern int basprintf(char* buf, const char* fmt, ...);
 
 
 
-#define BASLIB_VER "3334"
+#define BASLIB_VER "3336"
 
 
 
