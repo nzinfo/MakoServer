@@ -1,6 +1,6 @@
 
 
-#define MAKO_VER "1.5"
+#define MAKO_VER "1.6"
 
 #ifdef BASLIB_VER
 #define MAKO_DATE "BAS lib " BASLIB_VER ". Build date: " __DATE__

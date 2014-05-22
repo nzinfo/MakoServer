@@ -10,7 +10,7 @@
  ****************************************************************************
  *            PROGRAM MODULE
  *
- *   $Id: MakoMain.c 3333 2014-05-02 00:10:55Z wini $
+ *   $Id: MakoMain.c 3367 2014-05-22 03:36:37Z wini $
  *
  *   COPYRIGHT:  Real Time Logic LLC, 2012 - 2014
  *
@@ -321,10 +321,6 @@ findExecPath(const char* argv0)
 
 /* The following functions are not required and are defined to do nothing. */
 
-/* Disable signals on Linux */
-#define initUnix()
-
-
 /* Enter Linux daemon mode */
 #define setLinuxDaemonMode()
 
@@ -384,7 +380,6 @@ setCtrlCHandler(void)
 {
    SetConsoleCtrlHandler(sigTerm, TRUE);
 }
-#define initUnix()
 #define setLinuxDaemonMode()
 #define setUser(argc, argv)
 
@@ -527,18 +522,6 @@ cfblockSignal(int sig, const char* signame)
        errQuit("can't block %s - %s.\n", signame,strerror(errno));
 }
 #define blockSignal(x) cfblockSignal((int)(x), #x)
-static void
-initUnix(void)
-{
-    ignoreSignal(SIGHUP);
-    ignoreSignal(SIGTTOU);
-    ignoreSignal(SIGTTIN);
-    ignoreSignal(SIGTSTP);
-    ignoreSignal(SIGPIPE);
-    blockSignal(SIGUSR1);
-    blockSignal(SIGUSR2);
-    ignoreSignal(SIGXFSZ);
-}
 
 static void
 setLinuxDaemonMode(void)
@@ -555,9 +538,7 @@ setLinuxDaemonMode(void)
     * Become a session leader to lose controlling TTY.
     */
    if((pid = fork()) < 0)
-   {
       errQuit("%s: can't fork\n", APPNAME);
-   }
    else if(pid != 0) /* parent */
       exit(0);
    setsid();
@@ -566,6 +547,17 @@ setLinuxDaemonMode(void)
       errQuit("%s: can't fork\n", APPNAME);
    else if (pid != 0) /* parent */
       exit(0);
+
+    ignoreSignal(SIGHUP);
+    ignoreSignal(SIGTTOU);
+    ignoreSignal(SIGTTIN);
+    ignoreSignal(SIGTSTP);
+    ignoreSignal(SIGPIPE);
+    ignoreSignal(SIGXFSZ);
+    ignoreSignal(SIGXCPU); /*Prevent server from terminating after a few days*/
+    ignoreSignal(SIGXFSZ);
+    blockSignal(SIGUSR1);
+    blockSignal(SIGUSR2);
 
    /*
    ** Attach file descriptors 0, 1, and 2 to /dev/null.
@@ -887,6 +879,9 @@ createLuaGlobals(
       lua_setfield(L, -2, "execpath");
    }
 
+   lua_pushboolean(L, daemonMode);
+   lua_setfield(L, -2, "daemon");
+
    luaL_setfuncs(L, funcs, 0);
    lua_setglobal(L, "mako");
 
@@ -1118,11 +1113,7 @@ runMako(int isWinService, int argc, char* argv[], char* envp[])
    SetErrorMode(SEM_FAILCRITICALERRORS|SEM_NOOPENFILEERRORBOX);
 #endif
    if( ! isWinService )
-   {
-      setCtrlCHandler();
       fprintf(stderr,"\n%s\n%s\n%s\n\n",MAKO_VNAME,MAKO_DATE,MAKO_CPR);
-   }
-   initUnix();
    if(isWinService)
       daemonMode=isWinService;
    else
@@ -1228,6 +1219,8 @@ runMako(int isWinService, int argc, char* argv[], char* envp[])
    if(daemonMode)
       setLinuxDaemonMode();
 #endif
+   if( ! isWinService )
+      setCtrlCHandler();
 
    /* Create the Socket dispatcher (SoDisp), the SoDisp mutex, and the server.
     */
@@ -1362,11 +1355,12 @@ runMako(int isWinService, int argc, char* argv[], char* envp[])
 
    ThreadMutex_release(&mutex);   
    ThreadMutex_destructor(&mutex);
-
+   if(daemonMode)
+      makoprintf(TRUE,"Terminating Mako Server\n");
+   HttpTrace_flush();
    HttpTrace_close();
    if(execpath) baFree(execpath);
    dispatcher=0; /* Ref-wait */
-   HttpTrace_flush();
    if(logFp) fclose(logFp);
    return;
 }
