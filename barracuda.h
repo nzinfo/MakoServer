@@ -379,6 +379,12 @@ BA_API int baErr2HttpCode(int ecode);
 
 
 
+#ifndef SHARKSSL_ENABLE_CERT_KEYUSAGE
+#define SHARKSSL_ENABLE_CERT_KEYUSAGE                    0
+#endif
+
+
+
 #ifndef SHARKSSL_MD5_SMALL_FOOTPRINT
 #define SHARKSSL_MD5_SMALL_FOOTPRINT                     0
 #endif
@@ -3127,8 +3133,53 @@ typedef enum
 
  
 
-#if (SHARKSSL_ENABLE_RSA || (SHARKSSL_ENABLE_ECDSA))
+#if (SHARKSSL_ENABLE_RSA || SHARKSSL_ENABLE_ECDSA)
 
+
+
+
+#if SHARKSSL_ENABLE_CERT_KEYUSAGE
+#define SHARKSSL_CERT_KEYUSAGE_DIGITALSIGNATURE     0x00000001
+#define SHARKSSL_CERT_KEYUSAGE_NONREPUDIATION       0x00000002
+#define SHARKSSL_CERT_KEYUSAGE_KEYENCIPHERMENT      0x00000004
+#define SHARKSSL_CERT_KEYUSAGE_DATAENCIPHERMENT     0x00000008
+#define SHARKSSL_CERT_KEYUSAGE_KEYAGREEMENT         0x00000010
+#define SHARKSSL_CERT_KEYUSAGE_KEYCERTSIGN          0x00000020
+#define SHARKSSL_CERT_KEYUSAGE_CRLSIGN              0x00000040
+#define SHARKSSL_CERT_KEYUSAGE_ENCIPHERONLY         0x00000080 
+#define SHARKSSL_CERT_KEYUSAGE_DECIPHERONLY         0x00000100
+#define SHARKSSL_CERT_KEYUSAGE_PRESENT              0x00000200
+#define SHARKSSL_CERT_KEYUSAGE_CRITICAL             0x00000400
+
+#define SHARKSSL_CERT_KEYPURPOSE_SERVERAUTH         0x00010000
+#define SHARKSSL_CERT_KEYPURPOSE_CLIENTAUTH         0x00020000
+#define SHARKSSL_CERT_KEYPURPOSE_CODESIGNING        0x00040000
+#define SHARKSSL_CERT_KEYPURPOSE_EMAILPROTECTION    0x00080000
+#define SHARKSSL_CERT_KEYPURPOSE_TIMESTAMPING       0x00100000
+#define SHARKSSL_CERT_KEYPURPOSE_OCSPSIGNING        0x00200000
+
+#define SharkSslCertInfo_KeyFlagSet(o,f)            ((o)->keyUsagePurposes & f)
+
+
+#define SharkSslCertInfo_isKeyUsagePresent(o)       SharkSslCertInfo_KeyFlagSet(o, SHARKSSL_CERT_KEYUSAGE_PRESENT)
+#define SharkSslCertInfo_isKeyUsageCritical(o)      SharkSslCertInfo_KeyFlagSet(o, SHARKSSL_CERT_KEYUSAGE_CRITICAL)
+#define SharkSslCertInfo_KU_digitalSignature(o)     SharkSslCertInfo_KeyFlagSet(o, SHARKSSL_CERT_KEYUSAGE_DIGITALSIGNATURE)
+#define SharkSslCertInfo_KU_nonRepudiation(o)       SharkSslCertInfo_KeyFlagSet(o, SHARKSSL_CERT_KEYUSAGE_NONREPUDIATION)
+#define SharkSslCertInfo_KU_keyEncipherment(o)      SharkSslCertInfo_KeyFlagSet(o, SHARKSSL_CERT_KEYUSAGE_KEYENCIPHERMENT)
+#define SharkSslCertInfo_KU_dataEncipherment(o)     SharkSslCertInfo_KeyFlagSet(o, SHARKSSL_CERT_KEYUSAGE_DATAENCIPHERMENT)
+#define SharkSslCertInfo_KU_keyAgreement(o)         SharkSslCertInfo_KeyFlagSet(o, SHARKSSL_CERT_KEYUSAGE_KEYAGREEMENT)
+#define SharkSslCertInfo_KU_keyCertSign(o)          SharkSslCertInfo_KeyFlagSet(o, SHARKSSL_CERT_KEYUSAGE_KEYCERTSIGN)
+#define SharkSslCertInfo_KU_cRLSign(o)              SharkSslCertInfo_KeyFlagSet(o, SHARKSSL_CERT_KEYUSAGE_CRLSIGN)
+#define SharkSslCertInfo_KU_encipherOnly(o)         SharkSslCertInfo_KeyFlagSet(o, SHARKSSL_CERT_KEYUSAGE_ENCIPHERONLY)
+#define SharkSslCertInfo_KU_decipherOnly(o)         SharkSslCertInfo_KeyFlagSet(o, SHARKSSL_CERT_KEYUSAGE_DECIPHERONLY)
+
+#define SharkSslCertInfo_kp_serverAuth(o)           SharkSslCertInfo_KeyFlagSet(o, SHARKSSL_CERT_KEYPURPOSE_SERVERAUTH)
+#define SharkSslCertInfo_kp_clientAuth(o)           SharkSslCertInfo_KeyFlagSet(o, SHARKSSL_CERT_KEYPURPOSE_CLIENTAUTH)
+#define SharkSslCertInfo_kp_codeSigning(o)          SharkSslCertInfo_KeyFlagSet(o, SHARKSSL_CERT_KEYPURPOSE_CODESIGNING)
+#define SharkSslCertInfo_kp_emailProtection(o)      SharkSslCertInfo_KeyFlagSet(o, SHARKSSL_CERT_KEYPURPOSE_EMAILPROTECTION)
+#define SharkSslCertInfo_kp_timeStamping(o)         SharkSslCertInfo_KeyFlagSet(o, SHARKSSL_CERT_KEYPURPOSE_TIMESTAMPING)
+#define SharkSslCertInfo_kp_OCSPSigning(o)          SharkSslCertInfo_KeyFlagSet(o, SHARKSSL_CERT_KEYPURPOSE_OCSPSIGNING)
+#endif
 
 
 
@@ -3173,6 +3224,11 @@ typedef struct SharkSslCertInfo
 
    
    U8 *subjectAltDNSNames;
+
+   #if SHARKSSL_ENABLE_CERT_KEYUSAGE
+    
+   U32 keyUsagePurposes; 
+   #endif
 
    
    struct SharkSslCertInfo *parent;
@@ -3463,26 +3519,7 @@ SHARKSSL_API sharkssl_PEM_RetVal sharkssl_PEM(
  
 #endif
 
-#if SHARKSSL_ENABLE_RSA_API
-
-
-
-
-typedef SharkSslCert SharkSslRSAKey;
-
-#if SHARKSSL_ENABLE_PEM_API
-
-SharkSslRSAKey sharkssl_PEM_to_RSAKey(
-   const char *PEMKey, const char *passphrase);
-
-
-void SharkSslRSAKey_free(SharkSslRSAKey key);
-#endif
-
-
-
-U16 SharkSslRSAKey_size(SharkSslRSAKey key);
-
+#if SHARKSSL_ENABLE_RSA
 
 #define SHARKSSL_RSA_NO_PADDING      0
 
@@ -3490,23 +3527,82 @@ U16 SharkSslRSAKey_size(SharkSslRSAKey key);
 #define SHARKSSL_RSA_PKCS1_PADDING   1
 
 
-int sharkssl_RSA_public_encrypt(
+typedef enum
+{
+   
+   SHARKSSL_RSA_OK = 0,
+
+   
+   SHARKSSL_RSA_ALLOCATION_ERROR = -3000,
+
+   
+   SHARKSSL_RSA_INTERNAL_ERROR = -3100,
+
+   
+   SHARKSSL_RSA_WRONG_PARAMETERS,
+
+   
+   SHARKSSL_RSA_WRONG_KEY_FORMAT,
+
+   
+   SHARKSSL_RSA_WRONG_KEY_LENGTH,
+
+   
+   SHARKSSL_RSA_INPUT_DATA_LENGTH_TOO_BIG,
+
+   
+   SHARKSSL_RSA_INPUT_DATA_LENGTH_AND_KEY_LENGTH_MISMATCH,
+
+   
+   SHARKSSL_RSA_PKCS1_PADDING_ERROR
+} sharkssl_RSA_RetVal;
+#endif
+
+#if SHARKSSL_ENABLE_RSA_API
+
+
+
+
+typedef U8* SharkSslRSAKey;
+
+#if SHARKSSL_ENABLE_PEM_API
+
+SHARKSSL_API SharkSslRSAKey sharkssl_PEM_to_RSAKey(
+   const char *PEMKey, const char *passphrase);
+
+
+SHARKSSL_API SharkSslRSAKey
+sharkssl_PEM_extractPublicKey(const char *certPEM);
+
+
+SHARKSSL_API void SharkSslRSAKey_free(SharkSslRSAKey key);
+#endif
+
+#if SHARKSSL_ENABLE_RSA
+
+
+SHARKSSL_API U16 SharkSslRSAKey_size(SharkSslRSAKey key);
+
+
+SHARKSSL_API sharkssl_RSA_RetVal sharkssl_RSA_public_encrypt(
    U16 len, U8 *in, U8 *out, SharkSslRSAKey key, U8 padding);
 
 
 
-int sharkssl_RSA_private_decrypt(
+SHARKSSL_API sharkssl_RSA_RetVal sharkssl_RSA_private_decrypt(
    U16 len, U8 *in, U8 *out, SharkSslRSAKey privkey, U8 padding);
 
 
 
-int sharkssl_RSA_private_encrypt(
+SHARKSSL_API sharkssl_RSA_RetVal sharkssl_RSA_private_encrypt(
    U16 len, U8 *in, U8 *out, SharkSslRSAKey privkey, U8 padding);
 
 
 
-int sharkssl_RSA_public_decrypt(
+SHARKSSL_API sharkssl_RSA_RetVal sharkssl_RSA_public_decrypt(
    U16 len, U8 *in, U8 *out, SharkSslRSAKey key, U8 padding);
+
+#endif
 
  
 #endif
@@ -3526,8 +3622,9 @@ typedef U8 BaBool;
 #endif
 typedef struct SharkSslCertStore
 {
-      DoubleList certList;
-      U16 elements; 
+   DoubleList certList;
+   SharkSslCAList caList;
+   U16 elements;  
 } SharkSslCertStore;
 
 
@@ -3546,9 +3643,6 @@ SHARKSSL_API U16   SharkSslCertStore_add(
 
 SHARKSSL_API U8  SharkSslCertStore_assemble(
    SharkSslCertStore *o, SharkSslCAList *outList);
-
-
-#define SharkSslCAList_free(list) baFree((void*)list)
 
   
 #endif  
@@ -3630,6 +3724,10 @@ extern int basnprintf(char* buf, int len, const char* fmt, ...);
 extern int basprintf(char* buf, const char* fmt, ...);
 #endif
 
+#ifdef NO_LOCALDECPOINT
+#define getlocaledecpoint() '.'
+#endif
+
 
 
 
@@ -3644,7 +3742,7 @@ extern int basprintf(char* buf, const char* fmt, ...);
 
 
 
-#define BASLIB_VER "3370"
+#define BASLIB_VER "3420"
 
 
 
@@ -5064,6 +5162,9 @@ typedef struct HttpCookie
       bool        getSecure()  const { return secure ? true : false; }
 
       
+      bool        getHttpOnly()  const { return httpOnly ? true : false; }
+
+      
       const char* getValue()   const { return value; }
 
       
@@ -5084,6 +5185,9 @@ typedef struct HttpCookie
 
       
       void setSecure(bool flag);
+
+   
+      void setHttpOnly(bool flag);
 
       
       void setValue(const char* newValue);
@@ -5107,10 +5211,11 @@ typedef struct HttpCookie
       char* path;
       char* value;
       U32 maxAge;
-      int   secure;
       int   version;
-      BaBool deleteCookieFlag;
-      BaBool   activateFlag; 
+      BaBool  secure;
+      BaBool  httpOnly;
+      BaBool  deleteCookieFlag;
+      BaBool  activateFlag; 
 } HttpCookie;
 
 #ifdef __cplusplus
@@ -5122,14 +5227,16 @@ BA_API const char* HttpCookie_getDomain(HttpCookie* o);
 BA_API BaTime HttpCookie_getMaxAge(HttpCookie* o);
 BA_API const char* HttpCookie_getName(HttpCookie* o);
 BA_API const char* HttpCookie_getPath(HttpCookie* o);
-BA_API int HttpCookie_getSecure(HttpCookie* o);
+BA_API BaBool HttpCookie_getSecure(HttpCookie* o);
+BA_API BaBool HttpCookie_getHttpOnly(HttpCookie* o);
 BA_API const char* HttpCookie_getValue(HttpCookie* o);
 BA_API void HttpCookie_setComment(HttpCookie* o, const char* purpose);
 BA_API void HttpCookie_setDomain(HttpCookie* o, const char* pattern);
 BA_API void HttpCookie_setMaxAge(HttpCookie* o, BaTime expiry);
 #define HttpCookie_deleteCookie(o) (o)->deleteCookieFlag = TRUE;
 BA_API void HttpCookie_setPath(HttpCookie* o, const char* uri);
-BA_API void HttpCookie_setSecure(HttpCookie* o, int flag);
+BA_API void HttpCookie_setSecure(HttpCookie* o, BaBool flag);
+BA_API void HttpCookie_setHttpOnly(HttpCookie* o, BaBool flag);
 BA_API void HttpCookie_setValue(HttpCookie* o, const char* newValue);
 
 #if 0
@@ -5153,7 +5260,9 @@ inline void HttpCookie::deleteCookie() {
 inline void HttpCookie::setPath(const char* uri) {
    HttpCookie_setPath(this, uri); }
 inline void HttpCookie::setSecure(bool flag) {
-   HttpCookie_setSecure(this, flag); }
+   HttpCookie_setSecure(this, flag ? TRUE : FALSE); }
+inline void HttpCookie::setHttpOnly(bool flag) {
+   HttpCookie_setHttpOnly(this, flag ? TRUE : FALSE); }
 inline void HttpCookie::setValue(const char* newValue) {
    HttpCookie_setValue(this, newValue); }
 #if 0
@@ -5386,8 +5495,6 @@ BA_API struct HttpSession* HttpRequest_getSession(
    HttpRequest* o, BaBool create);
 BA_API struct HttpSession* HttpRequest_session(
    HttpRequest* o, const char* val, size_t len, int set);
-#define HttpRequest_setSession(o,val) \
-  (val ? HttpRequest_session(o,val,strlen(val),TRUE) : 0)
 #endif
 #ifdef __cplusplus
 }
@@ -6889,7 +6996,9 @@ struct HttpTraceWriteLock
 #define LUA_USE_DLOPEN		
 #endif
 #define LUA_USE_READLINE	
+#if !defined(ANDROID) && !defined(__ANDROID__)
 #define LUA_USE_STRTODHEX	
+#endif
 #define LUA_USE_AFORMAT		
 #define LUA_USE_LONGLONG	
 #endif
@@ -8612,6 +8721,10 @@ int pushCiphers(lua_State *L, SoDispCon* con);
 struct HttpClient;
 #define toHttpClient(L,ix) (struct HttpClient*)luaL_checkudata(L,ix,HTTPCLIENT)
 
+#define BACERTSTORE "BACERTSTORE"
+
+#define toCertStore(L,ix) (SharkSslCertStore*)luaL_checkudata(L,ix,BACERTSTORE) 
+
 
 #endif
 
@@ -8876,29 +8989,32 @@ int sharkStrCaseCmp(const char *a, const char *b);
 typedef enum
 {
    
-   SharkSslConTrust_CertCn = 1,
+   SharkSslConTrust_NotSSL=10,
 
    
-   SharkSslConTrust_Cn = 0,
+   SharkSslConTrust_None,
 
    
-   SharkSslConTrust_Cert = -1,
+   SharkSslConTrust_Cert,
 
    
-   SharkSslConTrust_None = -2,
+   SharkSslConTrust_Cn,
 
    
-   SharkSslConTrust_NotSSL = -3,
-
+   SharkSslConTrust_CertCn
 } SharkSslConTrust;
 
   
 
 
 
+#if SHARKSSL_ENABLE_CLONE_CERTINFO
+
 
 SHARKSSL_API SharkSslConTrust SharkSslCon_trusted(
    SharkSslCon* o, const char* name, SharkSslCertInfo** cPtr);
+
+#endif
 
   
 
@@ -9618,7 +9734,7 @@ inline void DigestAuthenticator::setStrictMode(bool enableStrictMode) {
 #define TLS_COMPRESSION_METHOD_NULL                0
 
 
-#define TLS_EXTENSION_SERVER_NAME                  0 
+#define TLS_EXTENSION_SERVER_NAME                  0
 #define TLS_EXTENSION_MAX_FRAGMENT_LENGTH          1
 #define TLS_EXTENSION_CLIENT_CERTIFICATE_URL       2
 #define TLS_EXTENSION_TRUSTED_CA_KEYS              3
@@ -10046,7 +10162,7 @@ inline void DigestAuthenticator::setStrictMode(bool enableStrictMode) {
 #elif SHARKSSL_USE_NULL_CIPHER
 #define SHARKSSL_MAX_KEY_LEN                        0   
 #else
-#error At least one cipher must be selected in SharkSSL_cfg.h 
+#error At least one cipher must be selected in SharkSSL_cfg.h
 #endif
 
 #if   (SHARKSSL_USE_AES_128 || SHARKSSL_USE_AES_256)
@@ -10064,7 +10180,7 @@ inline void DigestAuthenticator::setStrictMode(bool enableStrictMode) {
 #endif
 #ifndef SHARKSSL_ALIGNMENT
 #define SHARKSSL_ALIGNMENT                         4   
-#endif 
+#endif
 #define SHARKSSL_ALIGN_SIZE(s)                     (((s) + (SHARKSSL_ALIGNMENT - 1)) & ((U32)-SHARKSSL_ALIGNMENT))
 #define SHARKSSL_ALIGNED_POINTER(p)                (U8*)(((UPTR)((UPTR)(p) + SHARKSSL_ALIGNMENT - 1)) & ((UPTR)-SHARKSSL_ALIGNMENT))
 #define SHARKSSL_POINTER_IS_ALIGNED(p)             (0 == ((unsigned int)(UPTR)(p) & (SHARKSSL_ALIGNMENT - 1)))
@@ -10079,8 +10195,8 @@ inline void DigestAuthenticator::setStrictMode(bool enableStrictMode) {
 
 
 #define SHARKSSL_DIM_ARR(a)                        (sizeof(a)/sizeof(a[0]))
- 
-#define SHARKSSL_BUF_EXPANDSIZE                    1024                                                                  
+
+#define SHARKSSL_BUF_EXPANDSIZE                    1024
 #define SHARKSSL_BUF_HEADROOM_SIZE                 (SHARKSSL_MAX_DIGEST_BLOCK_LEN + SHARKSSL_SEQ_NUM_LEN)
 
 
@@ -10118,7 +10234,7 @@ inline void DigestAuthenticator::setStrictMode(bool enableStrictMode) {
 #define SHARKSSL_FLAG_SECURE_RENEGOTIATION         0x00008000
 #define SHARKSSL_FLAG_RENEGOTIATION_REQUESTED      0x00010000
 #define SHARKSSL_FLAG_RENEGOTIATION_SUBMITTED      0x00020000
-#define SHARKSSL_FLAG_RENEGOTIATION_ONGOING        0x00040000  
+#define SHARKSSL_FLAG_RENEGOTIATION_ONGOING        0x00040000
 #define SHARKSSL_FLAG_HANDSHAKE_DATA_IN_OUTBUF     0x00080000
 #define SHARKSSL_FLAG_CACHED_SESSION               0x00100000
 #define SHARKSSL_FLAG_HANDSHAKE_FINISHED           0x00200000
@@ -10192,9 +10308,9 @@ inline void DigestAuthenticator::setStrictMode(bool enableStrictMode) {
 
 
 #if (SHARKSSL_ENABLE_CA_LIST  || SHARKSSL_ENABLE_CERTSTORE_API)
-#define SHARKSSL_CA_LIST_NAME_SIZE                 8  
+#define SHARKSSL_CA_LIST_NAME_SIZE                 8
 #define SHARKSSL_CA_LIST_ELEMENT_SIZE              (SHARKSSL_CA_LIST_NAME_SIZE + 4)
-#define SHARKSSL_CA_LIST_INDEX_TYPE                0x00  
+#define SHARKSSL_CA_LIST_INDEX_TYPE                0x00
 
 #ifdef __IAR_SYSTEMS_ICC__
 
@@ -10222,7 +10338,7 @@ typedef struct SharkSslCSCert
 
 #endif  
 #endif  
- 
+
 
 
 #if SHARKSSL_ENABLE_PSK
@@ -10246,7 +10362,9 @@ typedef struct SharkSslBuf
 
 void    SharkSslBuf_constructor(SharkSslBuf*, U16);
 void    SharkSslBuf_destructor(SharkSslBuf*);
+#ifndef SHARKSSL_DISABLE_INBUF_EXPANSION
 U8     *SharkSslBuf_expand(SharkSslBuf*, U16);
+#endif
 void    SharkSslBuf_leftAlignData(SharkSslBuf*);
 #define SharkSslBuf_notAllocated(o) (!((o)->buf))
 #define SharkSslBuf_dataPtrLeftAligned(o) \
@@ -10283,7 +10401,7 @@ typedef struct SharkSslCipherSuite
 typedef struct SharkSslCertParsed
 {
    SharkSslCert cert;
-   U16 msgLen;    
+   U16 msgLen;   
    U8  keyType;
    U8  keyOID;
    U8  signatureAlgo;
@@ -10296,7 +10414,7 @@ typedef struct SharkSslCertList
    SingleLink link;
    SharkSslCertParsed certP;
 } SharkSslCertList;
- 
+
 
 typedef struct SharkSslCertKey
 {
@@ -10330,7 +10448,7 @@ typedef struct SharkSslCertParam
 typedef struct SharkSslSignParam  
 {
    SharkSslCertKey  *pCertKey;
-   SharkSslSignature signature; 
+   SharkSslSignature signature;
 } SharkSslSignParam;
 
 
@@ -10369,7 +10487,7 @@ typedef struct SharkSslECDHParam
 {
    U8 *XY;         
    U8 *k;          
-   U16 xLen;        
+   U16 xLen;       
    U16 curveType;  
 } SharkSslECDHParam;
 #endif
@@ -10382,7 +10500,7 @@ typedef struct SharkSslECDSAParam
    U8 *S;          
    U8 *key;        
    U8 *hash;       
-   U16 keyLen;      
+   U16 keyLen;     
    U16 hashLen;    
    U16 curveType;  
 } SharkSslECDSAParam;
@@ -10529,7 +10647,7 @@ struct SharkSslCon
    U8 major, minor;
    U8 ccLen;
    U8 padLen;
-   U8 alertLevel, alertDescr; 
+   U8 alertLevel, alertDescr;
    #if ((SHARKSSL_SSL_SERVER_CODE || SHARKSSL_SSL_CLIENT_CODE) && SHARKSSL_ENABLE_SELECT_CIPHERSUITE)
    #if (SHARKSSL_SELECT_CIPHERSUITE_LIST_DEPTH > 0xFF)
    #error SHARKSSL_SELECT_CIPHERSUITE_LIST_DEPTH must be lower than 256
@@ -10540,7 +10658,7 @@ struct SharkSslCon
 };
 
 
-typedef enum 
+typedef enum
 {
   SharkSslCon_SenderIsClient,
   SharkSslCon_SenderIsServer
@@ -10618,7 +10736,7 @@ int  SharkSslCon_sha256(SharkSslCon*, const U8*, U16, U8*);
 int  SharkSslCon_sha384(SharkSslCon*, const U8*, U16, U8*);
 #endif
 int  SharkSslCon_HMAC(SharkSslCon *, U8, U8*, U16, U8*, U8, U8, SharkSslCon_digestFunc);
-#if SHARKSSL_ENABLE_RSA   
+#if SHARKSSL_ENABLE_RSA
 SHARKSSL_API int  SharkSslCertKey_RSA(const SharkSslCertKey*, U8, U8*);
 int SharkSslCertKey_RSA_public_encrypt(const SharkSslCertKey *certKey, U16 len, U8 *in, U8 *out, U8 padding);
 int SharkSslCertKey_RSA_private_decrypt(const SharkSslCertKey *certKey, U16 len, U8 *in, U8 *out, U8 padding);
@@ -15524,6 +15642,7 @@ typedef struct HttpSharkSslServCon
       DoubleList sharkSslConList;
       SharkSsl* sharkSsl;
       BaBool requestClientCert;
+      BaBool favorRSA;
 } HttpSharkSslServCon;
 
 
@@ -15546,7 +15665,10 @@ SHARKSSL_API int HttpSharkSslServCon_setPort(HttpSharkSslServCon* o,
                                              BaBool setIp6,
                                              const void* interfaceName);
 #define HttpSharkSslServCon_isValid(o) HttpServCon_isValid((HttpServCon*)o)
-#define HttpSharkSslServCon_requestClientCert(o,enable) (o)->requestClientCert=enable
+#define HttpSharkSslServCon_requestClientCert(o,enable) \
+        (o)->requestClientCert=enable
+#define HttpSharkSslServCon_favorRSA(o,enable) \
+        (o)->favorRSA=enable
 
 SHARKSSL_API void HttpSharkSslServCon_destructor(HttpSharkSslServCon* o);
 
@@ -16721,7 +16843,7 @@ inline int HttpServerPipe::sendData(void* data, int len) {
 #define TLS_COMPRESSION_METHOD_NULL                0
 
 
-#define TLS_EXTENSION_SERVER_NAME                  0 
+#define TLS_EXTENSION_SERVER_NAME                  0
 #define TLS_EXTENSION_MAX_FRAGMENT_LENGTH          1
 #define TLS_EXTENSION_CLIENT_CERTIFICATE_URL       2
 #define TLS_EXTENSION_TRUSTED_CA_KEYS              3
@@ -17149,7 +17271,7 @@ inline int HttpServerPipe::sendData(void* data, int len) {
 #elif SHARKSSL_USE_NULL_CIPHER
 #define SHARKSSL_MAX_KEY_LEN                        0   
 #else
-#error At least one cipher must be selected in SharkSSL_cfg.h 
+#error At least one cipher must be selected in SharkSSL_cfg.h
 #endif
 
 #if   (SHARKSSL_USE_AES_128 || SHARKSSL_USE_AES_256)
@@ -17167,7 +17289,7 @@ inline int HttpServerPipe::sendData(void* data, int len) {
 #endif
 #ifndef SHARKSSL_ALIGNMENT
 #define SHARKSSL_ALIGNMENT                         4   
-#endif 
+#endif
 #define SHARKSSL_ALIGN_SIZE(s)                     (((s) + (SHARKSSL_ALIGNMENT - 1)) & ((U32)-SHARKSSL_ALIGNMENT))
 #define SHARKSSL_ALIGNED_POINTER(p)                (U8*)(((UPTR)((UPTR)(p) + SHARKSSL_ALIGNMENT - 1)) & ((UPTR)-SHARKSSL_ALIGNMENT))
 #define SHARKSSL_POINTER_IS_ALIGNED(p)             (0 == ((unsigned int)(UPTR)(p) & (SHARKSSL_ALIGNMENT - 1)))
@@ -17182,8 +17304,8 @@ inline int HttpServerPipe::sendData(void* data, int len) {
 
 
 #define SHARKSSL_DIM_ARR(a)                        (sizeof(a)/sizeof(a[0]))
- 
-#define SHARKSSL_BUF_EXPANDSIZE                    1024                                                                  
+
+#define SHARKSSL_BUF_EXPANDSIZE                    1024
 #define SHARKSSL_BUF_HEADROOM_SIZE                 (SHARKSSL_MAX_DIGEST_BLOCK_LEN + SHARKSSL_SEQ_NUM_LEN)
 
 
@@ -17221,7 +17343,7 @@ inline int HttpServerPipe::sendData(void* data, int len) {
 #define SHARKSSL_FLAG_SECURE_RENEGOTIATION         0x00008000
 #define SHARKSSL_FLAG_RENEGOTIATION_REQUESTED      0x00010000
 #define SHARKSSL_FLAG_RENEGOTIATION_SUBMITTED      0x00020000
-#define SHARKSSL_FLAG_RENEGOTIATION_ONGOING        0x00040000  
+#define SHARKSSL_FLAG_RENEGOTIATION_ONGOING        0x00040000
 #define SHARKSSL_FLAG_HANDSHAKE_DATA_IN_OUTBUF     0x00080000
 #define SHARKSSL_FLAG_CACHED_SESSION               0x00100000
 #define SHARKSSL_FLAG_HANDSHAKE_FINISHED           0x00200000
@@ -17295,9 +17417,9 @@ inline int HttpServerPipe::sendData(void* data, int len) {
 
 
 #if (SHARKSSL_ENABLE_CA_LIST  || SHARKSSL_ENABLE_CERTSTORE_API)
-#define SHARKSSL_CA_LIST_NAME_SIZE                 8  
+#define SHARKSSL_CA_LIST_NAME_SIZE                 8
 #define SHARKSSL_CA_LIST_ELEMENT_SIZE              (SHARKSSL_CA_LIST_NAME_SIZE + 4)
-#define SHARKSSL_CA_LIST_INDEX_TYPE                0x00  
+#define SHARKSSL_CA_LIST_INDEX_TYPE                0x00
 
 #ifdef __IAR_SYSTEMS_ICC__
 
@@ -17325,7 +17447,7 @@ typedef struct SharkSslCSCert
 
 #endif  
 #endif  
- 
+
 
 
 #if SHARKSSL_ENABLE_PSK
@@ -17349,7 +17471,9 @@ typedef struct SharkSslBuf
 
 void    SharkSslBuf_constructor(SharkSslBuf*, U16);
 void    SharkSslBuf_destructor(SharkSslBuf*);
+#ifndef SHARKSSL_DISABLE_INBUF_EXPANSION
 U8     *SharkSslBuf_expand(SharkSslBuf*, U16);
+#endif
 void    SharkSslBuf_leftAlignData(SharkSslBuf*);
 #define SharkSslBuf_notAllocated(o) (!((o)->buf))
 #define SharkSslBuf_dataPtrLeftAligned(o) \
@@ -17386,7 +17510,7 @@ typedef struct SharkSslCipherSuite
 typedef struct SharkSslCertParsed
 {
    SharkSslCert cert;
-   U16 msgLen;    
+   U16 msgLen;   
    U8  keyType;
    U8  keyOID;
    U8  signatureAlgo;
@@ -17399,7 +17523,7 @@ typedef struct SharkSslCertList
    SingleLink link;
    SharkSslCertParsed certP;
 } SharkSslCertList;
- 
+
 
 typedef struct SharkSslCertKey
 {
@@ -17433,7 +17557,7 @@ typedef struct SharkSslCertParam
 typedef struct SharkSslSignParam  
 {
    SharkSslCertKey  *pCertKey;
-   SharkSslSignature signature; 
+   SharkSslSignature signature;
 } SharkSslSignParam;
 
 
@@ -17472,7 +17596,7 @@ typedef struct SharkSslECDHParam
 {
    U8 *XY;         
    U8 *k;          
-   U16 xLen;        
+   U16 xLen;       
    U16 curveType;  
 } SharkSslECDHParam;
 #endif
@@ -17485,7 +17609,7 @@ typedef struct SharkSslECDSAParam
    U8 *S;          
    U8 *key;        
    U8 *hash;       
-   U16 keyLen;      
+   U16 keyLen;     
    U16 hashLen;    
    U16 curveType;  
 } SharkSslECDSAParam;
@@ -17632,7 +17756,7 @@ struct SharkSslCon
    U8 major, minor;
    U8 ccLen;
    U8 padLen;
-   U8 alertLevel, alertDescr; 
+   U8 alertLevel, alertDescr;
    #if ((SHARKSSL_SSL_SERVER_CODE || SHARKSSL_SSL_CLIENT_CODE) && SHARKSSL_ENABLE_SELECT_CIPHERSUITE)
    #if (SHARKSSL_SELECT_CIPHERSUITE_LIST_DEPTH > 0xFF)
    #error SHARKSSL_SELECT_CIPHERSUITE_LIST_DEPTH must be lower than 256
@@ -17643,7 +17767,7 @@ struct SharkSslCon
 };
 
 
-typedef enum 
+typedef enum
 {
   SharkSslCon_SenderIsClient,
   SharkSslCon_SenderIsServer
@@ -17721,7 +17845,7 @@ int  SharkSslCon_sha256(SharkSslCon*, const U8*, U16, U8*);
 int  SharkSslCon_sha384(SharkSslCon*, const U8*, U16, U8*);
 #endif
 int  SharkSslCon_HMAC(SharkSslCon *, U8, U8*, U16, U8*, U8, U8, SharkSslCon_digestFunc);
-#if SHARKSSL_ENABLE_RSA   
+#if SHARKSSL_ENABLE_RSA
 SHARKSSL_API int  SharkSslCertKey_RSA(const SharkSslCertKey*, U8, U8*);
 int SharkSslCertKey_RSA_public_encrypt(const SharkSslCertKey *certKey, U16 len, U8 *in, U8 *out, U8 padding);
 int SharkSslCertKey_RSA_private_decrypt(const SharkSslCertKey *certKey, U16 len, U8 *in, U8 *out, U8 padding);
