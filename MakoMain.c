@@ -10,9 +10,9 @@
  ****************************************************************************
  *            PROGRAM MODULE
  *
- *   $Id: MakoMain.c 3367 2014-05-22 03:36:37Z wini $
+ *   $Id: MakoMain.c 3641 2015-01-07 00:53:26Z wini $
  *
- *   COPYRIGHT:  Real Time Logic LLC, 2012 - 2014
+ *   COPYRIGHT:  Real Time Logic LLC, 2012 - 2015
  *
  *   This software is copyrighted by and is the sole property of Real
  *   Time Logic LLC.  All rights, title, ownership, or other interests in
@@ -45,7 +45,7 @@
 #define MAKO_VNAME      "Mako Server" MAKOEXNAME   ". Version " MAKO_VER
 #endif
 #ifndef MAKO_CPR
-#define MAKO_CPR "Copyright (c) 2014 Real Time Logic.  All rights reserved."
+#define MAKO_CPR "Copyright (c) 2015 Real Time Logic.  All rights reserved."
 #endif
 
 /* The Mako Server can optionally use an embedded version of
@@ -69,7 +69,7 @@
 
 
 /* Use the forkpty library on Linux. */
-#ifndef CUSTOM_PLAT
+#if !defined(CUSTOM_PLAT) && !defined(NO_FORKPTY) && !defined(_WIN32)
 #define USE_FORKPTY
 #endif
 
@@ -323,6 +323,7 @@ findExecPath(const char* argv0)
 
 /* Enter Linux daemon mode */
 #define setLinuxDaemonMode()
+#define disableSignals()
 
 /* Set Linux user */
 #define setUser(argc, argv)
@@ -381,6 +382,7 @@ setCtrlCHandler(void)
    SetConsoleCtrlHandler(sigTerm, TRUE);
 }
 #define setLinuxDaemonMode()
+#define disableSignals()
 #define setUser(argc, argv)
 
 /******************************** LINUX **********************************/
@@ -467,6 +469,7 @@ findExecPath(const char* argv0)
    }
    if(size > 0)
    {
+      buf[size]=0;
       ptr=strrchr(buf,'/');
       if(ptr)
          ptr[0]=0;
@@ -522,6 +525,12 @@ cfblockSignal(int sig, const char* signame)
        errQuit("can't block %s - %s.\n", signame,strerror(errno));
 }
 #define blockSignal(x) cfblockSignal((int)(x), #x)
+
+static void
+disableSignals(void)
+{
+   ignoreSignal(SIGPIPE);
+}
 
 static void
 setLinuxDaemonMode(void)
@@ -1053,7 +1062,7 @@ openVmIo(IoIntf* rootIo,const char* execpath, const char* cfgfname)
       io=checkMakoIo((IoIntf*)vmIo);
 #elif defined(USE_EMBEDDED_ZIP)
       /* Use embedded ZIP file, which is Created by the the BA tool: bin2c */
-      io=createAndCheckMakoZipIo(getLspZipReader(),"'embedded mako.zip'");
+      io=createAndCheckMakoZipIo(getLspZipReader(),"'the limited embedded mako.zip'. Warning: key features will be missing!");
 #endif
    }
    if(!io)
@@ -1218,6 +1227,8 @@ runMako(int isWinService, int argc, char* argv[], char* envp[])
 #else
    if(daemonMode)
       setLinuxDaemonMode();
+   else
+      disableSignals();
 #endif
    if( ! isWinService )
       setCtrlCHandler();
@@ -1283,7 +1294,7 @@ runMako(int isWinService, int argc, char* argv[], char* envp[])
 
 #ifdef BAS_LOADED
    luaopen_ba_redirector(L);
-#ifndef _WIN32
+#ifdef USE_FORKPTY
    balua_forkpty(L); /* The optional forkpty Lua bindings for Linux */
 #endif
 #endif

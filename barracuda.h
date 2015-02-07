@@ -152,18 +152,32 @@ BA_API int baErr2HttpCode(int ecode);
 #define SHARKSSL_USE_AES_256                             1
 #endif
 
+
 #ifndef SHARKSSL_USE_AES_128
 #define SHARKSSL_USE_AES_128                             1
 #endif
+
+
+#ifndef SHARKSSL_USE_AES_192
+#define SHARKSSL_USE_AES_192                             0
+#endif
+
 
 
 #ifndef SHARKSSL_ENABLE_AES_GCM
 #define SHARKSSL_ENABLE_AES_GCM                          1
 #endif
 
+
 #ifndef SHARKSSL_ENABLE_AES_CCM
 #define SHARKSSL_ENABLE_AES_CCM                          1
 #endif
+
+
+#ifndef SHARKSSL_USE_CHACHA20
+#define SHARKSSL_USE_CHACHA20                            1
+#endif
+
 
 #ifndef SHARKSSL_USE_3DES
 #define SHARKSSL_USE_3DES                                1
@@ -179,6 +193,7 @@ BA_API int baErr2HttpCode(int ecode);
 #define SHARKSSL_USE_DES                                 0
 #endif
 
+
 #ifndef SHARKSSL_USE_NULL_CIPHER
 #define SHARKSSL_USE_NULL_CIPHER                         0
 #endif
@@ -187,8 +202,8 @@ BA_API int baErr2HttpCode(int ecode);
 
 
 
-#ifndef SHARKSSL_USE_SHA_512
-#define SHARKSSL_USE_SHA_512                             0
+#ifndef SHARKSSL_USE_SHA_256
+#define SHARKSSL_USE_SHA_256                             1
 #endif
 
 
@@ -197,8 +212,8 @@ BA_API int baErr2HttpCode(int ecode);
 #endif
 
 
-#ifndef SHARKSSL_USE_SHA_256
-#define SHARKSSL_USE_SHA_256                             1
+#ifndef SHARKSSL_USE_SHA_512
+#define SHARKSSL_USE_SHA_512                             0
 #endif
 
 
@@ -211,7 +226,15 @@ BA_API int baErr2HttpCode(int ecode);
 #define SHARKSSL_USE_MD5                                 1
 #endif
 
-  
+
+#ifndef SHARKSSL_USE_POLY1305
+#define SHARKSSL_USE_POLY1305                            1
+#endif
+
+
+
+
+ 
 
 
 
@@ -393,6 +416,7 @@ BA_API int baErr2HttpCode(int ecode);
 #define SHARKSSL_SHA1_SMALL_FOOTPRINT                    0
 #endif
 
+
 #ifndef SHARKSSL_SHA256_SMALL_FOOTPRINT
 #define SHARKSSL_SHA256_SMALL_FOOTPRINT                  0
 #endif
@@ -462,6 +486,7 @@ BA_API int baErr2HttpCode(int ecode);
 #endif
 
 
+
 #ifndef SHARKSSL_ECC_TIMING_RESISTANT
 #define SHARKSSL_ECC_TIMING_RESISTANT                    0
 #endif
@@ -471,17 +496,21 @@ BA_API int baErr2HttpCode(int ecode);
 #define SHARKSSL_ECC_USE_SECP192R1                       1
 #endif
 
+
 #ifndef SHARKSSL_ECC_USE_SECP224R1
 #define SHARKSSL_ECC_USE_SECP224R1                       1
 #endif
+
 
 #ifndef SHARKSSL_ECC_USE_SECP256R1
 #define SHARKSSL_ECC_USE_SECP256R1                       1
 #endif
 
+
 #ifndef SHARKSSL_ECC_USE_SECP384R1
 #define SHARKSSL_ECC_USE_SECP384R1                       1
 #endif
+
 
 #ifndef SHARKSSL_ECC_USE_SECP521R1
 #define SHARKSSL_ECC_USE_SECP521R1                       1
@@ -511,7 +540,32 @@ BA_API int baErr2HttpCode(int ecode);
 #define SHARKSSL_ENABLE_ECDH_ECDSA                       1
 #endif
 
-  
+
+
+#ifndef SHARKSSL_OPTIMIZED_BIGINT_ASM
+#define SHARKSSL_OPTIMIZED_BIGINT_ASM	0
+#endif
+
+
+#ifndef SHARKSSL_OPTIMIZED_CHACHA_ASM
+#define SHARKSSL_OPTIMIZED_CHACHA_ASM	0
+#endif
+
+
+#ifndef SHARKSSL_OPTIMIZED_POLY1305_ASM
+#define SHARKSSL_OPTIMIZED_POLY1305_ASM	0
+#endif
+
+
+#ifndef SHARKSSL_USE_RNG_TINYMT
+#define SHARKSSL_USE_RNG_TINYMT	0
+#endif
+
+#ifndef SHARKSSL_NOPACK
+#define SHARKSSL_NOPACK                                  0
+#endif
+
+ 
 
 #endif
 #ifdef __cplusplus
@@ -526,10 +580,6 @@ BA_API int baErr2HttpCode(int ecode);
 #ifndef ThreadLib_hpp
 
 
-#ifndef _HttpConfig_h
-#define _HttpConfig_h
-
-
 #ifndef _TargConfig_h
 #define _TargConfig_h
 
@@ -540,6 +590,8 @@ BA_API int baErr2HttpCode(int ecode);
 #endif
 
 
+
+#define BA_POSIX
 
 #if defined(GNUC) || defined(__GNU__) || defined(__GNUC_MINOR__)
 #ifndef __GNUC__
@@ -694,6 +746,16 @@ typedef S32 SBaFileSize;
 #endif
 
 
+
+
+
+#ifndef __BaAtoi_h
+#define __BaAtoi_h
+
+#ifndef BA_API
+#define BA_API
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -721,8 +783,7 @@ BA_API U32 U32_hextoi(const char *s);
 #endif
 
 
-
-
+#endif
 #endif
 #define baGetUnixTime() time(0)
 
@@ -747,881 +808,6 @@ extern "C" {
 #define bIsxdigit isxdigit
 
 
-#endif
-
-
-#ifndef _gBsdDspO_h
-#define _gBsdDspO_h
-
-
-
-
-
-#define CONNECTION_DISPATCHER_OBJ DoubleLink dispatcherLink;
-
-
-
-
-
-
-#ifndef _DoubleList_h
-#define _DoubleList_h
-
-struct DoubleList;
-
-typedef struct DoubleLink
-{
-#ifdef __cplusplus
-      void *operator new(size_t s) { return ::baMalloc(s); }
-      void operator delete(void* d) { if(d) ::baFree(d); }
-      void *operator new(size_t, void *place) { return place; }
-      void operator delete(void*, void *) { }
-       DoubleLink();
-      ~DoubleLink();
-      void insertAfter(DoubleLink* newLink);
-      void insertBefore(DoubleLink* newLink);
-      void unlink();
-      bool isLinked();
-      DoubleLink* getNext();
-#endif
-      struct DoubleLink* next;
-      struct DoubleLink* prev;
-} DoubleLink;
-
-
-
-typedef struct DoubleList
-{
-#ifdef __cplusplus
-      DoubleList();
-      void insertFirst(DoubleLink* newLink);
-      void insertLast(DoubleLink* newLink);
-      bool isLast(DoubleLink* n);
-      DoubleLink* firstNode();
-      DoubleLink* lastNode();
-      bool isEmpty();
-      DoubleLink* removeFirst();
-      bool isInList(DoubleLink* n);
-#endif
-   DoubleLink* next;
-   DoubleLink* prev;
-} DoubleList;
-
-
-#define DoubleLink_constructor(o) do { \
-   ((DoubleLink*)o)->next = 0; \
-   ((DoubleLink*)o)->prev = 0; \
-} while(0)
-
-
-#define DoubleLink_destructor(o) do { \
-      if(DoubleLink_isLinked(o)) \
-         DoubleLink_unlink(o); \
-} while(0)
-
-#define DoubleLink_insertAfter(o, newLink) do { \
-   baAssert(((DoubleLink*)newLink)->prev==0&&((DoubleLink*)newLink)->next==0);\
-   ((DoubleLink*)newLink)->next = ((DoubleLink*)o)->next; \
-   ((DoubleLink*)newLink)->prev = ((DoubleLink*)o); \
-   ((DoubleLink*)o)->next->prev = ((DoubleLink*)newLink); \
-   ((DoubleLink*)o)->next = ((DoubleLink*)newLink); \
-} while(0)
-
-
-#define DoubleLink_insertBefore(o, newLink) do { \
-   baAssert(((DoubleLink*)newLink)->prev==0&&((DoubleLink*)newLink)->next==0);\
-   ((DoubleLink*)newLink)->prev = ((DoubleLink*)o)->prev; \
-   ((DoubleLink*)newLink)->next = ((DoubleLink*)o); \
-   ((DoubleLink*)o)->prev->next = ((DoubleLink*) newLink); \
-   ((DoubleLink*)o)->prev = ((DoubleLink*) newLink); \
-} while(0)
-
-
-#define DoubleLink_unlink(o) do { \
-   baAssert(((DoubleLink*)o)->prev && ((DoubleLink*)o)->next);\
-   ((DoubleLink*) o)->next->prev = ((DoubleLink*)o)->prev; \
-   ((DoubleLink*) o)->prev->next = ((DoubleLink*)o)->next; \
-   ((DoubleLink*) o)->next = 0; \
-   ((DoubleLink*) o)->prev = 0; \
-} while(0)
-
-#ifdef NDEBUG
-#define DoubleLink_isLinked(o) \
-   (((DoubleLink*)o)->prev ? TRUE : FALSE)
-#else
-#define DoubleLink_isLinked(o) \
-   (((DoubleLink*)o)->prev ? (baAssert(((DoubleLink*)o)->next), TRUE) : FALSE)
-#endif
-
-#define DoubleLink_getNext(o) ((DoubleLink*)(o))->next
-
-
-#define DoubleList_constructor(o) do { \
-   (o)->next = (DoubleLink*)o; \
-   (o)->prev = (DoubleLink*)o; \
-} while(0)
-
-
-#define DoubleList_insertFirst(o, newLink) do { \
-   baAssert(((DoubleLink*)newLink)->prev==0&&((DoubleLink*)newLink)->next==0);\
-   ((DoubleLink*)newLink)->next = (o)->next; \
-   ((DoubleLink*)newLink)->prev = (DoubleLink*)o; \
-   (o)->next->prev = ((DoubleLink*) newLink); \
-   (o)->next = ((DoubleLink*) newLink); \
-} while(0)
-
-
-#define DoubleList_insertLast(o, newLink) do { \
-   baAssert(((DoubleLink*)newLink)->prev==0&&((DoubleLink*)newLink)->next==0);\
-   ((DoubleLink*)newLink)->next = (DoubleLink*)o; \
-   ((DoubleLink*)newLink)->prev = (o)->prev; \
-   (o)->prev->next = ((DoubleLink*)newLink); \
-   (o)->prev = ((DoubleLink*)newLink); \
-} while(0)
-
-
-#define DoubleList_isLast(o, n) (((DoubleLink*)(n))->next == (DoubleLink*)(o))
-#define DoubleList_isEnd(o, n) ((DoubleLink*)(n) == (DoubleLink*)(o))
-
-#define DoubleList_firstNode(o) \
-   ((o)->next != (DoubleLink*)o ? (o)->next : 0)
-
-
-#define DoubleList_lastNode(o) \
-   ((o)->prev != (DoubleLink*)o ? (o)->prev : 0)
-
-
-
-#define DoubleList_isEmpty(o)  \
-   (((DoubleLink*)(o))->next == (DoubleLink*)(o))
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-BA_API DoubleLink* DoubleList_removeFirst(DoubleList* o);
-
-
-#ifdef NDEBUG
-#define DoubleList_isInList(o, node) (((DoubleLink*)node)->prev ? TRUE : FALSE)
-#else
-#define DoubleList_isInList(o, node) DoubleList_isInListF(o, node, __FILE__, __LINE__)
-BA_API BaBool DoubleList_isInListF(DoubleList* o,void* node,const char* file,int line);
-#endif
-
-
-#ifdef __cplusplus
-}
-inline DoubleLink::DoubleLink() {
-   DoubleLink_constructor(this);
-}
-inline DoubleLink::~DoubleLink() {
-   DoubleLink_destructor(this);
-}
-inline void DoubleLink::insertAfter(DoubleLink* newLink) {
-   DoubleLink_insertAfter(this, newLink);
-}
-inline void DoubleLink::insertBefore(DoubleLink* newLink) {
-   DoubleLink_insertBefore(this, newLink);
-}
-inline void DoubleLink::unlink() {
-   DoubleLink_unlink(this);
-}
-inline bool DoubleLink::isLinked() {
-   return DoubleLink_isLinked(this) ? true : false;
-}
-inline DoubleLink* DoubleLink::getNext() {
-   return DoubleLink_getNext(this);
-}
-inline DoubleList::DoubleList() {
-   DoubleList_constructor(this);
-}
-inline void DoubleList::insertFirst(DoubleLink* newLink) {
-   DoubleList_insertFirst(this, newLink);
-}
-inline void DoubleList::insertLast(DoubleLink* newLink) {
-   DoubleList_insertLast(this, newLink);
-}
-inline bool DoubleList::isLast(DoubleLink* n) {
-   return DoubleList_isLast(this, n) ? true : false;
-}
-inline  DoubleLink* DoubleList::firstNode() {
-   return DoubleList_firstNode(this);
-}
-inline DoubleLink* DoubleList::lastNode() {
-   return DoubleList_lastNode(this);
-}
-inline bool DoubleList::isEmpty() {
-   return DoubleList_isEmpty(this) ? true : false;
-}
-inline DoubleLink* DoubleList::removeFirst() {
-   return DoubleList_removeFirst(this);
-}
-inline bool DoubleList::isInList(DoubleLink* n) {
-   return DoubleList_isInList(this, n)  ? true : false;
-}
-#endif
-
-
-
-
-
-typedef struct DoubleListEnumerator
-{
-#ifdef __cplusplus
-      DoubleListEnumerator(){}
-      DoubleListEnumerator(DoubleList* list);
-      DoubleLink* getElement();
-      DoubleLink* nextElement();
-      DoubleLink* removeElement();
-   private:
-#endif
-      DoubleList* list;
-      DoubleLink* curElement;
-} DoubleListEnumerator;
-
-#define DoubleListEnumerator_constructor(o, listMA) do \
-{ \
-   (o)->list = listMA; \
-   (o)->curElement = DoubleList_firstNode((o)->list);\
-} while(0)
-
-#define DoubleListEnumerator_getElement(o) (o)->curElement
-
-#define DoubleListEnumerator_nextElement(o) \
-   ((o)->curElement ? ( \
-      (o)->curElement = (o)->curElement->next == (DoubleLink*)(o)->list ? 0 : (o)->curElement->next, \
-      (o)->curElement \
-    ) : 0)
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-BA_API DoubleLink* DoubleListEnumerator_removeElement(DoubleListEnumerator* o);
-#ifdef __cplusplus
-}
-inline DoubleListEnumerator::DoubleListEnumerator(DoubleList* list) {
-   DoubleListEnumerator_constructor(this, list); }
-inline DoubleLink*
-DoubleListEnumerator::removeElement() {
-   return DoubleListEnumerator_removeElement(this); }
-inline DoubleLink*
-DoubleListEnumerator::getElement() {return DoubleListEnumerator_getElement(this);}
-inline DoubleLink*
-DoubleListEnumerator::nextElement() {return DoubleListEnumerator_nextElement(this); }
-#endif
-
-
-#endif
-#define DISPATCHER_DATA \
-  DoubleList conList; \
-  DoubleList pendingList; \
-  DoubleLink* curL; \
-  DoubleListEnumerator iter; \
-  int defaultPollDelay; \
-  int pollDelay
-#endif
-
-#ifndef _NetConv_h
-#define _NetConv_h
-
-
-#ifdef B_LITTLE_ENDIAN
-#define baHtonl(x) ((U32)((((U32)(x) & 0x000000ffU) << 24) | \
-                         (((U32)(x) & 0x0000ff00U) <<  8) | \
-                         (((U32)(x) & 0x00ff0000U) >>  8) | \
-                         (((U32)(x) & 0xff000000U) >> 24)))
-#define baHtons(x) ((U16)((((U16)(x) & 0x00ff) << 8) | \
-                         (((U16)(x) & 0xff00) >> 8)))
-#elif defined B_BIG_ENDIAN
-#define baHtonl(x) x
-#define baHtons(x) x
-#else
-#error endian needed
-#endif
-#define baNtohl(x) baHtonl(x)
-#define baNtohs(x) baHtons(x)
-
-
-
-#endif
-
-#if defined(FD_CLOEXEC)
-
-#undef HttpSocket_setcloexec
-#undef HttpSocket_clearcloexec
-#undef basocketpair
-
-#define HttpSocket_setcloexec(o) (void)fcntl((o)->hndl, F_SETFD, FD_CLOEXEC)
-
-#define HttpSocket_clearcloexec(o)  (void)fcntl((o)->hndl, F_SETFD, 0)
-
-#define basocketpair(fd) socketpair(AF_UNIX,SOCK_STREAM,0,fd)
-
-#else
-#define HttpSocket_setcloexec(x)
-#define HttpSocket_clearcloexec(x)
-#define basocketpair(x)
-#endif 
-
-
-#if defined(EINTR) && defined(EAGAIN)
- 
-#undef socketAccept
-#define socketAccept
-#undef socketSend
-#define socketSend
-
-#define HttpSocket_accept(o, conSock, status) do { int e; \
- (conSock)->hndl=accept((o)->hndl, NULL, NULL); \
- if ((conSock)->hndl < 0) {e=errno; \
- if (e==EINTR||e==EAGAIN) continue;*(status)=e?e:-1;break;}    \
- else {*(status)=0;HttpSocket_setcloexec(o);break;} \
- } while(1)
-
-#define HttpSocket_recv(o, data, len, retLen) do { \
-  *(retLen)=recv((o)->hndl,data,len,0); \
-  if(*(retLen) == 0) {*(retLen) = -1;break;}  \
-  if(*(retLen) < 0) { int e=errno; \
-    if (e==EINTR) continue; \
-    if (e==EAGAIN) {*(retLen)=0;break;}   \
-  } \
-  break; \
-} while(1)
-
-#define HttpSocket_send(o, m, isTerminated, data, len, retLen) do { \
-  if(m && ThreadMutex_isOwner(m)) { \
-    ThreadMutex_release(m); \
-    *(retLen)=send((o)->hndl,data,len,0); \
-    ThreadMutex_set(m); \
-  } \
-  else \
-    *(retLen)=send((o)->hndl,data,len,0); \
-  if(*(retLen) < 0) { \
-    int e=errno; \
-    if (e==EINTR) continue; \
-    if (e==EAGAIN) {*(retLen)=0;} \
-  } \
-  break; \
-} while(1)
-
-#endif 
-
-
-
-
-#ifndef _gBsdSock_h
-#define _gBsdSock_h
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-struct HttpSockaddr;
-
-#ifndef basocklen_t
-#define basocklen_t socklen_t
-#endif
-
-#ifndef SocketHandle
-#define SocketHandle int
-#endif
-
-#ifndef socketAccept
-#define socketAccept accept
-#endif
-
-#ifndef socketBind
-#define socketBind bind
-#endif
-
-#ifndef socketClose
-#define socketClose close
-#endif
-
-#ifndef socketShutdown
-#define socketShutdown shutdown
-#endif
-
-#ifndef socketErrno
-#define socketErrno(s) errno
-#endif
-
-
-#ifndef socketIoctl
-#define socketIoctl ioctl
-#endif
-
-#ifndef socketGetPeerName
-#define socketGetPeerName getpeername
-#endif
-
-#ifndef socketGetSockName
-#define socketGetSockName getsockname
-#endif
-
-#ifndef socketListen
-#define socketListen listen
-#endif
-
-#ifndef socketRecv
-#define socketRecv recv
-#endif
-
-#ifndef socketSelect
-#define socketSelect select
-#endif
-
-#ifndef socketSend
-#define socketSend send
-#endif
-
-#ifndef socketSetsockopt
-#define socketSetsockopt setsockopt
-#endif
-
-#ifndef socketSocket
-#define socketSocket socket
-#endif
-
-#ifndef socketInetAddr
-#define socketInetAddr inet_addr
-#endif
-
-#ifndef socketInetPton
-#define socketInetPton inet_pton
-#endif
-
-#ifndef socketGethostbyname
-#define socketGethostbyname gethostbyname
-#endif
-
-#ifndef socketInetNtoa
-#define socketInetNtoa inet_ntoa
-#endif
-
-#ifndef socketWouldBlock
-#define socketWouldBlock(s) (EWOULDBLOCK == socketErrno(s))
-#endif
-
-#ifndef socketInProgress
-#ifdef EINPROGRESS
-#define socketInProgress(s) (EINPROGRESS == socketErrno(s))
-#else
-#define socketInProgress(s) 0
-#endif
-#endif
-
-#ifndef socketConnect
-#define socketConnect connect
-#endif
-
-
-#ifndef HttpSocket_setcloexec
-#define HttpSocket_setcloexec(x)
-#endif
-#ifndef HttpSocket_clearcloexec
-#define HttpSocket_clearcloexec(x)
-#endif
-#ifndef basocketpair
-#define basocketpair(x)
-#endif
-
-
-
-typedef struct {
-      SocketHandle hndl;
-} HttpSocket;
-
-
-#ifndef HttpSocket_accept
-#define HttpSocket_accept(o, conSock, status) do { \
-   (conSock)->hndl=socketAccept((o)->hndl, NULL, NULL); \
-   *(status) = (HttpSocket_isValid(conSock)) ? 0 : -1; \
-   HttpSocket_setcloexec(o); \
-}while(0)
-#endif
-
-
-#ifndef HttpSocket_bind
-#define HttpSocket_bindIp4(o, sockAddr, port, status) do { \
-   struct sockaddr_in in; \
-   memset(&in, 0, sizeof(struct sockaddr_in)); \
-   in.sin_family = AF_INET; \
-   in.sin_port = baHtons(port); \
-   memcpy(&in.sin_addr.s_addr,(sockAddr)->addr, 4); \
-   *(status) = socketBind((o)->hndl, (struct sockaddr *)&in, \
-                          sizeof(struct sockaddr_in)); \
-} while(0)
-#ifdef USE_IPV6
-#define HttpSocket_bindIp6(o, sockAddr, port, status) do { \
-      struct sockaddr_in6 in6; \
-      memset(&in6, 0, sizeof(struct sockaddr_in6)); \
-      in6.sin6_family = AF_INET6; \
-      in6.sin6_port = baHtons(port); \
-      memcpy(&in6.sin6_addr, (sockAddr)->addr, 16); \
-      *(status) = socketBind((o)->hndl, (struct sockaddr*)&in6, \
-                       sizeof(struct sockaddr_in6)); \
-} while(0)
-#else
-#define HttpSocket_bindIp6(o, sockAddr, port, status) baAssert(0)
-#endif
-#define HttpSocket_bind(o, sockAddr, port, status) do { \
-   if((sockAddr)->isIp6) \
-      HttpSocket_bindIp6(o, sockAddr, port, status); \
-   else \
-      HttpSocket_bindIp4(o, sockAddr, port, status); \
-}while(0)
-#endif
-
-#ifndef HttpSocket_close
-#define HttpSocket_close(o) do {\
-   int status;\
-   HttpSocket_setNonblocking(o,&status);\
-   (void)status; \
-   socketClose((o)->hndl);\
-   HttpSocket_invalidate(o);\
- } while(0)
-#endif
-
-
-
-#ifndef HttpSocket_hardClose
-#define HttpSocket_hardClose(o) do {\
-   struct linger l;\
-   l.l_onoff = 1; l.l_linger = 0;\
-   setsockopt((o)->hndl,SOL_SOCKET,SO_LINGER,(char*)&l,sizeof(struct linger));\
-   socketClose((o)->hndl);\
-   HttpSocket_invalidate(o);\
- } while(0)
-#endif
-
-
-#ifndef HttpSocket_shutdown
-#define HttpSocket_shutdown(o) do {\
-   int status;\
-   HttpSocket_setBlocking(o,&status);\
-   (void)status; \
-   socketShutdown((o)->hndl,2);\
-   socketClose((o)->hndl);\
-   HttpSocket_invalidate(o);\
- } while(0)
-#endif
-
-
-#ifndef HttpSocket_constructor
-#define HttpSocket_constructor(o) do { \
-   memset(o, 0, sizeof(HttpSocket)); \
-   HttpSocket_invalidate(o); \
-}while(0)
-#endif
-
-#ifndef HttpSocket_errno
-#define HttpSocket_errno(o, status, ecode) *(ecode) = socketErrno((o)->hndl)
-#endif
-
-#ifndef HttpSocket_getId
-#define HttpSocket_getId(o) (int)(o)->hndl
-#endif
-
-#ifndef HttpSocket_getPeerName
-#define HttpSocket_getPeerNameIp4(o, sockAddr, port, status) do { \
-   struct sockaddr_in in; basocklen_t size=sizeof(struct sockaddr_in);\
-   *(status) = socketGetPeerName((o)->hndl, (struct sockaddr *)&in, &size); \
-   memcpy((sockAddr)->addr, &in.sin_addr.s_addr, 4);\
-   if(port) *(port)=baHtons(in.sin_port);\
-} while(0)
-#ifdef USE_IPV6
-#define HttpSocket_getPeerNameIp6(o, sockAddr, port, status) do { \
-  struct sockaddr_in6 in6; basocklen_t size=sizeof(struct sockaddr_in6);\
-  *(status) = socketGetPeerName((o)->hndl, (struct sockaddr*)&in6, &size); \
-  memcpy(sockAddr, &in6.sin6_addr, 16); \
-   if(port) *(port)=baHtons(in6.sin6_port);\
-} while(0)
-#else
-#define HttpSocket_getPeerNameIp6(o, sockAddr, port, status) baAssert(0)
-#endif
-#define HttpSocket_getPeerName(o, sockAddr, port, setIsIp6, status) do { \
-   if(setIsIp6) \
-      HttpSocket_getPeerNameIp6(o, sockAddr, port, status); \
-   else \
-      HttpSocket_getPeerNameIp4(o, sockAddr, port, status); \
-   (sockAddr)->isIp6=setIsIp6; \
-}while(0)
-#endif
-
-#ifndef HttpSocket_getSockName
-#define HttpSocket_getSockNameIp4(o, sockAddr, port, status) do { \
-   struct sockaddr_in in; basocklen_t size=sizeof(struct sockaddr_in);\
-   *(status) = socketGetSockName((o)->hndl, (struct sockaddr *)&in, &size); \
-   memcpy((sockAddr)->addr, &in.sin_addr.s_addr, 4);\
-   if(port) *(port)=baHtons(in.sin_port);\
-} while(0)
-#ifdef USE_IPV6
-#define HttpSocket_getSockNameIp6(o, sockAddr, port, status) do { \
-  struct sockaddr_in6 in6; basocklen_t size=sizeof(struct sockaddr_in6);\
-  *(status) = socketGetSockName((o)->hndl, (struct sockaddr*)&in6, &size); \
-  memcpy(sockAddr, &in6.sin6_addr, 16); \
-   if(port) *(port)=baHtons(in6.sin6_port);\
-} while(0)
-#else
-#define HttpSocket_getSockNameIp6(o, sockAddr, port, status) baAssert(0)
-#endif
-#define HttpSocket_getSockName(o, sockAddr, port, setIsIp6, status) do { \
-   if(setIsIp6) \
-      HttpSocket_getSockNameIp6(o, sockAddr, port, status); \
-   else \
-      HttpSocket_getSockNameIp4(o, sockAddr, port, status); \
-   (sockAddr)->isIp6=setIsIp6; \
-}while(0)
-#endif
-
-#ifndef HttpSocket_invalidate
-#define HttpSocket_invalidate(o) (o)->hndl = -1
-#endif
-
-#ifndef HttpSocket_isValid
-#define HttpSocket_isValid(o) ((o)->hndl >= 0)
-#endif
-
-#ifndef HttpSocket_listen
-#define HttpSocket_listen(o, sockaddrNotUsed, queueSize, status) do { \
-   *(status)=socketListen((o)->hndl, queueSize); \
-   HttpSocket_setcloexec(o); \
-}while(0)
-#endif
-
-#ifndef HttpSocket_move
-#define HttpSocket_move(o, newS) do{ \
-  (newS)->hndl=(o)->hndl;HttpSocket_invalidate(o);}while(0)
-#endif
-
-#ifndef HttpSocket_recv
-#define HttpSocket_recv(o, data, len, retLen) do { \
-  *(retLen)=socketRecv((o)->hndl,data,len,0);\
-  if(*(retLen) <= 0) { \
-     if(*(retLen) < 0) { \
-        int wb; \
-        HttpSocket_wouldBlock(o, &wb); \
-        if(wb) \
-           *(retLen)=0;   \
-     } \
-     else *(retLen) = -1;  \
-  } \
-} while(0)
-#endif
-
-#ifndef HttpSocket_send
-#define HttpSocket_send(o, m, isTerminated, data, len, retLen) do { \
-  if(m && ThreadMutex_isOwner(m)) { \
-    ThreadMutex_release(m); \
-    *(retLen)=socketSend((o)->hndl,data,len,0); \
-    ThreadMutex_set(m); \
-  } \
-  else \
-    *(retLen)=socketSend((o)->hndl,data,len,0); \
-  if(*(retLen) < 0) { \
-     int wb; \
-     HttpSocket_wouldBlock(o, &wb); \
-     if(wb) \
-        *(retLen)=0;   \
-  } \
-} while(0)
-#endif
-
-#ifndef HttpSocket_setBlocking
-#define HttpSocket_setBlocking(o, status) do { \
-   U32 arg=0;  \
-  *(status)=socketIoctl((o)->hndl, FIONBIO, &arg); \
-} while(0)
-#endif
-
-#ifndef HttpSocket_setNonblocking
-#define HttpSocket_setNonblocking(o, status) \
-do { \
-   U32 arg=1;  \
-  *(status)=socketIoctl((o)->hndl, FIONBIO, &arg); \
-} while(0)
-#endif
-
-#ifndef HttpSocket_setTCPNoDelay
-#define HttpSocket_setTCPNoDelay(o, enable, status) do { \
-   int enableFlag = enable ? 1 : 0; \
-   *(status) = socketSetsockopt((o)->hndl, IPPROTO_TCP, TCP_NODELAY, \
-                               (char*)&enableFlag, sizeof(int)); \
-}while(0)
-#endif
-
-#ifndef HttpSocket_soReuseaddr
-#define HttpSocket_soReuseaddr(o, status) do { \
-   int enableFlag = 1; \
-   *(status) = socketSetsockopt((o)->hndl, SOL_SOCKET, SO_REUSEADDR, \
-                               (char*)&enableFlag, sizeof(int)); \
-}while(0)
-#endif
-
-#ifndef HttpSocket_sockStream
-#ifdef USE_IPV6
-#define HttpSocket_sockStreamIp6(o, status) do { \
-   (o)->hndl=socketSocket(AF_INET6, SOCK_STREAM, 0); \
-   *(status) = HttpSocket_isValid(o) ? 0 : -1; \
-}while(0)
-#else
-#define HttpSocket_sockStreamIp6(o, status) HttpSocket_sockStreamIp4(o, status)
-#endif
-
-#define HttpSocket_sockStreamIp4(o, status) do { \
-  (o)->hndl=socketSocket(AF_INET, SOCK_STREAM, 0); \
-   *(status) = HttpSocket_isValid(o) ? 0 : -1; \
-}while(0)
-
-#define HttpSocket_sockStream(o, interfNameNotUsed, useIp6, status) do { \
-   if(useIp6) \
-     HttpSocket_sockStreamIp6(o, status); \
-   else \
-     HttpSocket_sockStreamIp4(o, status); \
-}while(0)
-#endif
-
-
-#ifndef HttpSocket_wouldBlock
-#define HttpSocket_wouldBlock(o, status) do { \
-   *(status)=socketWouldBlock((o)->hndl); \
-   if(!*(status)) { \
-      *(status)=socketInProgress((o)->hndl); \
-   } \
-} while(0)
-#endif
-
-
-
-#ifndef HttpSocket_connect
-
-#define HttpSocket_connectV4(o, addr, port, status) \
-   struct sockaddr_in sin; \
-   memset((char *)&sin, 0, sizeof(sin)); \
-   sin.sin_family = AF_INET; \
-   sin.sin_port = baHtons(port); \
-   memcpy(&sin.sin_addr.s_addr, (addr)->addr, 4);\
-   *(status) = socketConnect((o)->hndl,(struct sockaddr *)&sin, sizeof(sin));
-
-
-
-#ifdef USE_IPV6
-#define HttpSocket_connectV6(o, addr, port, status)\
-   struct sockaddr_in6 sin6; \
-   memset((char *)&sin6, 0, sizeof(sin6)); \
-   sin6.sin6_family =  (addr)->isIp6 ? AF_INET6 : AF_INET; \
-   sin6.sin6_port = baHtons(port); \
-   memcpy(&sin6.sin6_addr, (addr)->addr, 16); \
-   *(status)=socketConnect((o)->hndl,(struct sockaddr *)&sin6,sizeof(sin6));
-
-
-#define HttpSocket_connect(o, addr, port, status) do {\
-   if((addr)->isIp6) {\
-      HttpSocket_connectV6(o, addr, port, status)\
-   }\
-   else {\
-      HttpSocket_connectV4(o, addr, port, status)\
-   }\
-} while(0)
-
-
-#else
-#define HttpSocket_connect(o, addr, port, status) do {\
-  HttpSocket_connectV4(o, addr, port, status) } while(0)
-#endif
-#endif
-
-
-BA_API int HttpSocket_makeClientCon(
-   HttpSocket* o,struct HttpSockaddr* addr,
-   const char* interfaceName,U16 port, BaBool nonBlocking);
-
-typedef struct HttpSockaddr {
-      char addr[16];
-      BaBool isIp6;
-} HttpSockaddr;
-
-
-#ifndef HttpSockaddr_gethostbynameIp6
-#ifdef USE_IPV6
-#define HttpSockaddr_gethostbynameIp6(o, host, status) do { \
-   if(host) { \
-      struct addrinfo hints, *servinfo; \
-      memset(&hints, 0, sizeof hints); \
-      hints.ai_family = AF_INET6; \
-      hints.ai_socktype = SOCK_STREAM; \
-      *(status) = getaddrinfo(host, 0, &hints, &servinfo); \
-      if( ! *(status) ) { \
-         memcpy((o)->addr, \
-                &((struct sockaddr_in6*)servinfo->ai_addr)->sin6_addr, 16); \
-         freeaddrinfo(servinfo); \
-      } \
-   } \
-   else { \
-      memset((o)->addr, 0, 16); \
-      *(status)=0; \
-   } \
-   (o)->isIp6=TRUE; \
-}while(0)
-#else
-#define HttpSockaddr_gethostbynameIp6(o, host, status) \
-  HttpSockaddr_gethostbynameIp4(o, host, status)
-#endif
-#endif
-
-#ifndef HttpSockaddr_gethostbyname
-#define HttpSockaddr_gethostbynameIp4(o, host, status)  do { \
-   unsigned long ipAddr; \
-   (o)->isIp6=FALSE; \
-   *(status)=0; \
-   if(host) \
-   { \
-      ipAddr = socketInetAddr(host);  \
-      if(ipAddr == INADDR_NONE)  \
-      { \
-         struct hostent* hostInfo = socketGethostbyname((char*)host); \
-         if(!hostInfo) \
-            *(status)=-1; \
-         else \
-            memcpy(&ipAddr,&((struct in_addr *)hostInfo->h_addr)->s_addr,4);\
-      } \
-   } \
-   else \
-      ipAddr = baHtonl(INADDR_ANY); \
-   memcpy((o)->addr,&ipAddr, 4); \
-}while(0)
-
-
-#define HttpSockaddr_gethostbyname(o, host, useIp6, status) do { \
-   if(useIp6) \
-     HttpSockaddr_gethostbynameIp6(o, host, status); \
-   else \
-     HttpSockaddr_gethostbynameIp4(o, host, status); \
-}while(0)
-#endif
-
-
-#ifndef HttpSockaddr_addr2String
-BA_API void HttpSockaddr_addr2String(
-   HttpSockaddr* o, char* buf, int bufLen, int* status);
-#endif
-
-
-#ifndef HttpSockaddr_inetAddr
-BA_API void HttpSockaddr_inetAddr(
-   HttpSockaddr* o, const char* host, BaBool useIp6, int* status);
-#endif
-
-
-#ifdef __cplusplus
-}
-#endif
-
-
-#endif
 #endif
 typedef enum { 
    ThreadPrioLowest, 
@@ -1928,16 +1114,88 @@ inline ThreadReleaseLock::~ThreadReleaseLock() { mutex->set(); }
 #ifndef __httpServerLib_h
 #define __httpServerLib_h
 
-#ifdef BA_MEM_CHECK
-#define AllocatorIntf AllocCheckIntf
-#endif
 
-#ifndef __DOXYGEN__
+
+#ifndef __AllocatorIntf_h
+#define __AllocatorIntf_h
+ 
 struct AllocatorIntf;
+
+
+typedef void* (*AllocatorIntf_Malloc)(struct AllocatorIntf* o, size_t* size);
+
+
+typedef void* (*AllocatorIntf_Realloc)(
+   struct AllocatorIntf* o, void* memblock, size_t* size);
+
+
+typedef void (*AllocatorIntf_Free)(struct AllocatorIntf* o, void* memblock);
+
+
+typedef struct AllocatorIntf
+{
+#ifdef __cplusplus
+      AllocatorIntf() {}
+      
+      AllocatorIntf(AllocatorIntf_Malloc malloc,
+                    AllocatorIntf_Realloc realloc,
+                    AllocatorIntf_Free free);
+
+      
+      static AllocatorIntf* getDefault(void);
+
+      
+      void* malloc(size_t* size);
+      void* malloc(size_t size) { return malloc(&size); }
+
+      
+      void* realloc(void* p, size_t* size);
+      void* realloc(void* p, size_t size) { return realloc(p, &size); }
+
+      
+      void free(void* p);
+#endif
+      AllocatorIntf_Malloc mallocCB;
+      AllocatorIntf_Realloc reallocCB; 
+      AllocatorIntf_Free freeCB;
+} AllocatorIntf;
+
+#define AllocatorIntf_constructor(o, m, r, f) do { \
+   (o)->mallocCB=m; \
+   (o)->reallocCB=r; \
+   (o)->freeCB=f; \
+} while(0)
+
+#define AllocatorIntf_malloc(o, size) (o)->mallocCB(o, size)
+#define AllocatorIntf_realloc(o, memblock, size) \
+   ((o)->reallocCB ? (o)->reallocCB(o,memblock,size) : 0)
+#define AllocatorIntf_free(o, memblock) (o)->freeCB(o,memblock)
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+BA_API AllocatorIntf* AllocatorIntf_getDefault(void);
+
+
+BA_API char* baStrdup2(struct AllocatorIntf* a, const char* str);
+
+#ifdef __cplusplus
+}
+inline AllocatorIntf::AllocatorIntf(AllocatorIntf_Malloc malloc,
+                                    AllocatorIntf_Realloc realloc,
+                                    AllocatorIntf_Free free) {
+   AllocatorIntf_constructor(this, malloc,realloc,free); }
+inline AllocatorIntf* AllocatorIntf::getDefault(void) {
+   return AllocatorIntf_getDefault(); }
+inline void* AllocatorIntf::malloc(size_t* size) {
+   return AllocatorIntf_malloc(this, size); }
+inline void* AllocatorIntf::realloc(void* memblock, size_t* size) {
+   return AllocatorIntf_realloc(this, memblock, size); }
+inline void AllocatorIntf::free(void* memblock) {
+   AllocatorIntf_free(this, memblock); }
 #endif
 
-
-
+#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -1968,19 +1226,7 @@ BA_API U32 baConvHexToU32(const void* from);
 
 
 
-#ifdef BA_LEAK_CHECK
-char* baStrdupLC(const char* str,const char* file, int line);
-char* baStrdup2LC(struct AllocatorIntf* a, const char* str,
-                const char* file, int line);
-#define baStrdup(str) baStrdupLC(str, __FILE__, __LINE__)
-#define baStrdup2(a, str) baStrdup2LC(a, str, __FILE__, __LINE__)
-#else
-
 BA_API char* baStrdup(const char* str);
-
-BA_API char* baStrdup2(struct AllocatorIntf* a, const char* str);
-#endif
-
 
 
 BA_API const void* baBSearch(const void* key, const void* base, int num, 
@@ -2056,96 +1302,6 @@ BA_API BaTime baTm2Time(struct BaTm* tmP);
 
 
 
-
-#ifndef BA_MEM_CHECK
-
-
-typedef void* (*AllocatorIntf_Malloc)(struct AllocatorIntf* o, size_t* size);
-
-
-typedef void* (*AllocatorIntf_Realloc)(
-   struct AllocatorIntf* o, void* memblock, size_t* size);
-
-
-typedef void (*AllocatorIntf_Free)(struct AllocatorIntf* o, void* memblock);
-
-
-typedef struct AllocatorIntf
-{
-#ifdef __cplusplus
-      AllocatorIntf() {}
-      
-      AllocatorIntf(AllocatorIntf_Malloc malloc,
-                    AllocatorIntf_Realloc realloc,
-                    AllocatorIntf_Free free);
-
-      
-      static AllocatorIntf* getDefault(void);
-
-      
-      void* malloc(size_t* size);
-      void* malloc(size_t size) { return malloc(&size); }
-
-      
-      void* realloc(void* p, size_t* size);
-      void* realloc(void* p, size_t size) { return realloc(p, &size); }
-
-      
-      void free(void* p);
-#endif
-      AllocatorIntf_Malloc mallocCB;
-      AllocatorIntf_Realloc reallocCB; 
-      AllocatorIntf_Free freeCB;
-#ifdef BA_LEAK_CHECK
-      const char* file;
-      int line;
-#endif
-} AllocatorIntf;
-
-#define AllocatorIntf_constructor(o, m, r, f) do { \
-   (o)->mallocCB=m; \
-   (o)->reallocCB=r; \
-   (o)->freeCB=f; \
-} while(0)
-
-#ifdef BA_LEAK_CHECK
-#define AllocatorIntf_malloc(o, size) \
-  ((o)->file=__FILE__,(o)->line=__LINE__,(o)->mallocCB(o, size))
-#define AllocatorIntf_realloc(o, memblock, size) \
-   ((o)->reallocCB ? ((o)->file=__FILE__,(o)->line=__LINE__,\
-    (o)->reallocCB(o,memblock,size)) : 0)
-#define AllocatorIntf_free(o, memblock) \
-  ((o)->file=__FILE__,(o)->line=__LINE__,(o)->freeCB(o,memblock))
-#else
-#define AllocatorIntf_malloc(o, size) (o)->mallocCB(o, size)
-#define AllocatorIntf_realloc(o, memblock, size) \
-   ((o)->reallocCB ? (o)->reallocCB(o,memblock,size) : 0)
-#define AllocatorIntf_free(o, memblock) (o)->freeCB(o,memblock)
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-BA_API AllocatorIntf* AllocatorIntf_getDefault(void);
-#ifdef __cplusplus
-}
-inline AllocatorIntf::AllocatorIntf(AllocatorIntf_Malloc malloc,
-                                    AllocatorIntf_Realloc realloc,
-                                    AllocatorIntf_Free free) {
-   AllocatorIntf_constructor(this, malloc,realloc,free); }
-inline AllocatorIntf* AllocatorIntf::getDefault(void) {
-   return AllocatorIntf_getDefault(); }
-inline void* AllocatorIntf::malloc(size_t* size) {
-   return AllocatorIntf_malloc(this, size); }
-inline void* AllocatorIntf::realloc(void* memblock, size_t* size) {
-   return AllocatorIntf_realloc(this, memblock, size); }
-inline void AllocatorIntf::free(void* memblock) {
-   AllocatorIntf_free(this, memblock); }
-#endif
-
-#else
-#endif
-
 #ifdef __DOXYGEN__
 
 
@@ -2176,9 +1332,9 @@ void baFree(void* p);
 
 typedef struct SharkSslMd5Ctx
 {
-    U32 total[2];
-    U32 state[4];
-    U8  buffer[64];
+   U32 total[2];
+   U32 state[4];
+   U8  buffer[64];
 } SharkSslMd5Ctx;
 #endif
 
@@ -2187,9 +1343,9 @@ typedef struct SharkSslMd5Ctx
 
 typedef struct SharkSslSha1Ctx
 {
-    U32 total[2];
-    U32 state[5];
-    U8  buffer[64];
+   U32 total[2];
+   U32 state[5];
+   U8  buffer[64];
 } SharkSslSha1Ctx;
 #endif
 
@@ -2198,9 +1354,9 @@ typedef struct SharkSslSha1Ctx
 
 typedef struct SharkSslSha256Ctx
 {
-    U32 total[2];
-    U32 state[8];
-    U8  buffer[64];
+   U32 total[2];
+   U32 state[8];
+   U8  buffer[64];
 } SharkSslSha256Ctx;
 #endif
 
@@ -2209,9 +1365,9 @@ typedef struct SharkSslSha256Ctx
 
 typedef struct SharkSslSha384Ctx
 {
-    U32 total[4];
-    U64 state[8];
-    U8  buffer[128];
+   U32 total[4];
+   U64 state[8];
+   U8  buffer[128];
 } SharkSslSha384Ctx;
 #endif
 
@@ -2222,13 +1378,35 @@ typedef struct SharkSslSha384Ctx SharkSslSha512Ctx;
 #endif
 
 
+#if SHARKSSL_USE_POLY1305
+
+typedef struct SharkSslPoly1305Ctx
+{
+   U32 r[5];
+   U32 key[4];
+   U32 nonce[4];
+   U8  buffer[16];
+   U8  flag, blen;
+} SharkSslPoly1305Ctx;
+#endif
+
+
+#if SHARKSSL_USE_CHACHA20
+
+typedef struct
+{
+   U32 state[16];
+} SharkSslChaChaCtx;
+#endif
+
+
 #if SHARKSSL_USE_ARC4
 
 typedef struct SharkSslArc4Ctx
 {
-    U8 x;
-    U8 y;
-    U8 b[256];
+   U8 x;
+   U8 y;
+   U8 b[256];
 } SharkSslArc4Ctx;
 #endif
 
@@ -2237,7 +1415,12 @@ typedef struct SharkSslArc4Ctx
 
 typedef struct SharkSslDesCtx
 {
-   #if SHARKSSL_USE_CAU
+   #if SHARKSSL_NOPACK
+   U32 key[96]; 
+   U8  tdea;
+   #else
+
+   #if (SHARKSSL_USE_CAU || SHARKSSL_USE_MMCAU)
    #if SHARKSSL_USE_3DES
    U32 key[6];
    #else
@@ -2256,6 +1439,8 @@ typedef struct SharkSslDesCtx
    #if (SHARKSSL_USE_DES && SHARKSSL_USE_3DES)
    U8  tdea;
    #endif
+
+   #endif
 } SharkSslDesCtx;
 
 
@@ -2268,19 +1453,21 @@ typedef enum
 #endif
 
 
-#if (SHARKSSL_USE_AES_128 || SHARKSSL_USE_AES_256)
+#if (SHARKSSL_USE_AES_256 || SHARKSSL_USE_AES_192 || SHARKSSL_USE_AES_128)
 
 typedef struct SharkSslAesCtx
 {
-    #if SHARKSSL_USE_AES_256
-    U32 key[60];     
-    #else
-    U32 key[44];     
-    #endif
-    U16 nr;          
+   #if (SHARKSSL_USE_AES_256 || SHARKSSL_NOPACK)
+   U32 key[60];
+   #elif SHARKSSL_USE_AES_192
+   U32 key[52];
+   #else
+   U32 key[44];
+   #endif
+   U16 nr;
 } SharkSslAesCtx;
 
-typedef enum 
+typedef enum
 {
    SharkSslAesCtx_Decrypt,
    SharkSslAesCtx_Encrypt
@@ -2313,6 +1500,8 @@ extern "C" {
 
 SHARKSSL_API int   sharkssl_entropy(U32);
 SHARKSSL_API int   sharkssl_rng(U8*, U16);
+SHARKSSL_API int   sharkssl_kmemcmp(const void *a, const void *b, U32 n);
+
 
 #if SHARKSSL_USE_MD5
 
@@ -2385,21 +1574,52 @@ SHARKSSL_API void  SharkSslSha512Ctx_finish(SharkSslSha512Ctx*, U8 digest[64]);
 SHARKSSL_API int   sharkssl_sha512(const U8*, U16, U8*);
 #endif
 
+#if SHARKSSL_USE_POLY1305
+
+SHARKSSL_API void  SharkSslPoly1305Ctx_constructor(SharkSslPoly1305Ctx *ctx, const U8 key[32]);
+
+#define SharkSslPoly1305Ctx_destructor(o) memset(o, 0, sizeof(SharkSslPoly1305Ctx))
+
+
+SHARKSSL_API void  SharkSslPoly1305Ctx_append(SharkSslPoly1305Ctx *ctx, const U8 *in, U32 len);
+
+
+SHARKSSL_API void  SharkSslPoly1305Ctx_finish(SharkSslPoly1305Ctx *ctx, U8 digest[16]);
+
+
+SHARKSSL_API int   sharkssl_poly1305(const U8 *data, U16 len, U8 *digest, const U8 key[32]);
+#endif
+
+#if SHARKSSL_USE_CHACHA20
+
+SHARKSSL_API void SharkSslChaChaCtx_constructor(SharkSslChaChaCtx *ctx,
+                                                const U8 *key, U8 keyLen);
+
+#define SharkSslChaChaCtx_destructor(ctx) memset(ctx, 0, sizeof(SharkSslChaChaCtx))
+
+
+SHARKSSL_API void SharkSslChaChaCtx_setIV(SharkSslChaChaCtx *ctx, const U8 IV[8]);
+
+
+SHARKSSL_API void  SharkSslChaChaCtx_crypt(
+   SharkSslChaChaCtx *ctx, const U8 *input, U8 *output, U32 len);
+#endif
+
 #if SHARKSSL_USE_ARC4
 
-SHARKSSL_API void  SharkSslArc4Ctx_constructor(SharkSslArc4Ctx *ctx, 
+SHARKSSL_API void  SharkSslArc4Ctx_constructor(SharkSslArc4Ctx *ctx,
                                                const U8 *key, U8 keyLen);
 
 #define SharkSslArc4Ctx_destructor(ctx) memset(ctx, 0, sizeof(SharkSslArc4Ctx))
 
 
 SHARKSSL_API void  SharkSslArc4Ctx_crypt(
-   SharkSslArc4Ctx *ctx, U8 *input, U8 *output, U16 len);          
+   SharkSslArc4Ctx *ctx, U8 *input, U8 *output, U16 len);
 #endif
 
 #if (SHARKSSL_USE_DES || SHARKSSL_USE_3DES)
 
-SHARKSSL_API void  SharkSslDesCtx_constructor(SharkSslDesCtx *ctx, 
+SHARKSSL_API void  SharkSslDesCtx_constructor(SharkSslDesCtx *ctx,
                                               SharkSslDesCtx_Type type,
                                               const U8 *key, U8 keyLen);
 #define SharkSslDesCtx_destructor(ctx)  memset(ctx, 0, sizeof(SharkSslDesCtx))
@@ -2407,7 +1627,7 @@ SHARKSSL_API void  SharkSslDesCtx_constructor(SharkSslDesCtx *ctx,
 
 SHARKSSL_API void  SharkSslDesCtx_encrypt(
    SharkSslDesCtx *ctx, U8 input[8], U8 output[8]);
-#if SHARKSSL_USE_CAU
+#if (SHARKSSL_USE_CAU || SHARKSSL_USE_MMCAU)
 
 
 SHARKSSL_API void  SharkSslDesCtx_decrypt(
@@ -2417,40 +1637,44 @@ SHARKSSL_API void  SharkSslDesCtx_decrypt(
 #endif
 
 
-SHARKSSL_API void  SharkSslDesCtx_cbc_encrypt(SharkSslDesCtx *ctx, U8 vect[8], 
+SHARKSSL_API void  SharkSslDesCtx_cbc_encrypt(SharkSslDesCtx *ctx, U8 vect[8],
                                               U8 *input, U8 *output, U16 len);
 
 
-SHARKSSL_API void  SharkSslDesCtx_cbc_decrypt(SharkSslDesCtx *ctx, U8 vect[8], 
+SHARKSSL_API void  SharkSslDesCtx_cbc_decrypt(SharkSslDesCtx *ctx, U8 vect[8],
                                               U8 *input, U8 *output, U16 len);
 #endif
 
-#if (SHARKSSL_USE_AES_128 || SHARKSSL_USE_AES_256)
+#if (SHARKSSL_USE_AES_256 || SHARKSSL_USE_AES_192 || SHARKSSL_USE_AES_128)
 
-SHARKSSL_API void  SharkSslAesCtx_constructor(SharkSslAesCtx *ctx, 
+SHARKSSL_API void  SharkSslAesCtx_constructor(SharkSslAesCtx *ctx,
                                               SharkSslAesCtx_Type type,
                                               const U8 *key, U8 keyLen);
 #define SharkSslAesCtx_destructor(ctx) memset(ctx, 0, sizeof(SharkSslAesCtx))
 
+#if (!SHARKSSL_DISABLE_AES_ECB_DECRYPT)
 
 SHARKSSL_API void  SharkSslAesCtx_decrypt(SharkSslAesCtx *ctx, U8 input[16], U8 output[16]);
+#endif
 
 
 SHARKSSL_API void  SharkSslAesCtx_encrypt(SharkSslAesCtx *ctx, U8 input[16], U8 output[16]);
 
+#if (!SHARKSSL_DISABLE_AES_CBC_MODE)
 
-SHARKSSL_API void  SharkSslAesCtx_cbc_encrypt(SharkSslAesCtx *ctx, U8 vect[16], 
+SHARKSSL_API void  SharkSslAesCtx_cbc_encrypt(SharkSslAesCtx *ctx, U8 vect[16],
                                               U8 *input, U8 *output, U16 len);
 
 
-SHARKSSL_API void  SharkSslAesCtx_cbc_decrypt(SharkSslAesCtx *ctx, U8 vect[16], 
+SHARKSSL_API void  SharkSslAesCtx_cbc_decrypt(SharkSslAesCtx *ctx, U8 vect[16],
                                               U8 *input, U8 *output, U16 len);
+#endif
 #if SHARKSSL_ENABLE_AES_CTR_MODE
 
 
-SHARKSSL_API void  SharkSslAesCtx_ctr_mode(SharkSslAesCtx *ctx, U8 ctr[16], 
+SHARKSSL_API void  SharkSslAesCtx_ctr_mode(SharkSslAesCtx *ctx, U8 ctr[16],
                                            U8 *input, U8 *output, U16 len);
-#endif                          
+#endif
 #if SHARKSSL_ENABLE_AES_GCM
 
 SHARKSSL_API void  SharkSslAesGcmCtx_constructor(SharkSslAesGcmCtx *ctx,
@@ -2460,14 +1684,14 @@ SHARKSSL_API void  SharkSslAesGcmCtx_constructor(SharkSslAesGcmCtx *ctx,
    memset(ctx, 0, sizeof(SharkSslAesGcmCtx))
 
 
-SHARKSSL_API int   SharkSslAesGcmCtx_encrypt(SharkSslAesGcmCtx *ctx, 
+SHARKSSL_API int   SharkSslAesGcmCtx_encrypt(SharkSslAesGcmCtx *ctx,
                                              const U8 vect[12], U8 tagout[16],
                                              const U8 *auth, U16 authlen,
                                              U8 *input, U8 *output, U16 len);
 
 
 
-SHARKSSL_API int   SharkSslAesGcmCtx_decrypt(SharkSslAesGcmCtx *ctx, 
+SHARKSSL_API int   SharkSslAesGcmCtx_decrypt(SharkSslAesGcmCtx *ctx,
                                              const U8 vect[12], U8 tagin[16],
                                              const U8 *auth, U16 authlen,
                                              U8 *input, U8 *output, U16 len);
@@ -2480,14 +1704,14 @@ SHARKSSL_API void  SharkSslAesCcmCtx_constructor(SharkSslAesCcmCtx *ctx,
 #define SharkSslAesCcmCtx_destructor(ctx) memset(ctx, 0, sizeof(SharkSslAesCcmCtx))
 
 
-SHARKSSL_API int   SharkSslAesCcmCtx_encrypt(SharkSslAesCcmCtx *ctx, 
+SHARKSSL_API int   SharkSslAesCcmCtx_encrypt(SharkSslAesCcmCtx *ctx,
                                              const U8 vect[12], U8 *tagout,
                                              const U8 *auth, U16 authlen,
                                              U8 *input, U8 *output, U16 len);
 
 
 
-SHARKSSL_API int   SharkSslAesCcmCtx_decrypt(SharkSslAesCcmCtx *ctx, 
+SHARKSSL_API int   SharkSslAesCcmCtx_decrypt(SharkSslAesCcmCtx *ctx,
                                              const U8 vect[12], U8 *tagin,
                                              const U8 *auth, U16 authlen,
                                              U8 *input, U8 *output, U16 len);
@@ -2565,153 +1789,159 @@ SHARKSSL_API int   SharkSslAesCcmCtx_decrypt(SharkSslAesCcmCtx *ctx,
 
 
 
-#define TLS_NULL_WITH_NULL_NULL                    0x0000
+#define TLS_NULL_WITH_NULL_NULL                       0x0000
 
-#define TLS_RSA_WITH_NULL_MD5                      0x0001
+#define TLS_RSA_WITH_NULL_MD5                         0x0001
 
-#define TLS_RSA_WITH_NULL_SHA                      0x0002
+#define TLS_RSA_WITH_NULL_SHA                         0x0002
 
-#define TLS_RSA_WITH_RC4_128_MD5                   0x0004
+#define TLS_RSA_WITH_RC4_128_MD5                      0x0004
 
-#define TLS_RSA_WITH_RC4_128_SHA                   0x0005
+#define TLS_RSA_WITH_RC4_128_SHA                      0x0005
 
-#define TLS_RSA_WITH_DES_CBC_SHA                   0x0009
+#define TLS_RSA_WITH_DES_CBC_SHA                      0x0009
 
-#define TLS_RSA_WITH_3DES_EDE_CBC_SHA              0x000A
+#define TLS_RSA_WITH_3DES_EDE_CBC_SHA                 0x000A
 
-#define TLS_DHE_RSA_WITH_DES_CBC_SHA               0x0015
+#define TLS_DHE_RSA_WITH_DES_CBC_SHA                  0x0015
 
-#define TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA          0x0016
+#define TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA             0x0016
 
-#define TLS_RSA_WITH_AES_128_CBC_SHA               0x002F
+#define TLS_RSA_WITH_AES_128_CBC_SHA                  0x002F
 
-#define TLS_DHE_RSA_WITH_AES_128_CBC_SHA           0x0033
+#define TLS_DHE_RSA_WITH_AES_128_CBC_SHA              0x0033
 
-#define TLS_RSA_WITH_AES_256_CBC_SHA               0x0035
+#define TLS_RSA_WITH_AES_256_CBC_SHA                  0x0035
 
-#define TLS_DHE_RSA_WITH_AES_256_CBC_SHA           0x0039
+#define TLS_DHE_RSA_WITH_AES_256_CBC_SHA              0x0039
 
-#define TLS_RSA_WITH_NULL_SHA256                   0x003B
+#define TLS_RSA_WITH_NULL_SHA256                      0x003B
 
-#define TLS_RSA_WITH_AES_128_CBC_SHA256            0x003C
+#define TLS_RSA_WITH_AES_128_CBC_SHA256               0x003C
 
-#define TLS_RSA_WITH_AES_256_CBC_SHA256            0x003D
+#define TLS_RSA_WITH_AES_256_CBC_SHA256               0x003D
 
-#define TLS_DHE_RSA_WITH_AES_128_CBC_SHA256        0x0067
+#define TLS_DHE_RSA_WITH_AES_128_CBC_SHA256           0x0067
 
-#define TLS_DHE_RSA_WITH_AES_256_CBC_SHA256        0x006B
+#define TLS_DHE_RSA_WITH_AES_256_CBC_SHA256           0x006B
 
-#define TLS_PSK_WITH_RC4_128_SHA                   0x008A
+#define TLS_PSK_WITH_RC4_128_SHA                      0x008A
 
-#define TLS_PSK_WITH_3DES_EDE_CBC_SHA              0x008B
+#define TLS_PSK_WITH_3DES_EDE_CBC_SHA                 0x008B
 
-#define TLS_PSK_WITH_AES_128_CBC_SHA               0x008C
+#define TLS_PSK_WITH_AES_128_CBC_SHA                  0x008C
 
-#define TLS_PSK_WITH_AES_256_CBC_SHA               0x008D
+#define TLS_PSK_WITH_AES_256_CBC_SHA                  0x008D
 
-#define TLS_RSA_WITH_AES_128_GCM_SHA256            0x009C
+#define TLS_RSA_WITH_AES_128_GCM_SHA256               0x009C
 
-#define TLS_RSA_WITH_AES_256_GCM_SHA384            0x009D
+#define TLS_RSA_WITH_AES_256_GCM_SHA384               0x009D
 
-#define TLS_DHE_RSA_WITH_AES_128_GCM_SHA256        0x009E
+#define TLS_DHE_RSA_WITH_AES_128_GCM_SHA256           0x009E
 
-#define TLS_DHE_RSA_WITH_AES_256_GCM_SHA384        0x009F
+#define TLS_DHE_RSA_WITH_AES_256_GCM_SHA384           0x009F
 
-#define TLS_PSK_WITH_AES_128_GCM_SHA256            0x00A8
+#define TLS_PSK_WITH_AES_128_GCM_SHA256               0x00A8
 
-#define TLS_PSK_WITH_AES_256_GCM_SHA384            0x00A9
+#define TLS_PSK_WITH_AES_256_GCM_SHA384               0x00A9
 
-#define TLS_PSK_WITH_AES_128_CBC_SHA256            0x00AE
+#define TLS_PSK_WITH_AES_128_CBC_SHA256               0x00AE
 
-#define TLS_PSK_WITH_AES_256_CBC_SHA384            0x00AF
+#define TLS_PSK_WITH_AES_256_CBC_SHA384               0x00AF
 
-#define TLS_ECDH_ECDSA_WITH_NULL_SHA               0xC001
+#define TLS_ECDH_ECDSA_WITH_NULL_SHA                  0xC001
 
-#define TLS_ECDH_ECDSA_WITH_RC4_128_SHA            0xC002
+#define TLS_ECDH_ECDSA_WITH_RC4_128_SHA               0xC002
 
-#define TLS_ECDH_ECDSA_WITH_3DES_EDE_CBC_SHA       0xC003
+#define TLS_ECDH_ECDSA_WITH_3DES_EDE_CBC_SHA          0xC003
 
-#define TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA        0xC004
+#define TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA           0xC004
 
-#define TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA        0xC005
+#define TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA           0xC005
 
-#define TLS_ECDHE_ECDSA_WITH_NULL_SHA              0xC006
+#define TLS_ECDHE_ECDSA_WITH_NULL_SHA                 0xC006
 
-#define TLS_ECDHE_ECDSA_WITH_RC4_128_SHA           0xC007
+#define TLS_ECDHE_ECDSA_WITH_RC4_128_SHA              0xC007
 
-#define TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA      0xC008
+#define TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA         0xC008
 
-#define TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA       0xC009
+#define TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA          0xC009
 
-#define TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA       0xC00A
+#define TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA          0xC00A
 
-#define TLS_ECDH_RSA_WITH_NULL_SHA                 0xC00B
+#define TLS_ECDH_RSA_WITH_NULL_SHA                    0xC00B
 
-#define TLS_ECDH_RSA_WITH_RC4_128_SHA              0xC00C
+#define TLS_ECDH_RSA_WITH_RC4_128_SHA                 0xC00C
 
-#define TLS_ECDH_RSA_WITH_3DES_EDE_CBC_SHA         0xC00D
+#define TLS_ECDH_RSA_WITH_3DES_EDE_CBC_SHA            0xC00D
 
-#define TLS_ECDH_RSA_WITH_AES_128_CBC_SHA          0xC00E
+#define TLS_ECDH_RSA_WITH_AES_128_CBC_SHA             0xC00E
 
-#define TLS_ECDH_RSA_WITH_AES_256_CBC_SHA          0xC00F
+#define TLS_ECDH_RSA_WITH_AES_256_CBC_SHA             0xC00F
 
-#define TLS_ECDHE_RSA_WITH_NULL_SHA                0xC010
+#define TLS_ECDHE_RSA_WITH_NULL_SHA                   0xC010
 
-#define TLS_ECDHE_RSA_WITH_RC4_128_SHA             0xC011
+#define TLS_ECDHE_RSA_WITH_RC4_128_SHA                0xC011
 
-#define TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA        0xC012
+#define TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA           0xC012
 
-#define TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA         0xC013
+#define TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA            0xC013
 
-#define TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA         0xC014
+#define TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA            0xC014
 
-#define TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256    0xC023
+#define TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256       0xC023
 
-#define TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384    0xC024
+#define TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384       0xC024
 
-#define TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256     0xC025
+#define TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256        0xC025
 
-#define TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA384     0xC026
+#define TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA384        0xC026
 
-#define TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256      0xC027
+#define TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256         0xC027
 
-#define TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384      0xC028
+#define TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384         0xC028
 
-#define TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256       0xC029
+#define TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256          0xC029
 
-#define TLS_ECDH_RSA_WITH_AES_256_CBC_SHA384       0xC02A
+#define TLS_ECDH_RSA_WITH_AES_256_CBC_SHA384          0xC02A
 
-#define TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256    0xC02B
+#define TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256       0xC02B
 
-#define TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384    0xC02C
+#define TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384       0xC02C
 
-#define TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256     0xC02D
+#define TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256        0xC02D
 
-#define TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384     0xC02E
+#define TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384        0xC02E
 
-#define TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256      0xC02F
+#define TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256         0xC02F
 
-#define TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384      0xC030
+#define TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384         0xC030
 
-#define TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256       0xC031
+#define TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256          0xC031
 
-#define TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384       0xC032
+#define TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384          0xC032
 
-#define TLS_RSA_WITH_AES_128_CCM                   0xC09C
+#define TLS_RSA_WITH_AES_128_CCM                      0xC09C
 
-#define TLS_RSA_WITH_AES_256_CCM                   0xC09D
+#define TLS_RSA_WITH_AES_256_CCM                      0xC09D
 
-#define TLS_DHE_RSA_WITH_AES_128_CCM               0xC09E
+#define TLS_DHE_RSA_WITH_AES_128_CCM                  0xC09E
 
-#define TLS_DHE_RSA_WITH_AES_256_CCM               0xC09F
+#define TLS_DHE_RSA_WITH_AES_256_CCM                  0xC09F
 
-#define TLS_RSA_WITH_AES_128_CCM_8                 0xC0A0
+#define TLS_RSA_WITH_AES_128_CCM_8                    0xC0A0
 
-#define TLS_RSA_WITH_AES_256_CCM_8                 0xC0A1
+#define TLS_RSA_WITH_AES_256_CCM_8                    0xC0A1
 
-#define TLS_DHE_RSA_WITH_AES_128_CCM_8             0xC0A2
+#define TLS_DHE_RSA_WITH_AES_128_CCM_8                0xC0A2
 
-#define TLS_DHE_RSA_WITH_AES_256_CCM_8             0xC0A3
+#define TLS_DHE_RSA_WITH_AES_256_CCM_8                0xC0A3
+
+#define TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256   0xCC13
+
+#define TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256 0xCC14
+
+#define TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256     0xCC15
 
   
 
@@ -2735,7 +1965,6 @@ SHARKSSL_API int   SharkSslAesCcmCtx_decrypt(SharkSslAesCcmCtx *ctx,
 #if (SHARKSSL_ENABLE_RSA || SHARKSSL_ENABLE_ECDSA)
 #ifndef BA_API  
 #define BA_API SHARKSSL_API
-typedef U8 BaBool;
 #ifdef _SHARKSSL_C_
 #define SingleListCode 1
 #endif
@@ -2963,7 +2192,7 @@ SingleList_removeFirst(SingleList* o)
 #endif
 
 
-#if SHARKSSL_ENABLE_SESSION_CACHE
+#if SHARKSSL_ENABLE_SESSION_CACHE || SHARKSSL_NOPACK
 
 
 
@@ -3010,7 +2239,7 @@ typedef const U8 *SharkSslCAList;
  
 #endif
 
-#if SHARKSSL_ENABLE_PSK
+#if SHARKSSL_ENABLE_PSK || SHARKSSL_NOPACK
 
 
 
@@ -3067,22 +2296,22 @@ SharkSsl
    U8 addCertificate(SharkSslCert cert);
    void terminateCon(SharkSslCon *sslCon);
 #endif
-   #if (SHARKSSL_SSL_SERVER_CODE && SHARKSSL_SSL_CLIENT_CODE)
+   #if (SHARKSSL_SSL_SERVER_CODE && SHARKSSL_SSL_CLIENT_CODE) || SHARKSSL_NOPACK
    SharkSsl_Role role;
    #endif
    U16 outBufSize;
    U16 inBufStartSize;
    U16 nCon;
-   #if (SHARKSSL_ENABLE_RSA || (SHARKSSL_ENABLE_ECDSA))
+   #if (SHARKSSL_ENABLE_RSA || (SHARKSSL_ENABLE_ECDSA))  || SHARKSSL_NOPACK
    SingleList certList;
-   #if SHARKSSL_ENABLE_CA_LIST
+   #if SHARKSSL_ENABLE_CA_LIST  || SHARKSSL_NOPACK
    SharkSslCAList caList;
    #endif
    #endif
-   #if SHARKSSL_ENABLE_PSK
+   #if SHARKSSL_ENABLE_PSK  || SHARKSSL_NOPACK
    SharkSslPSKTable tablePSK;
    #endif
-   #if SHARKSSL_ENABLE_SESSION_CACHE
+   #if SHARKSSL_ENABLE_SESSION_CACHE  || SHARKSSL_NOPACK
    SharkSslSessionCache sessionCache;
    
    SharkSslIntf* intf;
@@ -3521,10 +2750,15 @@ SHARKSSL_API sharkssl_PEM_RetVal sharkssl_PEM(
 
 #if SHARKSSL_ENABLE_RSA
 
+
+
+
 #define SHARKSSL_RSA_NO_PADDING      0
 
 
+
 #define SHARKSSL_RSA_PKCS1_PADDING   1
+
 
 
 typedef enum
@@ -3557,6 +2791,8 @@ typedef enum
    SHARKSSL_RSA_PKCS1_PADDING_ERROR
 } sharkssl_RSA_RetVal;
 #endif
+
+  
 
 #if SHARKSSL_ENABLE_RSA_API
 
@@ -3619,6 +2855,258 @@ SHARKSSL_API sharkssl_RSA_RetVal sharkssl_RSA_public_decrypt(
 #ifndef BA_API  
 #define BA_API SHARKSSL_API
 typedef U8 BaBool;
+#endif
+
+
+#ifndef _DoubleList_h
+#define _DoubleList_h
+
+struct DoubleList;
+
+typedef struct DoubleLink
+{
+#ifdef __cplusplus
+      void *operator new(size_t s) { return ::baMalloc(s); }
+      void operator delete(void* d) { if(d) ::baFree(d); }
+      void *operator new(size_t, void *place) { return place; }
+      void operator delete(void*, void *) { }
+       DoubleLink();
+      ~DoubleLink();
+      void insertAfter(DoubleLink* newLink);
+      void insertBefore(DoubleLink* newLink);
+      void unlink();
+      bool isLinked();
+      DoubleLink* getNext();
+#endif
+      struct DoubleLink* next;
+      struct DoubleLink* prev;
+} DoubleLink;
+
+
+
+typedef struct DoubleList
+{
+#ifdef __cplusplus
+      DoubleList();
+      void insertFirst(DoubleLink* newLink);
+      void insertLast(DoubleLink* newLink);
+      bool isLast(DoubleLink* n);
+      DoubleLink* firstNode();
+      DoubleLink* lastNode();
+      bool isEmpty();
+      DoubleLink* removeFirst();
+      bool isInList(DoubleLink* n);
+#endif
+   DoubleLink* next;
+   DoubleLink* prev;
+} DoubleList;
+
+
+#define DoubleLink_constructor(o) do { \
+   ((DoubleLink*)o)->next = 0; \
+   ((DoubleLink*)o)->prev = 0; \
+} while(0)
+
+
+#define DoubleLink_destructor(o) do { \
+      if(DoubleLink_isLinked(o)) \
+         DoubleLink_unlink(o); \
+} while(0)
+
+#define DoubleLink_insertAfter(o, newLink) do { \
+   baAssert(((DoubleLink*)newLink)->prev==0&&((DoubleLink*)newLink)->next==0);\
+   ((DoubleLink*)newLink)->next = ((DoubleLink*)o)->next; \
+   ((DoubleLink*)newLink)->prev = ((DoubleLink*)o); \
+   ((DoubleLink*)o)->next->prev = ((DoubleLink*)newLink); \
+   ((DoubleLink*)o)->next = ((DoubleLink*)newLink); \
+} while(0)
+
+
+#define DoubleLink_insertBefore(o, newLink) do { \
+   baAssert(((DoubleLink*)newLink)->prev==0&&((DoubleLink*)newLink)->next==0);\
+   ((DoubleLink*)newLink)->prev = ((DoubleLink*)o)->prev; \
+   ((DoubleLink*)newLink)->next = ((DoubleLink*)o); \
+   ((DoubleLink*)o)->prev->next = ((DoubleLink*) newLink); \
+   ((DoubleLink*)o)->prev = ((DoubleLink*) newLink); \
+} while(0)
+
+
+#define DoubleLink_unlink(o) do { \
+   baAssert(((DoubleLink*)o)->prev && ((DoubleLink*)o)->next);\
+   ((DoubleLink*) o)->next->prev = ((DoubleLink*)o)->prev; \
+   ((DoubleLink*) o)->prev->next = ((DoubleLink*)o)->next; \
+   ((DoubleLink*) o)->next = 0; \
+   ((DoubleLink*) o)->prev = 0; \
+} while(0)
+
+#ifdef NDEBUG
+#define DoubleLink_isLinked(o) \
+   (((DoubleLink*)o)->prev ? TRUE : FALSE)
+#else
+#define DoubleLink_isLinked(o) \
+   (((DoubleLink*)o)->prev ? (baAssert(((DoubleLink*)o)->next), TRUE) : FALSE)
+#endif
+
+#define DoubleLink_getNext(o) ((DoubleLink*)(o))->next
+
+
+#define DoubleList_constructor(o) do { \
+   (o)->next = (DoubleLink*)o; \
+   (o)->prev = (DoubleLink*)o; \
+} while(0)
+
+
+#define DoubleList_insertFirst(o, newLink) do { \
+   baAssert(((DoubleLink*)newLink)->prev==0&&((DoubleLink*)newLink)->next==0);\
+   ((DoubleLink*)newLink)->next = (o)->next; \
+   ((DoubleLink*)newLink)->prev = (DoubleLink*)o; \
+   (o)->next->prev = ((DoubleLink*) newLink); \
+   (o)->next = ((DoubleLink*) newLink); \
+} while(0)
+
+
+#define DoubleList_insertLast(o, newLink) do { \
+   baAssert(((DoubleLink*)newLink)->prev==0&&((DoubleLink*)newLink)->next==0);\
+   ((DoubleLink*)newLink)->next = (DoubleLink*)o; \
+   ((DoubleLink*)newLink)->prev = (o)->prev; \
+   (o)->prev->next = ((DoubleLink*)newLink); \
+   (o)->prev = ((DoubleLink*)newLink); \
+} while(0)
+
+
+#define DoubleList_isLast(o, n) (((DoubleLink*)(n))->next == (DoubleLink*)(o))
+#define DoubleList_isEnd(o, n) ((DoubleLink*)(n) == (DoubleLink*)(o))
+
+#define DoubleList_firstNode(o) \
+   ((o)->next != (DoubleLink*)o ? (o)->next : 0)
+
+
+#define DoubleList_lastNode(o) \
+   ((o)->prev != (DoubleLink*)o ? (o)->prev : 0)
+
+
+
+#define DoubleList_isEmpty(o)  \
+   (((DoubleLink*)(o))->next == (DoubleLink*)(o))
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+BA_API DoubleLink* DoubleList_removeFirst(DoubleList* o);
+
+
+#ifdef NDEBUG
+#define DoubleList_isInList(o, node) (((DoubleLink*)node)->prev ? TRUE : FALSE)
+#else
+#define DoubleList_isInList(o, node) DoubleList_isInListF(o, node, __FILE__, __LINE__)
+BA_API BaBool DoubleList_isInListF(DoubleList* o,void* node,const char* file,int line);
+#endif
+
+
+#ifdef __cplusplus
+}
+inline DoubleLink::DoubleLink() {
+   DoubleLink_constructor(this);
+}
+inline DoubleLink::~DoubleLink() {
+   DoubleLink_destructor(this);
+}
+inline void DoubleLink::insertAfter(DoubleLink* newLink) {
+   DoubleLink_insertAfter(this, newLink);
+}
+inline void DoubleLink::insertBefore(DoubleLink* newLink) {
+   DoubleLink_insertBefore(this, newLink);
+}
+inline void DoubleLink::unlink() {
+   DoubleLink_unlink(this);
+}
+inline bool DoubleLink::isLinked() {
+   return DoubleLink_isLinked(this) ? true : false;
+}
+inline DoubleLink* DoubleLink::getNext() {
+   return DoubleLink_getNext(this);
+}
+inline DoubleList::DoubleList() {
+   DoubleList_constructor(this);
+}
+inline void DoubleList::insertFirst(DoubleLink* newLink) {
+   DoubleList_insertFirst(this, newLink);
+}
+inline void DoubleList::insertLast(DoubleLink* newLink) {
+   DoubleList_insertLast(this, newLink);
+}
+inline bool DoubleList::isLast(DoubleLink* n) {
+   return DoubleList_isLast(this, n) ? true : false;
+}
+inline  DoubleLink* DoubleList::firstNode() {
+   return DoubleList_firstNode(this);
+}
+inline DoubleLink* DoubleList::lastNode() {
+   return DoubleList_lastNode(this);
+}
+inline bool DoubleList::isEmpty() {
+   return DoubleList_isEmpty(this) ? true : false;
+}
+inline DoubleLink* DoubleList::removeFirst() {
+   return DoubleList_removeFirst(this);
+}
+inline bool DoubleList::isInList(DoubleLink* n) {
+   return DoubleList_isInList(this, n)  ? true : false;
+}
+#endif
+
+
+
+
+
+typedef struct DoubleListEnumerator
+{
+#ifdef __cplusplus
+      DoubleListEnumerator(){}
+      DoubleListEnumerator(DoubleList* list);
+      DoubleLink* getElement();
+      DoubleLink* nextElement();
+      DoubleLink* removeElement();
+   private:
+#endif
+      DoubleList* list;
+      DoubleLink* curElement;
+} DoubleListEnumerator;
+
+#define DoubleListEnumerator_constructor(o, listMA) do \
+{ \
+   (o)->list = listMA; \
+   (o)->curElement = DoubleList_firstNode((o)->list);\
+} while(0)
+
+#define DoubleListEnumerator_getElement(o) (o)->curElement
+
+#define DoubleListEnumerator_nextElement(o) \
+   ((o)->curElement ? ( \
+      (o)->curElement = (o)->curElement->next == (DoubleLink*)(o)->list ? 0 : (o)->curElement->next, \
+      (o)->curElement \
+    ) : 0)
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+BA_API DoubleLink* DoubleListEnumerator_removeElement(DoubleListEnumerator* o);
+#ifdef __cplusplus
+}
+inline DoubleListEnumerator::DoubleListEnumerator(DoubleList* list) {
+   DoubleListEnumerator_constructor(this, list); }
+inline DoubleLink*
+DoubleListEnumerator::removeElement() {
+   return DoubleListEnumerator_removeElement(this); }
+inline DoubleLink*
+DoubleListEnumerator::getElement() {return DoubleListEnumerator_getElement(this);}
+inline DoubleLink*
+DoubleListEnumerator::nextElement() {return DoubleListEnumerator_nextElement(this); }
+#endif
+
+
 #endif
 typedef struct SharkSslCertStore
 {
@@ -3742,7 +3230,7 @@ extern int basprintf(char* buf, const char* fmt, ...);
 
 
 
-#define BASLIB_VER "3420"
+#define BASLIB_VER "3650"
 
 
 
@@ -3764,6 +3252,694 @@ extern int basprintf(char* buf, const char* fmt, ...);
 #ifndef _SoDisp_h
 #define _SoDisp_h
 
+
+#ifndef _HttpConfig_h
+#define _HttpConfig_h
+
+
+
+#ifndef _gBsdDspO_h
+#define _gBsdDspO_h
+
+
+
+
+
+#define CONNECTION_DISPATCHER_OBJ DoubleLink dispatcherLink;
+
+
+
+
+#define DISPATCHER_DATA \
+  DoubleList conList; \
+  DoubleList pendingList; \
+  DoubleLink* curL; \
+  DoubleListEnumerator iter; \
+  int defaultPollDelay; \
+  int pollDelay
+#endif
+
+#ifndef _NetConv_h
+#define _NetConv_h
+
+
+#ifdef B_LITTLE_ENDIAN
+#define baHtonl(x) ((U32)((((U32)(x) & 0x000000ffU) << 24) | \
+                         (((U32)(x) & 0x0000ff00U) <<  8) | \
+                         (((U32)(x) & 0x00ff0000U) >>  8) | \
+                         (((U32)(x) & 0xff000000U) >> 24)))
+#define baHtons(x) ((U16)((((U16)(x) & 0x00ff) << 8) | \
+                         (((U16)(x) & 0xff00) >> 8)))
+#elif defined B_BIG_ENDIAN
+#define baHtonl(x) x
+#define baHtons(x) x
+#else
+#error endian needed
+#endif
+#define baNtohl(x) baHtonl(x)
+#define baNtohs(x) baHtons(x)
+
+
+
+#endif
+
+#if defined(FD_CLOEXEC)
+
+#undef HttpSocket_setcloexec
+#undef HttpSocket_clearcloexec
+#undef basocketpair
+
+#define HttpSocket_setcloexec(o) (void)fcntl((o)->hndl, F_SETFD, FD_CLOEXEC)
+
+#define HttpSocket_clearcloexec(o)  (void)fcntl((o)->hndl, F_SETFD, 0)
+
+#define basocketpair(fd) socketpair(AF_UNIX,SOCK_STREAM,0,fd)
+
+#else
+#define HttpSocket_setcloexec(x)
+#define HttpSocket_clearcloexec(x)
+#define basocketpair(x)
+#endif 
+
+
+#if defined(EINTR) && defined(EAGAIN)
+ 
+#undef socketAccept
+#define socketAccept
+#undef socketSend
+#define socketSend
+
+#define HttpSocket_accept(o, conSock, status) do { int e; \
+ (conSock)->hndl=accept((o)->hndl, NULL, NULL); \
+ if ((conSock)->hndl < 0) {e=errno; \
+ if (e==EINTR||e==EAGAIN) continue;*(status)=e?e:-1;break;}    \
+ else {*(status)=0;HttpSocket_setcloexec(o);break;} \
+ } while(1)
+
+#define HttpSocket_recv(o, data, len, retLen) do { \
+  *(retLen)=recv((o)->hndl,data,len,0); \
+  if(*(retLen) == 0) {*(retLen) = -1;break;}  \
+  if(*(retLen) < 0) { int e=errno; \
+    if (e==EINTR) continue; \
+    if (e==EAGAIN) {*(retLen)=0;break;}   \
+  } \
+  break; \
+} while(1)
+
+#define HttpSocket_send(o, m, isTerminated, data, len, retLen) do { \
+  if(m && ThreadMutex_isOwner(m)) { \
+    ThreadMutex_release(m); \
+    *(retLen)=send((o)->hndl,data,len,0); \
+    ThreadMutex_set(m); \
+  } \
+  else \
+    *(retLen)=send((o)->hndl,data,len,0); \
+  if(*(retLen) < 0) { \
+    int e=errno; \
+    if (e==EINTR) continue; \
+    if (e==EAGAIN) {*(retLen)=0;} \
+  } \
+  break; \
+} while(1)
+
+#endif 
+
+#if !defined(NO_KEEPALIVEEX) && defined(TCP_KEEPIDLE)
+#define HttpSocket_getKeepAliveEx(o,enablePtr,timePtr,intervalPtr,statusPtr)\
+do {\
+   int _ZoptV,_Zidle,_Zintv;\
+   int _Zs = (o)->hndl;\
+   socklen_t _Zol = sizeof(_ZoptV);\
+   *(statusPtr) =\
+      getsockopt(_Zs, SOL_SOCKET, SO_KEEPALIVE, (char*)&_ZoptV, &_Zol) ||\
+      getsockopt(_Zs, IPPROTO_TCP, TCP_KEEPIDLE, (char*)&_Zidle, &_Zol) ||\
+      getsockopt(_Zs, IPPROTO_TCP, TCP_KEEPINTVL, (char*)&_Zintv, &_Zol) ?\
+      -1 : 0;\
+   *(enablePtr)=_ZoptV;\
+   *(timePtr)=_Zidle;\
+   *(intervalPtr)=_Zintv;\
+} while(0)
+
+#define HttpSocket_setKeepAliveEx(o,enable,time,interval,statusPtr) do {\
+   int _Zs = (o)->hndl;\
+   int _ZoptV=enable;\
+   socklen_t _Zol = sizeof(_ZoptV);\
+   if( ! setsockopt(_Zs, SOL_SOCKET, SO_KEEPALIVE, (char*)&_ZoptV, _Zol) ) {\
+      if(_ZoptV && time && interval) {\
+         int _Zidle=time;\
+         int _Zintv=interval;\
+         *(statusPtr) =\
+            setsockopt(_Zs, IPPROTO_TCP, TCP_KEEPIDLE, (char*)&_Zidle, _Zol) ||\
+            setsockopt(_Zs, IPPROTO_TCP, TCP_KEEPINTVL, (char*)&_Zintv, _Zol) ?\
+            -1 : 0;\
+      }\
+      else\
+         *(statusPtr)=0;\
+   }\
+   else\
+      *(statusPtr)=1;\
+} while(0)
+#endif
+
+
+
+
+#ifndef _gBsdSock_h
+#define _gBsdSock_h
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+struct HttpSockaddr;
+
+#ifndef basocklen_t
+#define basocklen_t socklen_t
+#endif
+
+#ifndef SocketHandle
+#define SocketHandle int
+#endif
+
+#ifndef socketAccept
+#define socketAccept accept
+#endif
+
+#ifndef socketBind
+#define socketBind bind
+#endif
+
+#ifndef socketClose
+#define socketClose close
+#endif
+
+#ifndef socketShutdown
+#define socketShutdown shutdown
+#endif
+
+#ifndef socketErrno
+#define socketErrno(s) errno
+#endif
+
+
+#ifndef socketIoctl
+#define socketIoctl ioctl
+#endif
+
+#ifndef socketGetPeerName
+#define socketGetPeerName getpeername
+#endif
+
+#ifndef socketGetSockName
+#define socketGetSockName getsockname
+#endif
+
+#ifndef socketListen
+#define socketListen listen
+#endif
+
+#ifndef socketRecv
+#define socketRecv recv
+#endif
+
+#ifndef socketSelect
+#define socketSelect select
+#endif
+
+#ifndef socketSend
+#define socketSend send
+#endif
+
+#ifndef socketSetsockopt
+#define socketSetsockopt setsockopt
+#endif
+
+#ifndef socketSocket
+#define socketSocket socket
+#endif
+
+#ifndef socketInetAddr
+#define socketInetAddr inet_addr
+#endif
+
+#ifndef socketInetPton
+#define socketInetPton inet_pton
+#endif
+
+#ifndef socketGethostbyname
+#define socketGethostbyname gethostbyname
+#endif
+
+#ifndef socketInetNtoa
+#define socketInetNtoa inet_ntoa
+#endif
+
+#ifndef socketWouldBlock
+#define socketWouldBlock(s) (EWOULDBLOCK == socketErrno(s))
+#endif
+
+#ifndef socketInProgress
+#ifdef EINPROGRESS
+#define socketInProgress(s) (EINPROGRESS == socketErrno(s))
+#else
+#define socketInProgress(s) 0
+#endif
+#endif
+
+#ifndef socketConnect
+#define socketConnect connect
+#endif
+
+
+
+#ifndef HttpSocket_setcloexec
+#define HttpSocket_setcloexec(x)
+#endif
+#ifndef HttpSocket_clearcloexec
+#define HttpSocket_clearcloexec(x)
+#endif
+#ifndef basocketpair
+#define basocketpair(x)
+#endif
+
+
+
+typedef struct {
+      SocketHandle hndl;
+} HttpSocket;
+
+
+#ifndef HttpSocket_accept
+#define HttpSocket_accept(o, conSock, status) do { \
+   (conSock)->hndl=socketAccept((o)->hndl, NULL, NULL); \
+   *(status) = (HttpSocket_isValid(conSock)) ? 0 : -1; \
+   HttpSocket_setcloexec(o); \
+}while(0)
+#endif
+
+
+#ifndef HttpSocket_bind
+#define HttpSocket_bindIp4(o, sockAddr, port, status) do { \
+   struct sockaddr_in in; \
+   memset(&in, 0, sizeof(struct sockaddr_in)); \
+   in.sin_family = AF_INET; \
+   in.sin_port = baHtons(port); \
+   memcpy(&in.sin_addr.s_addr,(sockAddr)->addr, 4); \
+   *(status) = socketBind((o)->hndl, (struct sockaddr *)&in, \
+                          sizeof(struct sockaddr_in)); \
+} while(0)
+#ifdef USE_IPV6
+#define HttpSocket_bindIp6(o, sockAddr, port, status) do { \
+      struct sockaddr_in6 in6; \
+      memset(&in6, 0, sizeof(struct sockaddr_in6)); \
+      in6.sin6_family = AF_INET6; \
+      in6.sin6_port = baHtons(port); \
+      memcpy(&in6.sin6_addr, (sockAddr)->addr, 16); \
+      *(status) = socketBind((o)->hndl, (struct sockaddr*)&in6, \
+                       sizeof(struct sockaddr_in6)); \
+} while(0)
+#else
+#define HttpSocket_bindIp6(o, sockAddr, port, status) baAssert(0)
+#endif
+#define HttpSocket_bind(o, sockAddr, port, status) do { \
+   if((sockAddr)->isIp6) \
+      HttpSocket_bindIp6(o, sockAddr, port, status); \
+   else \
+      HttpSocket_bindIp4(o, sockAddr, port, status); \
+}while(0)
+#endif
+
+#ifndef HttpSocket_close
+#define HttpSocket_close(o) do {\
+   int status;\
+   HttpSocket_setNonblocking(o,&status);\
+   (void)status; \
+   socketClose((o)->hndl);\
+   HttpSocket_invalidate(o);\
+ } while(0)
+#endif
+
+
+
+#ifndef HttpSocket_hardClose
+#define HttpSocket_hardClose(o) do {\
+   struct linger l;\
+   l.l_onoff = 1; l.l_linger = 0;\
+   setsockopt((o)->hndl,SOL_SOCKET,SO_LINGER,(char*)&l,sizeof(struct linger));\
+   socketClose((o)->hndl);\
+   HttpSocket_invalidate(o);\
+ } while(0)
+#endif
+
+
+
+#ifndef HttpSocket_shutdown
+#define HttpSocket_shutdown(o) do {\
+   int status;\
+   HttpSocket_setBlocking(o,&status);\
+   (void)status; \
+   socketShutdown((o)->hndl,2);\
+   socketClose((o)->hndl);\
+   HttpSocket_invalidate(o);\
+ } while(0)
+#endif
+
+
+#ifndef HttpSocket_constructor
+#define HttpSocket_constructor(o) do { \
+   memset(o, 0, sizeof(HttpSocket)); \
+   HttpSocket_invalidate(o); \
+}while(0)
+#endif
+
+#ifndef HttpSocket_errno
+#define HttpSocket_errno(o, status, ecode) *(ecode) = socketErrno((o)->hndl)
+#endif
+
+#ifndef HttpSocket_getId
+#define HttpSocket_getId(o) (int)(o)->hndl
+#endif
+
+#ifndef HttpSocket_getPeerName
+#define HttpSocket_getPeerNameIp4(o, sockAddr, port, status) do { \
+   struct sockaddr_in in; basocklen_t size=sizeof(struct sockaddr_in);\
+   *(status) = socketGetPeerName((o)->hndl, (struct sockaddr *)&in, &size); \
+   memcpy((sockAddr)->addr, &in.sin_addr.s_addr, 4);\
+   if(port) *(port)=baHtons(in.sin_port);\
+} while(0)
+#ifdef USE_IPV6
+#define HttpSocket_getPeerNameIp6(o, sockAddr, port, status) do { \
+  struct sockaddr_in6 in6; basocklen_t size=sizeof(struct sockaddr_in6);\
+  *(status) = socketGetPeerName((o)->hndl, (struct sockaddr*)&in6, &size); \
+  memcpy(sockAddr, &in6.sin6_addr, 16); \
+   if(port) *(port)=baHtons(in6.sin6_port);\
+} while(0)
+#else
+#define HttpSocket_getPeerNameIp6(o, sockAddr, port, status) baAssert(0)
+#endif
+#define HttpSocket_getPeerName(o, sockAddr, port, setIsIp6, status) do { \
+   if(setIsIp6) \
+      HttpSocket_getPeerNameIp6(o, sockAddr, port, status); \
+   else \
+      HttpSocket_getPeerNameIp4(o, sockAddr, port, status); \
+   (sockAddr)->isIp6=setIsIp6; \
+}while(0)
+#endif
+
+#ifndef HttpSocket_getSockName
+#define HttpSocket_getSockNameIp4(o, sockAddr, port, status) do { \
+   struct sockaddr_in in; basocklen_t size=sizeof(struct sockaddr_in);\
+   *(status) = socketGetSockName((o)->hndl, (struct sockaddr *)&in, &size); \
+   memcpy((sockAddr)->addr, &in.sin_addr.s_addr, 4);\
+   if(port) *(port)=baHtons(in.sin_port);\
+} while(0)
+#ifdef USE_IPV6
+#define HttpSocket_getSockNameIp6(o, sockAddr, port, status) do { \
+  struct sockaddr_in6 in6; basocklen_t size=sizeof(struct sockaddr_in6);\
+  *(status) = socketGetSockName((o)->hndl, (struct sockaddr*)&in6, &size); \
+  memcpy(sockAddr, &in6.sin6_addr, 16); \
+   if(port) *(port)=baHtons(in6.sin6_port);\
+} while(0)
+#else
+#define HttpSocket_getSockNameIp6(o, sockAddr, port, status) baAssert(0)
+#endif
+#define HttpSocket_getSockName(o, sockAddr, port, setIsIp6, status) do { \
+   if(setIsIp6) \
+      HttpSocket_getSockNameIp6(o, sockAddr, port, status); \
+   else \
+      HttpSocket_getSockNameIp4(o, sockAddr, port, status); \
+   (sockAddr)->isIp6=setIsIp6; \
+}while(0)
+#endif
+
+#ifndef HttpSocket_invalidate
+#define HttpSocket_invalidate(o) (o)->hndl = -1
+#endif
+
+#ifndef HttpSocket_isValid
+#define HttpSocket_isValid(o) ((o)->hndl >= 0)
+#endif
+
+#ifndef HttpSocket_listen
+#define HttpSocket_listen(o, sockaddrNotUsed, queueSize, status) do { \
+   *(status)=socketListen((o)->hndl, queueSize); \
+   HttpSocket_setcloexec(o); \
+}while(0)
+#endif
+
+#ifndef HttpSocket_move
+#define HttpSocket_move(o, newS) do{ \
+  (newS)->hndl=(o)->hndl;HttpSocket_invalidate(o);}while(0)
+#endif
+
+#ifndef HttpSocket_recv
+#define HttpSocket_recv(o, data, len, retLen) do { \
+  *(retLen)=socketRecv((o)->hndl,data,len,0);\
+  if(*(retLen) <= 0) { \
+     if(*(retLen) < 0) { \
+        int wb; \
+        HttpSocket_wouldBlock(o, &wb); \
+        if(wb) \
+           *(retLen)=0;   \
+     } \
+     else *(retLen) = -1;  \
+  } \
+} while(0)
+#endif
+
+#ifndef HttpSocket_send
+#define HttpSocket_send(o, m, isTerminated, data, len, retLen) do { \
+  if(m && ThreadMutex_isOwner(m)) { \
+    ThreadMutex_release(m); \
+    *(retLen)=socketSend((o)->hndl,data,len,0); \
+    ThreadMutex_set(m); \
+  } \
+  else \
+    *(retLen)=socketSend((o)->hndl,data,len,0); \
+  if(*(retLen) < 0) { \
+     int wb; \
+     HttpSocket_wouldBlock(o, &wb); \
+     if(wb) \
+        *(retLen)=0;   \
+  } \
+} while(0)
+#endif
+
+#ifndef HttpSocket_setBlocking
+#define HttpSocket_setBlocking(o, status) do { \
+   U32 arg=0;  \
+  *(status)=socketIoctl((o)->hndl, FIONBIO, &arg); \
+} while(0)
+#endif
+
+#ifndef HttpSocket_setNonblocking
+#define HttpSocket_setNonblocking(o, status) \
+do { \
+   U32 arg=1;  \
+  *(status)=socketIoctl((o)->hndl, FIONBIO, &arg); \
+} while(0)
+#endif
+
+#ifndef HttpSocket_setTCPNoDelay
+#define HttpSocket_setTCPNoDelay(o, enable, status) do { \
+   int enableFlag = enable ? 1 : 0; \
+   *(status) = socketSetsockopt((o)->hndl, IPPROTO_TCP, TCP_NODELAY, \
+                               (char*)&enableFlag, sizeof(int)); \
+}while(0)
+#endif
+
+#if !defined(HttpSocket_getKeepAlive) && defined(SO_KEEPALIVE)
+#define HttpSocket_getKeepAlive(o,enablePtr,statusPtr) do { \
+   int optval; \
+   socklen_t optlen = sizeof(optval); \
+   *(statusPtr) = \
+      getsockopt((o)->hndl,SOL_SOCKET,SO_KEEPALIVE,(char*)&optval,&optlen)<0 ? \
+      -1 : 0; \
+   *(enablePtr) = optval; \
+} while(0)
+#endif
+
+#if !defined(HttpSocket_setKeepAlive) && defined(SO_KEEPALIVE)
+#define HttpSocket_setKeepAlive(o,enable,statusPtr) do { \
+   int optval=enable; \
+   socklen_t optlen = sizeof(optval); \
+   *(statusPtr) = \
+      setsockopt((o)->hndl,SOL_SOCKET,SO_KEEPALIVE,(char*)&optval,optlen)<0 ? \
+      -1 : 0; \
+} while(0)
+#endif
+
+
+#ifndef HttpSocket_soReuseaddr
+#define HttpSocket_soReuseaddr(o, status) do { \
+   int enableFlag = 1; \
+   *(status) = socketSetsockopt((o)->hndl, SOL_SOCKET, SO_REUSEADDR, \
+                               (char*)&enableFlag, sizeof(int)); \
+}while(0)
+#endif
+
+#ifndef HttpSocket_sockStream
+#ifdef USE_IPV6
+#define HttpSocket_sockStreamIp6(o, status) do { \
+   (o)->hndl=socketSocket(AF_INET6, SOCK_STREAM, 0); \
+   *(status) = HttpSocket_isValid(o) ? 0 : -1; \
+}while(0)
+#else
+#define HttpSocket_sockStreamIp6(o, status) HttpSocket_sockStreamIp4(o, status)
+#endif
+
+#define HttpSocket_sockStreamIp4(o, status) do { \
+  (o)->hndl=socketSocket(AF_INET, SOCK_STREAM, 0); \
+   *(status) = HttpSocket_isValid(o) ? 0 : -1; \
+}while(0)
+
+#define HttpSocket_sockStream(o, interfNameNotUsed, useIp6, status) do { \
+   if(useIp6) \
+     HttpSocket_sockStreamIp6(o, status); \
+   else \
+     HttpSocket_sockStreamIp4(o, status); \
+}while(0)
+#endif
+
+
+#ifndef HttpSocket_wouldBlock
+#define HttpSocket_wouldBlock(o, status) do { \
+   *(status)=socketWouldBlock((o)->hndl); \
+   if(!*(status)) { \
+      *(status)=socketInProgress((o)->hndl); \
+   } \
+} while(0)
+#endif
+
+
+
+#ifndef HttpSocket_connect
+
+#define HttpSocket_connectV4(o, addr, port, status) \
+   struct sockaddr_in sin; \
+   memset((char *)&sin, 0, sizeof(sin)); \
+   sin.sin_family = AF_INET; \
+   sin.sin_port = baHtons(port); \
+   memcpy(&sin.sin_addr.s_addr, (addr)->addr, 4);\
+   *(status) = socketConnect((o)->hndl,(struct sockaddr *)&sin, sizeof(sin));
+
+
+
+#ifdef USE_IPV6
+#define HttpSocket_connectV6(o, addr, port, status)\
+   struct sockaddr_in6 sin6; \
+   memset((char *)&sin6, 0, sizeof(sin6)); \
+   sin6.sin6_family =  (addr)->isIp6 ? AF_INET6 : AF_INET; \
+   sin6.sin6_port = baHtons(port); \
+   memcpy(&sin6.sin6_addr, (addr)->addr, 16); \
+   *(status)=socketConnect((o)->hndl,(struct sockaddr *)&sin6,sizeof(sin6));
+
+
+#define HttpSocket_connect(o, addr, port, status) do {\
+   if((addr)->isIp6) {\
+      HttpSocket_connectV6(o, addr, port, status)\
+   }\
+   else {\
+      HttpSocket_connectV4(o, addr, port, status)\
+   }\
+} while(0)
+
+
+#else
+#define HttpSocket_connect(o, addr, port, status) do {\
+  HttpSocket_connectV4(o, addr, port, status) } while(0)
+#endif
+#endif
+
+
+BA_API int HttpSocket_makeClientCon(
+   HttpSocket* o,struct HttpSockaddr* addr,
+   const char* interfaceName,U16 port, BaBool nonBlocking);
+
+typedef struct HttpSockaddr {
+      char addr[16];
+      BaBool isIp6;
+} HttpSockaddr;
+
+
+#ifndef HttpSockaddr_gethostbynameIp6
+#ifdef USE_IPV6
+#define HttpSockaddr_gethostbynameIp6(o, host, status) do { \
+   if(host) { \
+      struct addrinfo hints, *servinfo; \
+      memset(&hints, 0, sizeof hints); \
+      hints.ai_family = AF_INET6; \
+      hints.ai_socktype = SOCK_STREAM; \
+      *(status) = getaddrinfo(host, 0, &hints, &servinfo); \
+      if( ! *(status) ) { \
+         memcpy((o)->addr, \
+                &((struct sockaddr_in6*)servinfo->ai_addr)->sin6_addr, 16); \
+         freeaddrinfo(servinfo); \
+      } \
+   } \
+   else { \
+      memset((o)->addr, 0, 16); \
+      *(status)=0; \
+   } \
+   (o)->isIp6=TRUE; \
+}while(0)
+#else
+#define HttpSockaddr_gethostbynameIp6(o, host, status) \
+  HttpSockaddr_gethostbynameIp4(o, host, status)
+#endif
+#endif
+
+#ifndef HttpSockaddr_gethostbyname
+#define HttpSockaddr_gethostbynameIp4(o, host, status)  do { \
+   unsigned long ipAddr; \
+   (o)->isIp6=FALSE; \
+   *(status)=0; \
+   if(host) \
+   { \
+      ipAddr = socketInetAddr(host);  \
+      if(ipAddr == INADDR_NONE)  \
+      { \
+         struct hostent* hostInfo = socketGethostbyname((char*)host); \
+         if(!hostInfo) \
+            *(status)=-1; \
+         else \
+            memcpy(&ipAddr,&((struct in_addr *)hostInfo->h_addr)->s_addr,4);\
+      } \
+   } \
+   else \
+      ipAddr = baHtonl(INADDR_ANY); \
+   memcpy((o)->addr,&ipAddr, 4); \
+}while(0)
+
+
+#define HttpSockaddr_gethostbyname(o, host, useIp6, status) do { \
+   if(useIp6) \
+     HttpSockaddr_gethostbynameIp6(o, host, status); \
+   else \
+     HttpSockaddr_gethostbynameIp4(o, host, status); \
+}while(0)
+#endif
+
+
+#ifndef HttpSockaddr_addr2String
+BA_API void HttpSockaddr_addr2String(
+   HttpSockaddr* o, char* buf, int bufLen, int* status);
+#endif
+
+
+#ifndef HttpSockaddr_inetAddr
+BA_API void HttpSockaddr_inetAddr(
+   HttpSockaddr* o, const char* host, BaBool useIp6, int* status);
+#endif
+
+
+#ifdef __cplusplus
+}
+#endif
+
+
+#endif
+#endif
 struct SoDispCon;
 struct HttpServer;
 
@@ -3818,7 +3994,9 @@ typedef struct SoDisp
 extern "C" {
 #endif
 BA_API void SoDisp_constructor(SoDisp* o, ThreadMutex* mutex);
+#ifndef SoDisp_destructor
 #define SoDisp_destructor(o)
+#endif
 BA_API void SoDisp_addConnection(SoDisp* o, struct SoDispCon* con);
 BA_API void SoDisp_activateRec(SoDisp* o, struct SoDispCon* con);
 BA_API void SoDisp_deactivateRec(SoDisp* o, struct SoDispCon* con);
@@ -4401,6 +4579,10 @@ inline SplayTreeNode* SplayTree::getRoot() {
 #undef putc
 #endif
 
+#ifndef BA_API
+#define BA_API
+#endif
+
 struct BufPrint;
 
 #ifdef __cplusplus
@@ -4427,10 +4609,9 @@ typedef int (*BufPrint_Flush)(struct BufPrint* o, int sizeRequired);
 typedef struct BufPrint
 {
 #ifdef __cplusplus
-      BufPrint() {}
 
       
-      BufPrint(void* userData, BufPrint_Flush flush);
+      BufPrint(void* userData=0, BufPrint_Flush flush=0);
 
       
       void* getUserData();
@@ -4449,6 +4630,10 @@ typedef struct BufPrint
 
       
       int write(const char* buf);
+
+
+   
+   void setBuf(char* buf, int size);
 
 
       
@@ -4493,6 +4678,7 @@ extern "C" {
 #define BufPrint_getUserData(o) (o)->userData
 #define BufPrint_erase(o) (o)->cursor=0
 #define BufPrint_getBuf(o) (o)->buf
+#define BufPrint_setBuf(o, b, size) (o)->buf=b,(o)->bufSize=size,(o)->cursor=0
 #define BufPrint_getBufSize(o) (o)->cursor
 BA_API void BufPrint_constructor(
    BufPrint* o,void* userData,BufPrint_Flush flush);
@@ -4523,6 +4709,8 @@ inline int BufPrint::printf(const char* fmt, ...) {
 }
 inline char* BufPrint::getBuf() {
    return BufPrint_getBuf(this); }
+inline void BufPrint::setBuf(char* buf, int size) {
+   BufPrint_setBuf(this, buf, size); }
 inline U32 BufPrint::getBufSize() {
    return BufPrint_getBufSize(this); }
 inline void BufPrint::erase() {
@@ -9700,7 +9888,7 @@ inline void DigestAuthenticator::setStrictMode(bool enableStrictMode) {
 #define SHARKSSL_CONTENT_TYPE_APPLICATION_DATA     23
 
 #define SHARKSSL_HANDSHAKETYPE_HELLO_REQUEST       0
-#define SHARKSSL_HANDSHAKETYPE_CLIENT_HELLO        1
+#define SHARKSSL_HANDSHAKETYPE_CLIENT_HELLO       1
 #define SHARKSSL_HANDSHAKETYPE_SERVER_HELLO        2
 #define SHARKSSL_HANDSHAKETYPE_CERTIFICATE         11
 #define SHARKSSL_HANDSHAKETYPE_SERVER_KEY_EXCHANGE 12
@@ -9785,7 +9973,7 @@ inline void DigestAuthenticator::setStrictMode(bool enableStrictMode) {
 #error TLS 1.1 cannot be enabled when either MD5 or SHA1 are disabled
 #endif
 #if (!SHARKSSL_ENABLE_TLS_1_2)
-#error TLS 1.2 must be enabled when either MD5 or SHA1 are disabled
+
 #endif
 #endif
 
@@ -10104,11 +10292,27 @@ inline void DigestAuthenticator::setStrictMode(bool enableStrictMode) {
 #endif  
 
 
+#if (SHARKSSL_USE_CHACHA20 && SHARKSSL_USE_POLY1305)
+#if SHARKSSL_ENABLE_TLS_1_2
+#if SHARKSSL_ENABLE_DHE_RSA
+#define SHARKSSL_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256     TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256
+#endif  
+#if SHARKSSL_ENABLE_ECDHE_RSA
+#define SHARKSSL_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256   TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
+#endif  
+#if SHARKSSL_ENABLE_ECDHE_ECDSA
+#define SHARKSSL_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256 TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
+#endif  
+#endif  
+#endif  
+
+
 #define SHARKSSL_MD5_MAC_LEN                       16
 #define SHARKSSL_SHA1_MAC_LEN                      20
 #define SHARKSSL_SHA256_MAC_LEN                    32
 #define SHARKSSL_SHA384_MAC_LEN                    48
 #define SHARKSSL_SHA512_MAC_LEN                    64
+#define SHARKSSL_POLY1305_MAC_LEN                  16
 
 #define SHARKSSL_MD5_BLOCK_LEN                     64
 #define SHARKSSL_SHA1_BLOCK_LEN                    64
@@ -10151,7 +10355,7 @@ inline void DigestAuthenticator::setStrictMode(bool enableStrictMode) {
 #define SHARKSSL_MAX_REC_LEN                       (16384 + 2048) 
 #define SHARKSSL_MAX_REC_PAD_LEN                   SHARKSSL_MAX_BLOCK_LEN
 
-#if   SHARKSSL_USE_AES_256
+#if   (SHARKSSL_USE_AES_256 || (SHARKSSL_USE_POLY1305 && SHARKSSL_USE_CHACHA20))
 #define SHARKSSL_MAX_KEY_LEN                       32   
 #elif SHARKSSL_USE_3DES
 #define SHARKSSL_MAX_KEY_LEN                       24   
@@ -10264,6 +10468,7 @@ inline void DigestAuthenticator::setStrictMode(bool enableStrictMode) {
 #define SHARKSSL_CS_RSA                            0x0008
 #define SHARKSSL_CS_PSK                            0x0010
 #define SHARKSSL_CS_AEAD                           0x0020  
+#define SHARKSSL_CS_POLYCHA                        0x0040  
 #define SHARKSSL_CS_TLS12                          0x0080
 #define SHARKSSL_CS_SHA384                         0x0100
 #define SHARKSSL_CS_SHA512                         0x0200
@@ -10602,7 +10807,13 @@ struct SharkSslCon
    U8 rMacH[SHARKSSL_MAX_DIGEST_BLOCK_LEN + SHARKSSL_MAX_DIGEST_LEN];
 
    #if SHARKSSL_MAX_BLOCK_LEN
+   #if ((SHARKSSL_MAX_BLOCK_LEN < 16) && (SHARKSSL_ENABLE_TLS_1_2 && ((SHARKSSL_USE_CHACHA20 && SHARKSSL_USE_POLY1305) || SHARKSSL_ENABLE_AES_GCM || SHARKSSL_ENABLE_AES_CCM)))
+   U8 wIV[16];
+   #else
    U8 wIV[SHARKSSL_MAX_BLOCK_LEN];
+   #endif
+   #elif  (SHARKSSL_ENABLE_TLS_1_2 && ((SHARKSSL_USE_CHACHA20 && SHARKSSL_USE_POLY1305) || SHARKSSL_ENABLE_AES_GCM || SHARKSSL_ENABLE_AES_CCM))
+   U8 wIV[16];
    #endif
    #if SHARKSSL_MAX_KEY_LEN
    U8 wKey[SHARKSSL_MAX_KEY_LEN];
@@ -10737,7 +10948,7 @@ int  SharkSslCon_sha384(SharkSslCon*, const U8*, U16, U8*);
 #endif
 int  SharkSslCon_HMAC(SharkSslCon *, U8, U8*, U16, U8*, U8, U8, SharkSslCon_digestFunc);
 #if SHARKSSL_ENABLE_RSA
-SHARKSSL_API int  SharkSslCertKey_RSA(const SharkSslCertKey*, U8, U8*);
+SHARKSSL_API int SharkSslCertKey_RSA(const SharkSslCertKey *ck, U8 op, U8 *inout);
 int SharkSslCertKey_RSA_public_encrypt(const SharkSslCertKey *certKey, U16 len, U8 *in, U8 *out, U8 padding);
 int SharkSslCertKey_RSA_private_decrypt(const SharkSslCertKey *certKey, U16 len, U8 *in, U8 *out, U8 padding);
 int SharkSslCertKey_RSA_private_encrypt(const SharkSslCertKey *certKey, U16 len, U8 *in, U8 *out, U8 padding);
@@ -10772,6 +10983,9 @@ int  SharkSslCon_aes_gcm(SharkSslCon*, U8, U8*, U16);
 #if (SHARKSSL_ENABLE_AES_CCM && SHARKSSL_ENABLE_TLS_1_2)
 int  SharkSslCon_aes_ccm(SharkSslCon*, U8, U8*, U16);
 #endif
+#endif
+#if (SHARKSSL_USE_CHACHA20 && SHARKSSL_USE_POLY1305 && SHARKSSL_ENABLE_TLS_1_2)
+int SharkSslCon_chacha20_poly1305(SharkSslCon*, U8, U8*, U16);
 #endif
 
 #endif
@@ -11016,6 +11230,45 @@ inline void DavAuth::setLoginTracker(LoginTracker* tracker) {
 #define __JParser_h
 
 
+struct JParserIntf;
+struct JParserVal;
+
+
+typedef int (*JParserIntf_Service)(
+   struct JParserIntf* o, struct JParserVal* v, int recLevel);
+
+
+
+typedef struct JParserIntf
+{
+#ifdef __cplusplus
+   
+   JParserIntf(JParserIntf_Service s) { service = s; }
+
+   
+   int serviceCB(JParserVal* v, int recLevel);
+
+   ~JParserIntf(){}
+   JParserIntf() {}
+#endif
+      JParserIntf_Service service;
+} JParserIntf;
+
+#define JParserIntf_constructor(o,serviceMA) (o)->service=serviceMA
+
+#define JParserIntf_serviceCB(o, v, recLev) (o)->service(o,v,recLev)
+
+#ifdef __cplusplus
+
+inline int JParserIntf::serviceCB(JParserVal* v, int recLevel) {
+   return JParserIntf_serviceCB(this,v, recLevel); }
+#endif
+
+ 
+
+
+
+
 typedef enum {
    
    JVType_InvalidType,
@@ -11130,7 +11383,6 @@ typedef struct
       U32 index;
       size_t size;
 } JDBuf;
-#endif
 
 
 
@@ -11139,8 +11391,8 @@ typedef enum {
    JLexerT_Boolean,
    JLexerT_Number,
    JLexerT_String,
-   JLexerT_StartObject,
-   JLexerT_StartArray,
+   JLexerT_BeginObject,
+   JLexerT_BeginArray,
    JLexerT_EndObject,
    JLexerT_EndArray,
    JLexerT_Comma, 
@@ -11166,11 +11418,9 @@ typedef enum {
 } JLexerSt;
 
 
-#ifndef __DOXYGEN__
 typedef struct
 {
-      JDBuf asmB;
-
+      JDBuf* asmB;
       const U8* bufStart;
       const U8* bufEnd;
       const U8* tokenPtr;
@@ -11189,53 +11439,42 @@ typedef struct
       U8 isDouble; 
 } JLexer;
 
+#endif 
+
 
 typedef enum {
-   JParserT_InvalidType=0,
-   JParserT_String,
-   JParserT_Double,
-   JParserT_Int,
-   JParserT_Long,   
-   JParserT_Boolean,
-   JParserT_Null,
-   JParserT_StartObject,
-   JParserT_StartArray,
-   JParserT_EndObject,
-   JParserT_EndArray
+   JParserT_InvalidType=0, 
+   JParserT_Null, 
+   JParserT_String = 's', 
+   JParserT_Double = 'f', 
+   JParserT_Int = 'd', 
+   JParserT_Long = 'l',   
+   JParserT_Boolean = 'b', 
+   JParserT_BeginObject = '{', 
+   JParserT_BeginArray = '[', 
+   JParserT_EndObject = '}', 
+   JParserT_EndArray = ']' 
 } JParserT;
 
 
 typedef struct JParserVal
 {
-      union
-      {
-            U8* s; 
+   
+   union
+   {
+      char* s; 
 #ifndef NO_DOUBLE
-            double f; 
+      double f; 
 #endif
-            S32 d; 
-            U64 l; 
-            BaBool b;
-      } v;
-      char* memberName;
-      JParserT t;
+      S32 d; 
+      U64 l; 
+      BaBool b;
+   } v;
+
+   
+   char* memberName;
+   JParserT t; 
 } JParserVal;
-
-
-struct JParserIntf;
-typedef int (*JParserIntf_Service)(
-   struct JParserIntf* o, JParserVal* v, int recLevel);
-#endif 
-
-
-typedef struct JParserIntf
-{
-      JParserIntf_Service service;
-} JParserIntf;
-
-#define JParserIntf_constructor(o,serviceMA) (o)->service=serviceMA
-
-#define JParserIntf_service(o, v, recLev) (o)->service(o,v,recLev)
 
 
 
@@ -11258,13 +11497,16 @@ typedef enum {
    JParsStat_IntfErr,
 
    
-   JParsStat_MemErr
+   JParsStat_MemErr,
+
+   
+   JParsStat_StackOverflow
 } JParsStat;
 
 
 typedef enum {
    JParserSt_StartObj,
-   JParserSt_EmptyArray,
+   JParserSt_BeginArray,
    JParserSt_MemberName,
    JParserSt_MemberSep,
    JParserSt_Value,
@@ -11273,40 +11515,59 @@ typedef enum {
 } JParserSt;
 
 
-typedef struct JParser
+#define JPARSER_STACK_LEN 8
+
+
+typedef U8 JParserStackNode;
+
+
+struct JParser
 {
 #ifdef __cplusplus
-      
-      JParser(JParserIntf* intf, AllocatorIntf* alloc);
+   
+   JParser(JParserIntf* intf, char* nameBuf, int namebufSize,
+           AllocatorIntf* alloc, int extraStackLen=0);
 
-      
-      int parse(const U8* buf, U32 size);
+   
+   int parse(const U8* buf, U32 size);
 
-      
-      ~JParser();
+   
+   ~JParser();
 
-      
-      JParsStat getStatus();
+   
+   JParsStat getStatus();
 #endif
-      JDBuf stack;
-      JLexer lexer;
-      JParserVal val;
-      JParserIntf* intf;
-      JParsStat status;
-      JParserSt state;
-} JParser;
+   JLexer lexer;
+   JParserVal val;
+   JDBuf asmB; 
+   JDBuf mnameB; 
+   JParserIntf* intf;
+   S16 stackIx;
+   S16 stackSize;
+   U8 status; 
+   U8 state; 
+   
+   JParserStackNode stack[JPARSER_STACK_LEN];
+};
+
+typedef struct JParser JParser;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-BA_API void JParser_constructor(
-   JParser* o, JParserIntf* intf, AllocatorIntf* alloc);
+BA_API void JParser_constructor(JParser* o, JParserIntf* intf, char* nameBuf,
+                                int namebufSize, AllocatorIntf* alloc,
+                                int extraStackLen);
 BA_API int JParser_parse(JParser* o, const U8* buf, U32 size);
 BA_API void JParser_destructor(JParser* o);
-#define JParser_getStatus(o) (o)->status
+#define JParser_getStatus(o) ((JParsStat)(o)->status)
 #ifdef __cplusplus
 }
-inline JParser::JParser(JParserIntf* intf, AllocatorIntf* alloc) {
-   JParser_constructor(this, intf, alloc);}
+inline JParser::JParser(JParserIntf* intf, char* nameBuf,
+                        int namebufSize, AllocatorIntf* alloc,
+                        int extraStackLen) {
+   JParser_constructor(this, intf, nameBuf, namebufSize, alloc, extraStackLen);
+}
 inline int JParser::parse(const U8* buf, U32 size) {
    return JParser_parse(this, buf, size);}
 inline JParser::~JParser() {
@@ -11318,7 +11579,7 @@ inline JParsStat JParser::getStatus() {
   
 
 #endif
-typedef struct JVal
+struct JVal
 {
 #ifdef __cplusplus
       
@@ -11367,10 +11628,10 @@ typedef struct JVal
       char* manageString(JErr* e);
 
       
-      const char* getMemberName();
+      const char* getName();
 
       
-      char* manageMemberName();
+      char* manageName();
 
       
       JVal* getNextElem();
@@ -11421,7 +11682,10 @@ typedef struct JVal
       char* memberName;
       struct JVal* next;
       JVType type;
-} JVal;
+};
+
+typedef struct JVal JVal;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -11434,8 +11698,8 @@ BA_API double JVal_getDouble(JVal* o, JErr* e);
 BA_API BaBool JVal_getBoolean(JVal* o, JErr* e);
 BA_API const char* JVal_getString(JVal* o, JErr* e);
 BA_API char* JVal_manageString(JVal* o, JErr* e);
-BA_API const char* JVal_getMemberName(JVal* o);
-BA_API char* JVal_manageMemberName(JVal* o);
+BA_API const char* JVal_getName(JVal* o);
+BA_API char* JVal_manageName(JVal* o);
 #define JVal_getNextElem(o) (o)->next
 BA_API JVal* JVal_getObject(JVal* o, JErr* e);
 BA_API JVal* JVal_getArray(JVal* o, JErr* e);
@@ -11481,10 +11745,10 @@ inline const char* JVal::getString(JErr* e){
    return JVal_getString(this, e); }
 inline char* JVal::manageString(JErr* e){
    return JVal_manageString(this, e); }
-inline const char* JVal::getMemberName(){
-   return JVal_getMemberName(this); }
-inline char* JVal::manageMemberName(){
-   return JVal_manageMemberName(this); }
+inline const char* JVal::getName(){
+   return JVal_getName(this); }
+inline char* JVal::manageName(){
+   return JVal_manageName(this); }
 inline JVal* JVal::getNextElem(){
    return JVal_getNextElem(this); }
 inline JVal* JVal::getObject(JErr* e){
@@ -11522,6 +11786,9 @@ inline int JVal::add(JErr* e, JVal* child) {
 inline void JVal::terminate(AllocatorIntf* vAlloc, AllocatorIntf* dAlloc){
    JVal_terminate(this, vAlloc, dAlloc); }
 #endif
+
+ 
+
 
 
 typedef enum
@@ -11587,6 +11854,10 @@ inline void JParserValFact::termFirstVal() {
 inline JParserValFact::~JParserValFact() {
     JParserValFact_destructor(this); }
 #endif
+
+ 
+
+
 
 
 typedef struct JValFact
@@ -13311,145 +13582,6 @@ int     SharkSslECNISTCurve_multiply2(SharkSslECNISTCurve *S, SharkSslBigInt *d,
 
 
 
-#ifndef __DefaultMq_h
-#define __DefaultMq_h
-
-
-
-#ifndef __MqInterf_h
-#define __MqInterf_h
-
-#ifndef __DOXYGEN__
-struct MqMessage;
-struct MqInterf;
-#endif
-
-
-
-
-typedef void (*MqMessage_Runnable)(struct MqMessage* m);
-
-
-typedef struct MqMessage
-{
-#ifdef __cplusplus
-      
-      MqMessage(MqMessage_Runnable runnable);
-
-      
-      void run();
-#endif
-      MqMessage_Runnable runnable;
-} MqMessage;
-
-#define MqMessage_constructor(o, runnableMA) (o)->runnable=runnableMA
-#define MqMessage_run(o) (o)->runnable(o)
-
-#ifdef __cplusplus
-inline MqMessage::MqMessage(MqMessage_Runnable runnable) {
-   MqMessage_constructor(this, runnable);
-}
-inline void MqMessage::run() {
-   MqMessage_run(this);
-}
-#endif
-
-
-typedef int (*MqInterf_Send)(struct MqInterf* mq, MqMessage* msg);
-
-
-typedef MqMessage* (*MqInterf_Receive)(struct MqInterf* mq);
-
-
-typedef struct MqInterf
-{
-#ifdef __cplusplus
-      MqInterf(){}
-
-      
-      MqInterf(MqInterf_Send send, MqInterf_Receive rec);
-
-      
-      void sendmsg(MqMessage* m);
-
-      
-      MqMessage* receivemsg();
-#endif
-      MqInterf_Send sendF;
-      MqInterf_Receive receiveF;
-} MqInterf;
-
-
-#define MqInterf_constructor(o, send, receive) \
-   (o)->sendF=send,(o)->receiveF=receive
-
-#define MqInterf_sendmsg(o, message) (o)->sendF(o, message)
-#define MqInterf_receivemsg(o) (o)->receiveF(o)
-
-#ifdef __cplusplus
-inline MqInterf::MqInterf(MqInterf_Send send, MqInterf_Receive rec) {
-   MqInterf_constructor(this, send, rec);
-}
-inline void MqInterf::sendmsg(MqMessage* m) {
-      MqInterf_sendmsg(this, m);
-}
-inline MqMessage* MqInterf::receivemsg() {
-   return MqInterf_receivemsg(this);
-}
-#endif
-
- 
-
-#endif
-#ifndef __DOXYGEN__
-typedef struct DefaultMqNode
-{
-      SingleLink super;
-      MqMessage* msg;
-} DefaultMqNode;
-#endif
-
-
-
-
-typedef struct DefaultMq
-#ifdef __cplusplus
-: public MqInterf
-{
-      
-      DefaultMq(AllocatorIntf* allocator=0);
-      char mutexBuf[sizeof(ThreadMutex)];
-      char queueBuf[sizeof(SingleList)];
-      char semBuf[sizeof(ThreadSemaphore)];
-#else
-{
-      MqInterf super; 
-      ThreadMutex mutex;
-      SingleList queue;
-      ThreadSemaphore sem;
-#endif
-
-      AllocatorIntf* allocator;
-} DefaultMq;
-
-#ifdef __cplusplus
-extern "C" {
-#endif 
-BA_API void DefaultMq_constructor(DefaultMq* o,
-                           AllocatorIntf* allocator);
-#ifdef __cplusplus
-}
-inline DefaultMq::DefaultMq(AllocatorIntf* allocator) {
-   DefaultMq_constructor(this, allocator);
-}
-#endif
-
- 
-
-
-#endif
-
-
 #ifndef __FixedSizeAllocator_h
 #define __FixedSizeAllocator_h
 
@@ -14003,162 +14135,6 @@ inline HttpCmdThreadPool::~HttpCmdThreadPool() {
 #endif
 
 
-#ifndef __HttpFiber_h
-#define __HttpFiber_h
-
- 
-typedef struct HttpFiberHandle
-{
-      HttpRequest* req;
-      const char* path;
-      S32 derivedSize;
-      S32 paramSize;
-      S32 dataSize;
-      S32 pathSize;
-      S32 sendBufSize;
-} HttpFiberHandle;
- 
-
-
-
-
-
-
-typedef struct HttpFiber
-#ifdef __cplusplus
-      : public HttpAsynchReqResp
-{
-
-      
-      HttpParameter* getParam();
-
-      
-      const char* getPath();
-
-      
-      HttpMethod getMethodType();
-
-      
-      void* getData();
-
-      
-      S32 getDataSize();
- 
-      
-      HttpFiber(HttpAsynchReq_OnData onData, HttpFiberHandle* fh);
-
-      
-      int start(void* derivedObjPtr, HttpFiberHandle* fh);
-
-      
-      static S32 calcRequiredSize(HttpRequest* req,
-                                  size_t derivedSize,
-                                  bool copyParameters,
-                                  size_t sendBufSize,
-                                  HttpFiberHandle* fh);
-
-      
-      static S32 calcRequiredSize(HttpCommand* cmd,
-                                  const char* path,
-                                  size_t derivedSize,
-                                  bool copyParameters,
-                                  size_t sendBufSize,
-                                  HttpFiberHandle* fh);
-#if 0
-}
-#endif
-#else
-{
-   HttpAsynchReqResp super;
-#endif
-      HttpParameter* param;
-      char* path;
-      HttpMethod methodType;
-} HttpFiber;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#define HttpFiber_getMutex(o) \
-   HttpAsynchReqResp_getMutex((HttpAsynchReqResp*)(o))
-#define HttpFiber_getServer(o) \
-   HttpAsynchReqResp_getServer((HttpAsynchReqResp*)(o))
-#define HttpFiber_getResponse(o) \
-   HttpAsynchReqResp_getResponse((HttpAsynchReqResp*)(o))
-
-#define HttpFiber_destructor(o) \
-  HttpAsynchReqResp_destructor((HttpAsynchReqResp*)(o))
-#define HttpFiber_getParam(o) (o)->param
-#define HttpFiber_getPath(o) (o)->path
-#define HttpFiber_getMethodType(o) (o)->methodType
-#define HttpFiber_getData(o) ((HttpAsynchReq*)(o))->buffer
-#define HttpFiber_getDataSize(o) ((HttpAsynchReq*)(o))->bufferSize
-BA_API void HttpFiber_constructor(
-   HttpFiber* o,HttpAsynchReq_OnData onData,HttpFiberHandle* fh);
-BA_API int HttpFiber_start(
-   HttpFiber* o, void* derivedObjPtr, HttpFiberHandle* fh);
-BA_API S32 HttpFiber_calcRequiredSize(HttpRequest* req,
-                                      size_t derivedSize,
-                                      BaBool copyParameters,
-                                      size_t sendBufSize,
-                                      HttpFiberHandle* fh);
-BA_API S32 HttpFiber_calcRequiredSize2(HttpCommand* cmd,
-                                       const char* path,
-                                       size_t derivedSize,
-                                       BaBool copyParameters,
-                                       size_t sendBufSize,
-                                       HttpFiberHandle* fh);
-#ifdef __cplusplus
-}
-inline void* HttpFiber::getData() {
-   return HttpFiber_getData(this);
-}
-inline S32 HttpFiber::getDataSize() {
-   return HttpFiber_getDataSize(this);
-}
-inline HttpParameter* HttpFiber::getParam() {
-   return HttpFiber_getParam(this);
-}
-inline const char* HttpFiber::getPath() {
-   return HttpFiber_getPath(this);
-}
-inline HttpMethod HttpFiber::getMethodType() {
-   return HttpFiber_getMethodType(this);
-}
-inline HttpFiber::HttpFiber(HttpAsynchReq_OnData onData,HttpFiberHandle* fh){
-   HttpFiber_constructor(this, onData,fh);
-}
-inline int HttpFiber::start(void* derivedObjPtr, HttpFiberHandle* fh) {
-   return HttpFiber_start(this, derivedObjPtr, fh);
-}
-inline S32 HttpFiber::calcRequiredSize(HttpRequest* req,
-                                       size_t derivedSize,
-                                       bool copyParameters,
-                                       size_t sendBufSize,
-                                       HttpFiberHandle* fh) {
-   return HttpFiber_calcRequiredSize(
-      req,derivedSize,copyParameters?TRUE:FALSE,sendBufSize,fh);
-}
-inline S32 HttpFiber::calcRequiredSize(HttpCommand* cmd,
-                                       const char* path,
-                                       size_t derivedSize,
-                                       bool copyParameters,
-                                       size_t sendBufSize,
-                                       HttpFiberHandle* fh) {
-   return HttpFiber_calcRequiredSize2(
-      cmd,path,derivedSize,copyParameters?TRUE:FALSE,sendBufSize,fh);
-}
-#endif 
-
-
-
- 
-  
-
-#endif
-
-
 #ifndef _HttpRecData_h
 #define _HttpRecData_h
 
@@ -14440,9 +14416,20 @@ static const SharkSslCipherSuite sharkSslCipherSuiteList[] =
    SHARKSSL_SHA1_MAC_LEN
    },
    #endif
-   
+
    #if SHARKSSL_ENABLE_ECDHE_ECDSA
    
+   #if SHARKSSL_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
+   {
+   SharkSslCon_chacha20_poly1305,
+   SharkSslCon_sha256,
+   SHARKSSL_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
+   SHARKSSL_CS_EC | SHARKSSL_CS_DHE | SHARKSSL_CS_DSA | SHARKSSL_CS_POLYCHA |SHARKSSL_CS_TLS12,
+   32, 
+   0,  
+   16  
+   },
+   #endif
    #if SHARKSSL_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
    {
    SharkSslCon_aes_gcm,
@@ -14635,6 +14622,17 @@ static const SharkSslCipherSuite sharkSslCipherSuiteList[] =
 
    #if SHARKSSL_ENABLE_RSA
    
+   #if SHARKSSL_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
+   {
+   SharkSslCon_chacha20_poly1305,
+   SharkSslCon_sha256,
+   SHARKSSL_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
+   SHARKSSL_CS_EC | SHARKSSL_CS_DHE | SHARKSSL_CS_RSA | SHARKSSL_CS_POLYCHA |SHARKSSL_CS_TLS12,
+   32, 
+   0,  
+   16  
+   },
+   #endif
    #if SHARKSSL_ECDHE_RSA_WITH_AES_256_GCM_SHA384
    {
    SharkSslCon_aes_gcm,
@@ -14823,6 +14821,17 @@ static const SharkSslCipherSuite sharkSslCipherSuiteList[] =
    #endif
 
    
+   #if SHARKSSL_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256
+   {
+   SharkSslCon_chacha20_poly1305,
+   SharkSslCon_sha256,
+   SHARKSSL_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
+   SHARKSSL_CS_DHE | SHARKSSL_CS_RSA | SHARKSSL_CS_POLYCHA |SHARKSSL_CS_TLS12,
+   32, 
+   0,  
+   16  
+   },
+   #endif
    #if SHARKSSL_DHE_RSA_WITH_AES_256_GCM_SHA384
    {
    SharkSslCon_aes_gcm,
@@ -16232,7 +16241,7 @@ typedef int (*PushConNode_Send)(
 
 
 #ifndef __DOXYGEN__
-typedef struct PushConNode 
+typedef struct PushConNode
 {
       HttpConnection super; 
 
@@ -16402,6 +16411,7 @@ BA_API void EventHandlerConfig_setMutex(
    EventHandlerConfig* o, ThreadMutex* mutex);
 BA_API void EventHandlerConfig_setMutexState(
    EventHandlerConfig* o, EhMutexT mxT);
+
 #ifdef __cplusplus
 }
 inline EventHandlerConfig::EventHandlerConfig() {
@@ -16487,6 +16497,9 @@ typedef struct EventHandler
       void setTCPNoDelay(bool enable);
 
       
+      int setKeepAlive(U32 cid,bool enable,int idle,int intv);
+
+      
       ThreadMutex* getMutex();
 
       
@@ -16528,6 +16541,8 @@ BA_API HttpConnection* EventHandler_getCon(EventHandler*o, U32 cid);
    AuthenticatedUser_get2(EventHandler_getSession(o, cid))
 BA_API void EventHandler_sendErrMsg(EventHandler*o, U32 cid, const char* msg);
 BA_API void EventHandler_setTCPNoDelay(EventHandler* o, int enable);
+BA_API int EventHandler_setKeepAlive(
+   EventHandler* o, U32 cid, BaBool enable, int idle, int intv);
 BA_API int EventHandler_sendData2All(
    EventHandler* o, const char*intf, const char* method, const char* fmt, ...);
 BA_API int EventHandler_zzsendData2All(
@@ -16573,6 +16588,10 @@ inline void EventHandler::sendErrMsg(U32 cid, const char* msg) {
 
 inline void EventHandler::setTCPNoDelay(bool enable) {
    EventHandler_setTCPNoDelay(this, enable?TRUE:FALSE);
+}
+
+inline int EventHandler::setKeepAlive(U32 cid,bool enable,int idle,int intv){
+   return EventHandler_setKeepAlive(this, cid, enable?TRUE:FALSE, idle, intv);
 }
 
 inline int EventHandler::sendData2All(const char* i, const char* m,
@@ -16695,90 +16714,6 @@ inline EventHandler* EhDir::getEventHandler() {
 #endif
 
 
-
-#ifndef __HttpServerPipe_h
-#define __HttpServerPipe_h
-
-typedef struct HttpServerPipe
-#ifdef __cplusplus
-:public SoDispCon
-{
-      
-      static bool isHttpPipeReq(HttpRequest* request);
-
-      
-      HttpServerPipe(SoDisp* dispatcher,
-                     SoDispCon_DispRecEv onRecEvent);
-
-      
-      int start(HttpRequest* request);
-
-      
-      ~HttpServerPipe();
-
-      
-      bool hasMoreData();
-
-      
-      int readData(void* data, int len);
-
-      
-      int sendData(void* data, int len);
-#if 0
-} //For emacs
-#endif
-#else
-{
-   SoDispCon super; 
-#endif
-} HttpServerPipe;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-BA_API BaBool HttpServerPipe_isHttpPipeReq(HttpRequest* request);
-BA_API void HttpServerPipe_constructor(HttpServerPipe* o,
-                                       SoDisp* dispatcher,
-                                       SoDispCon_DispRecEv onRecEvent);
-BA_API int HttpServerPipe_start(HttpServerPipe* o, HttpRequest* request);
-BA_API void HttpServerPipe_destructor(HttpServerPipe* o);
-#define HttpServerPipe_hasMoreData(o) \
-   SoDispCon_hasMoreData((SoDispCon*)(o))
-BA_API int HttpServerPipe_readData(HttpServerPipe* o, void* data, int len);
-#define HttpServerPipe_sendData( o, data, len) \
-   SoDispCon_sendData((SoDispCon*)(o), data, len)
-#ifdef __cplusplus
-}
-
-inline bool HttpServerPipe::isHttpPipeReq(HttpRequest* request) {
-   return HttpServerPipe_isHttpPipeReq(request) ? true : false;
-}
-inline HttpServerPipe::HttpServerPipe(SoDisp* dispatcher,
-                                      SoDispCon_DispRecEv onRecEvent) {
-   HttpServerPipe_constructor(this,dispatcher,onRecEvent);
-}
-inline int HttpServerPipe::start(HttpRequest* request) {
-   return HttpServerPipe_start(this, request);
-}
-inline HttpServerPipe::~HttpServerPipe() {
-   HttpServerPipe_destructor(this);
-}
-inline bool HttpServerPipe::hasMoreData() {
-   return HttpServerPipe_hasMoreData(this);
-}
-inline int HttpServerPipe::readData(void* data, int len) {
-   return HttpServerPipe_readData(this, data, len);
-}
-inline int HttpServerPipe::sendData(void* data, int len) {
-   return HttpServerPipe_sendData(this, data, len);
-}
-#endif
-
- 
-
-
-#endif
-
 #ifndef _SharkSslCon_h
 #define _SharkSslCon_h
 
@@ -16809,7 +16744,7 @@ inline int HttpServerPipe::sendData(void* data, int len) {
 #define SHARKSSL_CONTENT_TYPE_APPLICATION_DATA     23
 
 #define SHARKSSL_HANDSHAKETYPE_HELLO_REQUEST       0
-#define SHARKSSL_HANDSHAKETYPE_CLIENT_HELLO        1
+#define SHARKSSL_HANDSHAKETYPE_CLIENT_HELLO       1
 #define SHARKSSL_HANDSHAKETYPE_SERVER_HELLO        2
 #define SHARKSSL_HANDSHAKETYPE_CERTIFICATE         11
 #define SHARKSSL_HANDSHAKETYPE_SERVER_KEY_EXCHANGE 12
@@ -16894,7 +16829,7 @@ inline int HttpServerPipe::sendData(void* data, int len) {
 #error TLS 1.1 cannot be enabled when either MD5 or SHA1 are disabled
 #endif
 #if (!SHARKSSL_ENABLE_TLS_1_2)
-#error TLS 1.2 must be enabled when either MD5 or SHA1 are disabled
+
 #endif
 #endif
 
@@ -17213,11 +17148,27 @@ inline int HttpServerPipe::sendData(void* data, int len) {
 #endif  
 
 
+#if (SHARKSSL_USE_CHACHA20 && SHARKSSL_USE_POLY1305)
+#if SHARKSSL_ENABLE_TLS_1_2
+#if SHARKSSL_ENABLE_DHE_RSA
+#define SHARKSSL_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256     TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256
+#endif  
+#if SHARKSSL_ENABLE_ECDHE_RSA
+#define SHARKSSL_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256   TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
+#endif  
+#if SHARKSSL_ENABLE_ECDHE_ECDSA
+#define SHARKSSL_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256 TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
+#endif  
+#endif  
+#endif  
+
+
 #define SHARKSSL_MD5_MAC_LEN                       16
 #define SHARKSSL_SHA1_MAC_LEN                      20
 #define SHARKSSL_SHA256_MAC_LEN                    32
 #define SHARKSSL_SHA384_MAC_LEN                    48
 #define SHARKSSL_SHA512_MAC_LEN                    64
+#define SHARKSSL_POLY1305_MAC_LEN                  16
 
 #define SHARKSSL_MD5_BLOCK_LEN                     64
 #define SHARKSSL_SHA1_BLOCK_LEN                    64
@@ -17260,7 +17211,7 @@ inline int HttpServerPipe::sendData(void* data, int len) {
 #define SHARKSSL_MAX_REC_LEN                       (16384 + 2048) 
 #define SHARKSSL_MAX_REC_PAD_LEN                   SHARKSSL_MAX_BLOCK_LEN
 
-#if   SHARKSSL_USE_AES_256
+#if   (SHARKSSL_USE_AES_256 || (SHARKSSL_USE_POLY1305 && SHARKSSL_USE_CHACHA20))
 #define SHARKSSL_MAX_KEY_LEN                       32   
 #elif SHARKSSL_USE_3DES
 #define SHARKSSL_MAX_KEY_LEN                       24   
@@ -17373,6 +17324,7 @@ inline int HttpServerPipe::sendData(void* data, int len) {
 #define SHARKSSL_CS_RSA                            0x0008
 #define SHARKSSL_CS_PSK                            0x0010
 #define SHARKSSL_CS_AEAD                           0x0020  
+#define SHARKSSL_CS_POLYCHA                        0x0040  
 #define SHARKSSL_CS_TLS12                          0x0080
 #define SHARKSSL_CS_SHA384                         0x0100
 #define SHARKSSL_CS_SHA512                         0x0200
@@ -17711,7 +17663,13 @@ struct SharkSslCon
    U8 rMacH[SHARKSSL_MAX_DIGEST_BLOCK_LEN + SHARKSSL_MAX_DIGEST_LEN];
 
    #if SHARKSSL_MAX_BLOCK_LEN
+   #if ((SHARKSSL_MAX_BLOCK_LEN < 16) && (SHARKSSL_ENABLE_TLS_1_2 && ((SHARKSSL_USE_CHACHA20 && SHARKSSL_USE_POLY1305) || SHARKSSL_ENABLE_AES_GCM || SHARKSSL_ENABLE_AES_CCM)))
+   U8 wIV[16];
+   #else
    U8 wIV[SHARKSSL_MAX_BLOCK_LEN];
+   #endif
+   #elif  (SHARKSSL_ENABLE_TLS_1_2 && ((SHARKSSL_USE_CHACHA20 && SHARKSSL_USE_POLY1305) || SHARKSSL_ENABLE_AES_GCM || SHARKSSL_ENABLE_AES_CCM))
+   U8 wIV[16];
    #endif
    #if SHARKSSL_MAX_KEY_LEN
    U8 wKey[SHARKSSL_MAX_KEY_LEN];
@@ -17846,7 +17804,7 @@ int  SharkSslCon_sha384(SharkSslCon*, const U8*, U16, U8*);
 #endif
 int  SharkSslCon_HMAC(SharkSslCon *, U8, U8*, U16, U8*, U8, U8, SharkSslCon_digestFunc);
 #if SHARKSSL_ENABLE_RSA
-SHARKSSL_API int  SharkSslCertKey_RSA(const SharkSslCertKey*, U8, U8*);
+SHARKSSL_API int SharkSslCertKey_RSA(const SharkSslCertKey *ck, U8 op, U8 *inout);
 int SharkSslCertKey_RSA_public_encrypt(const SharkSslCertKey *certKey, U16 len, U8 *in, U8 *out, U8 padding);
 int SharkSslCertKey_RSA_private_decrypt(const SharkSslCertKey *certKey, U16 len, U8 *in, U8 *out, U8 padding);
 int SharkSslCertKey_RSA_private_encrypt(const SharkSslCertKey *certKey, U16 len, U8 *in, U8 *out, U8 padding);
@@ -17882,24 +17840,22 @@ int  SharkSslCon_aes_gcm(SharkSslCon*, U8, U8*, U16);
 int  SharkSslCon_aes_ccm(SharkSslCon*, U8, U8*, U16);
 #endif
 #endif
+#if (SHARKSSL_USE_CHACHA20 && SHARKSSL_USE_POLY1305 && SHARKSSL_ENABLE_TLS_1_2)
+int SharkSslCon_chacha20_poly1305(SharkSslCon*, U8, U8*, U16);
+#endif
 
 #endif
 
 
-#ifndef __JRpc_h
-#define __JRpc_h
+#ifndef __JEncoder_h
+#define __JEncoder_h
 
-
-
-#ifndef __JSerializer_h
-#define __JSerializer_h
-
-typedef struct JSerializer
+typedef struct JEncoder
 {
 #ifdef __cplusplus
       
-      JSerializer(JErr* err, BufPrint* out);
-      ~JSerializer();
+      JEncoder(JErr* err, BufPrint* out);
+      ~JEncoder();
 
       
       int setInt(S32 val);
@@ -17934,7 +17890,7 @@ typedef struct JSerializer
       int set(const char* fmt, ...);
 
       
-      int setMemberName(const char* name);
+      int setName(const char* name);
 
       
 
@@ -17972,291 +17928,104 @@ typedef struct JSerializer
       BufPrint* out;
       BaBool objectMember;
       BaBool startNewObj;
-} JSerializer;
+} JEncoder;
 #ifdef __cplusplus
 extern "C" {
 #endif
-BA_API void JSerializer_constructor(JSerializer* o, JErr* err, BufPrint* out);
-#define JSerializer_destructor(o) JSerializer_flush(o)
-BA_API int JSerializer_flush(JSerializer* o);
-BA_API int JSerializer_commit(JSerializer* o);
-#define JSerializer_getErr(o) (o)->err
-BA_API int JSerializer_setInt(JSerializer* o, S32 val);
-BA_API int JSerializer_setLong(JSerializer* o, S64 val);
+BA_API void JEncoder_constructor(JEncoder* o, JErr* err, BufPrint* out);
+#define JEncoder_destructor(o) JEncoder_flush(o)
+BA_API int JEncoder_flush(JEncoder* o);
+BA_API int JEncoder_commit(JEncoder* o);
+#define JEncoder_getErr(o) (o)->err
+BA_API int JEncoder_setInt(JEncoder* o, S32 val);
+BA_API int JEncoder_setLong(JEncoder* o, S64 val);
 #ifdef NO_DOUBLE
-#define JSerializer_setDouble JSerializer_setInt
+#define JEncoder_setDouble JEncoder_setInt
 #else
-BA_API int JSerializer_setDouble(JSerializer* o, double val);
+BA_API int JEncoder_setDouble(JEncoder* o, double val);
 #endif
 
-BA_API int JSerializer_fmtString(JSerializer* o, const char* fmt,...);
-BA_API int JSerializer_vFmtString(
-   JSerializer* o, const char* fmt,va_list argList);
-BA_API int JSerializer_setString(JSerializer* o, const char* val);
-BA_API int JSerializer_setBoolean(JSerializer* o, BaBool val);
-BA_API int JSerializer_setNull(JSerializer* o);
-BA_API int JSerializer_setJV(
-   JSerializer* o, struct JVal* val, BaBool iterateNext);
-BA_API int JSerializer_vSetJV(
-   JSerializer* o,const char** fmt,va_list* argList);
-BA_API int JSerializer_set(JSerializer* o, const char* fmt, ...);
-BA_API int JSerializer_setMemberName(JSerializer* o, const char* name);
-BA_API int JSerializer_beginObject(JSerializer* o);
-BA_API int JSerializer_endObject(JSerializer* o);
-BA_API int JSerializer_beginArray(JSerializer* o);
-BA_API int JSerializer_endArray(JSerializer* o);
-#define JSerializer_getBufPrint(o) (o)->out
+BA_API int JEncoder_fmtString(JEncoder* o, const char* fmt,...);
+BA_API int JEncoder_vFmtString(
+   JEncoder* o, const char* fmt,va_list argList);
+BA_API int JEncoder_setString(JEncoder* o, const char* val);
+BA_API int JEncoder_setBoolean(JEncoder* o, BaBool val);
+BA_API int JEncoder_setNull(JEncoder* o);
+BA_API int JEncoder_setJV(
+   JEncoder* o, struct JVal* val, BaBool iterateNext);
+BA_API int JEncoder_vSetJV(
+   JEncoder* o,const char** fmt,va_list* argList);
+BA_API int JEncoder_set(JEncoder* o, const char* fmt, ...);
+BA_API int JEncoder_setName(JEncoder* o, const char* name);
+BA_API int JEncoder_beginObject(JEncoder* o);
+BA_API int JEncoder_endObject(JEncoder* o);
+BA_API int JEncoder_beginArray(JEncoder* o);
+BA_API int JEncoder_endArray(JEncoder* o);
+#define JEncoder_getBufPrint(o) (o)->out
 #ifdef __cplusplus
 }
-inline JSerializer::JSerializer(JErr* err, BufPrint* out) {
-   JSerializer_constructor(this,err, out); }
-inline JSerializer::~JSerializer() {
-   JSerializer_destructor(this); }
-inline int JSerializer::setInt(S32 val) {
-   return  JSerializer_setInt(this, val); }
-inline int JSerializer::setLong(S64 val) {
-   return  JSerializer_setLong(this, val); }
+inline JEncoder::JEncoder(JErr* err, BufPrint* out) {
+   JEncoder_constructor(this,err, out); }
+inline JEncoder::~JEncoder() {
+   JEncoder_destructor(this); }
+inline int JEncoder::setInt(S32 val) {
+   return  JEncoder_setInt(this, val); }
+inline int JEncoder::setLong(S64 val) {
+   return  JEncoder_setLong(this, val); }
 #ifndef NO_DOUBLE
-inline int JSerializer::setDouble(double val) {
-   return  JSerializer_setDouble(this, val); }
+inline int JEncoder::setDouble(double val) {
+   return  JEncoder_setDouble(this, val); }
 #endif
-inline int JSerializer::fmtString(const char* fmt,...) {
+inline int JEncoder::fmtString(const char* fmt,...) {
    int retv; va_list argList;
    va_start(argList, fmt); 
-   retv = JSerializer_fmtString(this, fmt, argList);
+   retv = JEncoder_fmtString(this, fmt, argList);
    va_end(argList);
    return retv;
 }
-inline int JSerializer::vFmtString(const char* fmt,va_list argList) {
-   return JSerializer_vFmtString(this, fmt, argList); }
-inline int JSerializer::setString(const char* val) {
-   return  JSerializer_setString(this, val); }
-inline int JSerializer::setBoolean(bool val) {
-   return  JSerializer_setBoolean(this, val ? TRUE : FALSE); }
-inline int JSerializer::setNull() {
-   return  JSerializer_setNull(this); }
-inline int JSerializer::setJV(struct JVal* val, bool iterateNext) {
-   return  JSerializer_setJV(this,val,iterateNext?TRUE:FALSE); }
-inline int JSerializer::set(const char* fmt, ...) {
+inline int JEncoder::vFmtString(const char* fmt,va_list argList) {
+   return JEncoder_vFmtString(this, fmt, argList); }
+inline int JEncoder::setString(const char* val) {
+   return  JEncoder_setString(this, val); }
+inline int JEncoder::setBoolean(bool val) {
+   return  JEncoder_setBoolean(this, val ? TRUE : FALSE); }
+inline int JEncoder::setNull() {
+   return  JEncoder_setNull(this); }
+inline int JEncoder::setJV(struct JVal* val, bool iterateNext) {
+   return  JEncoder_setJV(this,val,iterateNext?TRUE:FALSE); }
+inline int JEncoder::set(const char* fmt, ...) {
    int retv; va_list argList;
    va_start(argList, fmt); 
-   retv=JSerializer_vSetJV(this,&fmt,&argList);
+   retv=JEncoder_vSetJV(this,&fmt,&argList);
    va_end(argList);
    return retv;
 }
-inline int JSerializer::setMemberName(const char* name) {
-   return  JSerializer_setMemberName(this, name); }
-inline int JSerializer::beginObject() {
-   return  JSerializer_beginObject(this); }
-inline int JSerializer::endObject() {
-   return  JSerializer_endObject(this); }
-inline int JSerializer::beginArray() {
-   return  JSerializer_beginArray(this); }
-inline int JSerializer::endArray() {
-   return  JSerializer_endArray(this); }
-inline JErr* JSerializer::getErr() {
-   return JSerializer_getErr(this); }
-inline int JSerializer::flush() {
-   return JSerializer_flush(this); }
-inline int JSerializer::commit() {
-   return JSerializer_commit(this); }
-inline BufPrint* JSerializer::getBufPrint() {
-   return JSerializer_getBufPrint(this); }
+inline int JEncoder::setName(const char* name) {
+   return  JEncoder_setName(this, name); }
+inline int JEncoder::beginObject() {
+   return  JEncoder_beginObject(this); }
+inline int JEncoder::endObject() {
+   return  JEncoder_endObject(this); }
+inline int JEncoder::beginArray() {
+   return  JEncoder_beginArray(this); }
+inline int JEncoder::endArray() {
+   return  JEncoder_endArray(this); }
+inline JErr* JEncoder::getErr() {
+   return JEncoder_getErr(this); }
+inline int JEncoder::flush() {
+   return JEncoder_flush(this); }
+inline int JEncoder::commit() {
+   return JEncoder_commit(this); }
+inline BufPrint* JEncoder::getBufPrint() {
+   return JEncoder_getBufPrint(this); }
 #endif
+
+
+#define JE_MEMBER(o, m) #m, (o)->m
+
 
   
 
-#endif
-#ifndef __DOXYGEN__
-struct JRpc;
-struct JRpcObj;
-#endif
-
-
-
-
-
-typedef int (*JRpcMethodCB)(
-   struct JRpcObj* rpc,JVal* val,JErr* err,BufPrint* out);
- 
-
-typedef struct JRpcMethod
-{
-      const char* methodName;
-      JRpcMethodCB rpc;
-} JRpcMethod;
- 
-
-
-typedef struct JRpc
-{
-#ifdef __cplusplus
-      
-      JRpc();
-      
-      ~JRpc();
-
-      
-      static void sendErr(JErr* err, BufPrint* out);
-
-      
-      static void sendUserErr(BufPrint* out, S32 errCode, JVal* errVal,
-                              const char* fmt, ...);
-
-      
-      static void vSendUserErr(BufPrint* out, S32 errCode,JVal* errVal,
-                               const char* fmt, va_list argList);
-
-      
-      int service(JParser* p, JVal* val, BufPrint* out);
-#endif
-      SplayTree rpcObjTree;  
-} JRpc;
-#ifdef __cplusplus
-extern "C" {
-#endif
-BA_API void JRpc_sendErr(JErr* err, BufPrint* out);
-BA_API void JRpc_sendUserErr(BufPrint* out, S32 errCode,
-                             JVal* errVal, const char* fmt, ...);
-BA_API void JRpc_vSendUserErr(BufPrint* out, S32 errCode,
-                              JVal* errVal, const char* fmt, va_list argList);
-BA_API int JRpc_service(JRpc* o, JParser* p, JVal* val, BufPrint* out);
-BA_API void JRpc_constructor(JRpc* o);
-BA_API void JRpc_destructor(JRpc* o);
-#ifdef __cplusplus
-}
-inline void JRpc::sendErr(JErr* err, BufPrint* out) {
-   JRpc_sendErr(err, out); }
-inline void JRpc::sendUserErr(BufPrint* out, S32 errCode,
-                              JVal* errVal, const char* fmt, ...) {
-   va_list argList;
-   va_start(argList, fmt); 
-   JRpc_vSendUserErr(out,  errCode, errVal, fmt, argList);
-   va_end(argList);
-}
-inline void JRpc::vSendUserErr(BufPrint* out, S32 errCode,JVal* errVal,
-                               const char* fmt, va_list argList) {
-   JRpc_vSendUserErr(out,  errCode, errVal, fmt, argList); }
-inline int JRpc::service(JParser* p, JVal* val, BufPrint* out) {
-   return JRpc_service(this, p, val, out); }
-inline JRpc::JRpc() {
-   JRpc_constructor(this); }
-inline JRpc::~JRpc() {
-   JRpc_destructor(this); }
-#endif
-
-
-
-typedef struct JRpcObj
-{
-#ifdef __cplusplus
-      
-       JRpcObj(JRpc* rpc, const char* objName,
-              const struct JRpcMethod* methods, int methodSize);
-      
-      ~JRpcObj();
-
-#endif
-      SplayTreeNode super; 
-      JRpc* rpc;
-      const struct JRpcMethod* methods;
-      int methodsSize;
-} JRpcObj;
-#ifdef __cplusplus
-extern "C" {
-#endif
-BA_API void JRpcObj_constructor(JRpcObj* o, JRpc* rpc, const char* objName,
-                         const struct JRpcMethod* methods, int methodSize);
-BA_API void JRpcObj_destructor(JRpcObj* o);
-#ifdef __cplusplus
-}
-inline JRpcObj::JRpcObj(JRpc* rpc, const char* objName,
-                       const struct JRpcMethod* methods, int methodSize) {
-   JRpcObj_constructor(this, rpc, objName, methods, methodSize); }
-inline JRpcObj::~JRpcObj() {
-   JRpcObj_destructor(this); }
-#endif
-
-
-
-typedef struct JRpcResp
-{
-#ifdef __cplusplus
-      
-      JRpcResp(JErr* err, BufPrint* out);
-
-      
-      ~JRpcResp();
-
-      
-      JSerializer* getSerializer();
-      
-      void sendResponse();
-
-      U8 buf[sizeof(JSerializer)];
-#else
-      JSerializer s;
-#endif
-      U32 cursor;
-      BaBool respSent;
-} JRpcResp;
-#ifdef __cplusplus
-extern "C" {
-#endif
-BA_API void JRpcResp_constructor(JRpcResp* o, JErr* err, BufPrint* out);
-#define JRpcResp_destructor(o) JRpcResp_sendResponse(o)
-BA_API JSerializer* JRpcResp_getSerializer(JRpcResp* o);
-BA_API void JRpcResp_sendResponse(JRpcResp* o);
-#ifdef __cplusplus
-}
-inline JRpcResp::JRpcResp(JErr* err, BufPrint* out) {
-   JRpcResp_constructor(this, err, out); }
-inline JRpcResp::~JRpcResp() {
-   JRpcResp_destructor(this); }
-inline JSerializer* JRpcResp::getSerializer() {
-   return JRpcResp_getSerializer(this); }
-inline void JRpcResp::sendResponse() {
-   JRpcResp_sendResponse(this); }
-#endif
-
-  
-#endif
-
-
-#ifndef __JRpcPage_h
-#define __JRpcPage_h
- 
-typedef struct JRpcPage
-#ifdef __cplusplus
-   : public HttpPage 
-{
-      
-      JRpcPage(const char* pageName,
-               JRpc* rpc,
-               AllocatorIntf* vAlloc=AllocatorIntf_getDefault(),
-               AllocatorIntf* dAlloc=AllocatorIntf_getDefault());
-#else
-{
-   HttpPage super;
-#endif
-      JRpc* rpc;
-      AllocatorIntf* vAlloc; //Allocator used for allocating JVal types
-      AllocatorIntf* dAlloc; //Allocator used for generic dynamic allocation
-} JRpcPage;
-
-#ifdef __cplusplus
-      extern "C" {
-#endif
-BA_API void JRpcPage_constructor(JRpcPage* o, const char* pageName,JRpc* rpc,
-                                 AllocatorIntf* vAlloc,AllocatorIntf* dAlloc);
-#ifdef __cplusplus
-}
-inline JRpcPage::JRpcPage(const char* pageName,JRpc* rpc,
-                          AllocatorIntf* vAlloc,AllocatorIntf* dAlloc) {
-   JRpcPage_constructor(this, pageName,rpc,vAlloc,dAlloc); }
-#endif
-
-  
 #endif
 
 #ifndef _RecIoIter_h
@@ -18516,731 +18285,6 @@ int ljsonlibTabEncode(lua_State* L, BufPrint* b, int recIxTab, int tabIx);
 
 
 #endif
-
- 
-#ifndef _XmlRpc_h
-#define _XmlRpc_h
-
-#ifndef __DOXYGEN__
-struct XmlRpcMethod;
-struct XmlRpcVal;
-struct XmlRpcFiber;
-struct XmlRpcPage;
-#endif
-
-typedef enum {
-   
-   XmlRpcElemType_Array=0,
-   XmlRpcElemType_Base64,
-   XmlRpcElemType_Boolean,
-   XmlRpcElemType_Data,
-   XmlRpcElemType_DateTime,
-   XmlRpcElemType_Double,
-   XmlRpcElemType_I4,
-   XmlRpcElemType_Int,
-   XmlRpcElemType_Member,
-   XmlRpcElemType_MethodCall,
-   XmlRpcElemType_MethodName,
-   XmlRpcElemType_Name,
-   XmlRpcElemType_Nil,
-   XmlRpcElemType_Param,
-   XmlRpcElemType_Params,
-   XmlRpcElemType_String,
-   XmlRpcElemType_Struct,
-   XmlRpcElemType_Value,
-   
-
-   
-   XmlRpcElemType_Base64Decoded,
-   XmlRpcElemType_EndTagDetected,
-   XmlRpcElemType_Unknown
-}XmlRpcElemType;
-
- 
-
-
-
-
-
-
-typedef enum {
-   XmlRpcFault_NoError=0,
-
-   XmlRpcFault_NotWellFormed = -32700,
-   XmlRpcFault_UnsupportedEncoding = -32701,
-   XmlRpcFault_InvalidCharacterForEncoding = -32702,
-
-   XmlRpcFault_InvalidXmlRpc = -32600,
-   XmlRpcFault_MethodNotFound = -32601,
-   XmlRpcFault_InvalidMethodParams = -32602,
-
-   XmlRpcFault_ApplicationError = -32500,
-   XmlRpcFault_SystemError = -32400
-} XmlRpcFaultCodes;
-
-
-    
-typedef struct XmlRpcFault
-{
-#ifdef __cplusplus
-
-      
-      XmlRpcFault();
-
-      
-      ~XmlRpcFault();
-
-      
-      void reset();
-
-      
-      bool isError();
-      
-      bool noError();
-
-      
-      int fmtError(int ecode,const char* fmt, ...);
-
-      
-      void setDynBuffer(DynBuffer* dynBuffer);
-
-      
-      BufPrint* getBufPrint();
-
-      
-      int commitBufPrint(int eCode);
-
-      
-      int setError(int ecode,const char* msg);
-
-      
-      int setMallocError();
-
-      
-      int setReallocError();
-
-      
-      int setTooFewParams();
-#endif
-      const char* msg;
-      const char* found;
-      AllocatorIntf* alloc;
-      DynBuffer* dynBuffer;
-      U32 errorStartPos;
-      int eCode;
-} XmlRpcFault;
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-BA_API void XmlRpcFault_constructor(XmlRpcFault* o);
-#define XmlRpcFault_destructor(o) 
-#define XmlRpcFault_reset(o) (o)->eCode = XmlRpcFault_NoError
-#define XmlRpcFault_isError(o) ((o)->eCode != XmlRpcFault_NoError)
-#define XmlRpcFault_noError(o) ((o)->eCode == XmlRpcFault_NoError)
-BA_API BufPrint* XmlRpcFault_getBufPrint(XmlRpcFault* o);
-BA_API int XmlRpcFault_commitBufPrint(XmlRpcFault* o, int eCode);
-BA_API int XmlRpcFault_vfmtError(
-   XmlRpcFault* o,int ecode,const char* fmt,va_list argList);
-BA_API int XmlRpcFault_fmtError(XmlRpcFault* o,int ecode,const char* fmt, ...);
-#define XmlRpcFault_setDynBuffer(o, db) (o)->dynBuffer=db
-BA_API int XmlRpcFault_setError(XmlRpcFault* o,int ecode,const char* msg);
-BA_API int XmlRpcFault_setMallocError(XmlRpcFault* o);
-BA_API int XmlRpcFault_setReallocError(XmlRpcFault* o);
-BA_API int XmlRpcFault_setTooFewParams(XmlRpcFault* o);
-BA_API void XmlRpcFault_sendError(XmlRpcFault* o, HttpAsynchResp* resp);
-BA_API void XmlRpcFault_sendError2(
-   int ecode,const char* msg, struct XmlRpcFiber* fiber);
-#ifdef __cplusplus
-}
-inline XmlRpcFault::XmlRpcFault() {
-   XmlRpcFault_constructor(this); }
-inline XmlRpcFault::~XmlRpcFault() {
-   XmlRpcFault_destructor(this); }
-inline void XmlRpcFault::reset() {
-   XmlRpcFault_reset(this); }
-inline bool XmlRpcFault::isError() {
-   return XmlRpcFault_isError(this) ? true : false; }
-inline bool XmlRpcFault::noError() {
-   return XmlRpcFault_noError(this) ? true : false; }
-inline BufPrint* XmlRpcFault::getBufPrint() {
-   return XmlRpcFault_getBufPrint(this); }
-inline int XmlRpcFault::commitBufPrint(int eCode) {
-   return XmlRpcFault_commitBufPrint(this, eCode); }
-inline int XmlRpcFault::fmtError(int ecode,const char* fmt, ...) {
-   int retv; va_list varg;
-   va_start(varg, fmt);  
-   retv=XmlRpcFault_vfmtError(this, ecode, fmt, varg);
-   va_end(varg);
-   return retv;
-}
-inline void XmlRpcFault::setDynBuffer(DynBuffer* dynBuffer) {
-   XmlRpcFault_setDynBuffer(this, dynBuffer); }
-inline int XmlRpcFault::setError(int ecode,const char* msg) {
-   return  XmlRpcFault_setError(this,ecode,msg); }
-inline int XmlRpcFault::setMallocError() {
-   return  XmlRpcFault_setMallocError(this); }
-inline int XmlRpcFault::setReallocError() {
-   return  XmlRpcFault_setReallocError(this); }
-inline int XmlRpcFault::setTooFewParams() {
-   return  XmlRpcFault_setTooFewParams(this); }
-#endif
-
-
-typedef struct XmlRpcVal
-{
-#ifdef __cplusplus
-      
-      S32 getInt(XmlRpcFault* fault);
-
-      
-      const char* getAsciiVal(XmlRpcFault* fault);
-
-      
-      bool isStructMember();
-
-      
-      XmlRpcElemType getType();
-
-#ifndef NO_DOUBLE
-      
-      double getDouble(XmlRpcFault* fault);
-#endif
-      
-      const char* getString(XmlRpcFault* fault);
-
-      
-      BaBool getBoolean(XmlRpcFault* fault);
-
-      
-      int getBase64(XmlRpcFault* fault, void** data);
-
-
-      
-      BaTime getDateTime(XmlRpcFault* fault);
-
-      
-      const char* getIso8601(XmlRpcFault* fault);
-
-      
-      const char* getMemberName();
-
-      
-      struct XmlRpcVal* getX(XmlRpcFault* fault);
-
-      
-      XmlRpcVal* getStruct(XmlRpcFault* fault);
-
-      
-      XmlRpcVal* getArray(XmlRpcFault* fault);
-
-
-      
-      S32 getLength(XmlRpcFault* fault);
-
-      
-      XmlRpcVal* getNextElem();
-
-      
-      XmlRpcVal* get(XmlRpcFault* fault,const char* fmt, ...);
-#endif
-      U8 elemType; 
-      U8 magicNo;
-      U16 valOffs;
-      U16 nextElemOffs; 
-      U16 nameOffs;
-} XmlRpcVal;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-#define XmlRpcVal_isStructMember(o) ((o)->nameOffs != 0)
-BA_API S32 XmlRpcVal_getInt(struct XmlRpcVal* o, XmlRpcFault* fault);
-BA_API const char* XmlRpcVal_getAsciiVal(
-   struct XmlRpcVal* o, XmlRpcFault* fault);
-BA_API XmlRpcElemType XmlRpcVal_getType(struct XmlRpcVal* o);
-#ifdef NO_DOUBLE
-#define XmlRpcVal_getDouble XmlRpcVal_getInt
-#else
-BA_API double XmlRpcVal_getDouble(struct XmlRpcVal* o, XmlRpcFault* fault);
-#endif
-BA_API const char* XmlRpcVal_getString(
-   struct XmlRpcVal* o, XmlRpcFault* fault);
-BA_API BaBool XmlRpcVal_getBoolean(struct XmlRpcVal* o, XmlRpcFault* fault);
-BA_API int XmlRpcVal_getBase64(
-   struct XmlRpcVal* o, XmlRpcFault* fault, void** data);
-BA_API BaTime XmlRpcVal_getDateTime(struct XmlRpcVal* o, XmlRpcFault* fault);
-BA_API const char* XmlRpcVal_getIso8601(XmlRpcVal* o, XmlRpcFault* fault);
-BA_API const char* XmlRpcVal_getMemberName(struct XmlRpcVal* o);
-BA_API struct XmlRpcVal* XmlRpcVal_getX(
-   struct XmlRpcVal* o, XmlRpcFault* fault);
-BA_API struct XmlRpcVal* XmlRpcVal_getStruct(
-   struct XmlRpcVal* o, XmlRpcFault* fault);
-BA_API struct XmlRpcVal* XmlRpcVal_getArray(
-   struct XmlRpcVal* o, XmlRpcFault* fault);
-BA_API S32 XmlRpcVal_getLength(struct XmlRpcVal* o, XmlRpcFault* fault);
-BA_API struct XmlRpcVal* XmlRpcVal_getNextElem(struct XmlRpcVal* o);
-BA_API struct XmlRpcVal* XmlRpcVal_vget(
-   struct XmlRpcVal* o,
-   XmlRpcFault* fault,
-   const char** fmt,
-   va_list* argList);
-BA_API struct XmlRpcVal* XmlRpcVal_get(
-   struct XmlRpcVal* o,XmlRpcFault* fault,const char* fmt, ...);
-
-#ifdef __cplusplus
-}
-inline bool XmlRpcVal::isStructMember() {
-   return  XmlRpcVal_isStructMember(this); }
-inline S32 XmlRpcVal::getInt(XmlRpcFault* fault) {
-   return  XmlRpcVal_getInt(this, fault); }
-inline const char* XmlRpcVal::getAsciiVal(XmlRpcFault* fault) {
-   return  XmlRpcVal_getAsciiVal(this, fault); }
-inline XmlRpcElemType XmlRpcVal::getType() {
-   return  XmlRpcVal_getType(this); }
-#ifndef NO_DOUBLE
-inline double XmlRpcVal::getDouble(XmlRpcFault* fault) {
-   return  XmlRpcVal_getDouble(this, fault); }
-#endif
-inline const char* XmlRpcVal::getString(XmlRpcFault* fault) {
-   return  XmlRpcVal_getString(this, fault); }
-inline BaBool XmlRpcVal::getBoolean(XmlRpcFault* fault) {
-   return  XmlRpcVal_getBoolean(this, fault); }
-inline int XmlRpcVal::getBase64(XmlRpcFault* fault, void** data) {
-   return  XmlRpcVal_getBase64(this, fault, data); }
-inline BaTime XmlRpcVal::getDateTime(XmlRpcFault* fault) {
-   return  XmlRpcVal_getDateTime(this, fault); }
-inline const char* XmlRpcVal::getIso8601(XmlRpcFault* fault) {
-   return  XmlRpcVal_getIso8601(this, fault); }
-inline const char* XmlRpcVal::getMemberName() {
-   return  XmlRpcVal_getMemberName(this); }
-inline struct XmlRpcVal* XmlRpcVal::getX(XmlRpcFault* fault) {
-   return  XmlRpcVal_getX(this, fault); }
-inline XmlRpcVal* XmlRpcVal::getStruct(XmlRpcFault* fault) {
-   return  XmlRpcVal_getStruct(this, fault); }
-inline XmlRpcVal* XmlRpcVal::getArray(XmlRpcFault* fault) {
-   return  XmlRpcVal_getArray(this, fault); }
-inline S32 XmlRpcVal::getLength(XmlRpcFault* fault) {
-   return XmlRpcVal_getLength(this, fault);
-}
-inline XmlRpcVal* XmlRpcVal::getNextElem() {
-   return  XmlRpcVal_getNextElem(this); }
-inline XmlRpcVal* XmlRpcVal::get(XmlRpcFault* fault,const char* fmt, ...) {
-   XmlRpcVal* retv; va_list argList;
-   va_start(argList, fmt); 
-   retv=XmlRpcVal_vget(this,fault,&fmt,&argList); 
-   va_end(argList);
-   return retv;
-}
-#endif
-
-
-
-typedef struct XmlRpcFiber
-{
-#ifdef __cplusplus
-
-      
-      ThreadMutex* getMutex();
-
-      
-      XmlRpcVal* getFirstVal();
-
-      
-      HttpSession* getSession();
-
-      
-      AuthenticatedUser* getUser();
-
-      
-
-      U32 getSessionId();
-
-      
-      void terminate();
-#endif
-      HttpFiber super; 
-      MqMessage mqNode;
-      char* encoding;
-      struct XmlRpcPage* page;
-      U32 sessionId;
-} XmlRpcFiber;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-#define XmlRpcFiber_getMutex(o) \
-   SoDisp_getMutex(HttpConnection_getDispatcher((HttpConnection*)(o))) 
-#define XmlRpcFiber_getFirstVal(o)  \
-   ((XmlRpcVal*)(((U8*)HttpFiber_getData((HttpFiber*)(o))) + \
-    *((U16*)HttpFiber_getData((HttpFiber*)(o)))))
-#define XmlRpcFiber_getSessionId(o) (o)->sessionId
-#define XmlRpcFiber_getSession(o) \
-   HttpServer_getSession(HttpFiber_getServer((HttpFiber*)(o)), (o)->sessionId)
-#define XmlRpcFiber_getUser(o) AuthenticatedUser_get2(XmlRpcFiber_getSession(o))
-BA_API void XmlRpcFiber_terminate(XmlRpcFiber* o);
-#ifdef __cplusplus
-}
-inline ThreadMutex* XmlRpcFiber::getMutex() {
-   return XmlRpcFiber_getMutex(this);
-}
-inline XmlRpcVal* XmlRpcFiber::getFirstVal() {
-   return XmlRpcFiber_getFirstVal(this); }
-inline void XmlRpcFiber::terminate() {
-   XmlRpcFiber_terminate(this); }
-inline HttpSession* XmlRpcFiber::getSession() {
-   return XmlRpcFiber_getSession(this); }
-inline U32 XmlRpcFiber::getSessionId() {
-   return XmlRpcFiber_getSessionId(this); }
-inline AuthenticatedUser* XmlRpcFiber::getUser() {
-   return XmlRpcFiber_getUser(this); }
-#endif
-
-
-#ifndef __DOXYGEN__
-typedef struct
-{
-      char* nextPtr; 
-      char* endPtr; 
-      XmlRpcElemType curElem;
-      BaBool emptyElem;
-} ElemLexer;
-#endif
-
-
-typedef struct XmlRpcParser
-{
-#ifdef __cplusplus
-      
-      XmlRpcParser(char* buf, U16 size);
-      
-      int parse(XmlRpcVal** firstVal);
-#endif
-      ElemLexer lexer;
-      char* encoding;
-}XmlRpcParser;
- 
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-BA_API int XmlRpcParser_parseMethod(XmlRpcParser* o, XmlRpcVal** val, char** methodName);
-BA_API void XmlRpcParser_constructor(XmlRpcParser* o, char* buf, U16 size);
-BA_API int XmlRpcParser_parse(XmlRpcParser* o, XmlRpcVal** val);
-#ifdef __cplusplus
-}
-inline XmlRpcParser::XmlRpcParser(char* buf, U16 size) {
-   XmlRpcParser_constructor(this, buf, size);
-}
-inline int XmlRpcParser::parse(XmlRpcVal** val) {
-   return XmlRpcParser_parse(this, val);
-}
-
-#endif
-
-
-
-
-typedef struct XmlRpcSerializer
-{
-#ifdef __cplusplus
-      
-      XmlRpcSerializer(int startSize,int expandSize=0,AllocatorIntf* alloc=0);
-
-      
-      ~XmlRpcSerializer();
-
-      
-      const char* getXmlBuf();
-
-      
-      void erase();
-
-      
-      U32 getXmlBufSize();
-      
-      
-      void sendResponse(XmlRpcFiber** fiber);
-
-      
-      int setInt(S32 val);
-#ifndef NO_DOUBLE
-
-      
-      int setDouble(double val);
-#endif
-
-      
-      int setString(const char* val);
-
-      
-      int setBoolean(bool val);
-
-      
-      int setBase64(const void* val, int len);
-
-      
-      int setDateTime(BaTime val);
-
-      
-      int setIso8601(const char* time);
-
-      
-      int setX(struct XmlRpcVal* val, bool iterateNext=false);
-
-      
-      int set(const char* fmt, ...);
-
-      
-      int setMemberName(const char* name);
-
-      
-
-      
-      void setMultipleParam();
-
-      
-      int beginStruct();
-
-      
-      int endStruct();
-
-      
-      int beginArray();
-
-      
-      int endArray();
-
-      
-      XmlRpcFault* getFault();
-#endif
-      DynBuffer super; 
-      XmlRpcFault fault;
-      struct
-      {
-            U8 level;
-            U8 data[8];
-      }structStack;
-      BaBool structMember;
-      BaBool param; 
-      BaBool multipleParamOK;
-} XmlRpcSerializer;
-#ifdef __cplusplus
-extern "C" {
-#endif
-BA_API void XmlRpcSerializer_constructor(
-   XmlRpcSerializer* o,
-   int startSize,
-   int expandSize,
-   AllocatorIntf* alloc);
-BA_API void XmlRpcSerializer_destructor(XmlRpcSerializer* o);
-BA_API void XmlRpcSerializer_erase(XmlRpcSerializer* o);
-#define XmlRpcSerializer_getXmlBuf(o) (((BufPrint*)o)->buf)
-#define XmlRpcSerializer_getXmlBufSize(o) (((BufPrint*)o)->cursor)
-#define XmlRpcSerializer_getFault(o) (&(o)->fault)
-BA_API void XmlRpcSerializer_sendResponse(
-   XmlRpcSerializer* o, XmlRpcFiber** fiber);
-BA_API int XmlRpcSerializer_setInt(XmlRpcSerializer* o, S32 val);
-#ifdef NO_DOUBLE
-#define XmlRpcSerializer_setDouble XmlRpcSerializer_setInt
-#else
-BA_API int XmlRpcSerializer_setDouble(XmlRpcSerializer* o, double val);
-#endif
-BA_API int XmlRpcSerializer_setString(XmlRpcSerializer* o, const char* val);
-BA_API int XmlRpcSerializer_setBoolean(XmlRpcSerializer* o, BaBool val);
-BA_API int XmlRpcSerializer_setBase64(
-   XmlRpcSerializer* o, const void* val, int len);
-BA_API int XmlRpcSerializer_setDateTime(XmlRpcSerializer* o, BaTime val);
-BA_API int XmlRpcSerializer_setIso8601(XmlRpcSerializer* o, const char* time);
-BA_API int XmlRpcSerializer_setX(
-   XmlRpcSerializer* o, struct XmlRpcVal* val, BaBool iterateNext);
-BA_API int XmlRpcSerializer_vset(
-   XmlRpcSerializer* o,const char** fmt,va_list* argList);
-BA_API int XmlRpcSerializer_set(XmlRpcSerializer* o, const char* fmt, ...);
-BA_API int XmlRpcSerializer_setMemberName(
-   XmlRpcSerializer* o, const char* name);
-#define XmlRpcSerializer_setMultipleParam(o) (o)->multipleParamOK=TRUE
-BA_API int XmlRpcSerializer_beginStruct(XmlRpcSerializer* o);
-BA_API int XmlRpcSerializer_endStruct(XmlRpcSerializer* o);
-BA_API int XmlRpcSerializer_beginArray(XmlRpcSerializer* o);
-BA_API int XmlRpcSerializer_endArray(XmlRpcSerializer* o);
-#ifdef __cplusplus
-}
-inline XmlRpcSerializer::XmlRpcSerializer(
-   int startSize,int expandSize,AllocatorIntf* alloc) {
-   XmlRpcSerializer_constructor(this,startSize,expandSize,alloc); }
-inline XmlRpcSerializer::~XmlRpcSerializer() {
-   XmlRpcSerializer_destructor(this); }
-inline void XmlRpcSerializer::erase() {
-   XmlRpcSerializer_erase(this); }
-inline const char* XmlRpcSerializer::getXmlBuf() {
-   return XmlRpcSerializer_getXmlBuf(this); }
-inline U32 XmlRpcSerializer::getXmlBufSize() {
-   return XmlRpcSerializer_getXmlBufSize(this);
-}
-inline void XmlRpcSerializer::sendResponse(XmlRpcFiber** fiber) {
-   XmlRpcSerializer_sendResponse(this, fiber); }
-inline int XmlRpcSerializer::setInt(S32 val) {
-   return  XmlRpcSerializer_setInt(this, val); }
-#ifndef NO_DOUBLE
-inline int XmlRpcSerializer::setDouble(double val) {
-   return  XmlRpcSerializer_setDouble(this, val); }
-#endif
-inline int XmlRpcSerializer::setString(const char* val) {
-   return  XmlRpcSerializer_setString(this, val); }
-inline int XmlRpcSerializer::setBoolean(bool val) {
-   return  XmlRpcSerializer_setBoolean(this, val ? TRUE : FALSE); }
-inline int XmlRpcSerializer::setBase64(const void* val, int len) {
-   return  XmlRpcSerializer_setBase64(this, val, len); }
-inline int XmlRpcSerializer::setDateTime(BaTime val) {
-   return  XmlRpcSerializer_setDateTime(this, val); }
-inline int XmlRpcSerializer::setIso8601(const char* time) {
-   return  XmlRpcSerializer_setIso8601(this, time); }
-inline int XmlRpcSerializer::setX(struct XmlRpcVal* val, bool iterateNext) {
-   return  XmlRpcSerializer_setX(this,val,iterateNext?TRUE:FALSE); }
-inline int XmlRpcSerializer::set(const char* fmt, ...) {
-   int retv; va_list argList;
-   va_start(argList, fmt); 
-   retv=XmlRpcSerializer_vset(this,&fmt,&argList);
-   va_end(argList);
-   return retv;
-}
-inline int XmlRpcSerializer::setMemberName(const char* name) {
-   return  XmlRpcSerializer_setMemberName(this, name); }
-inline void XmlRpcSerializer::setMultipleParam() {
-   XmlRpcSerializer_setMultipleParam(this);
-}
-inline int XmlRpcSerializer::beginStruct() {
-   return  XmlRpcSerializer_beginStruct(this); }
-inline int XmlRpcSerializer::endStruct() {
-   return  XmlRpcSerializer_endStruct(this); }
-inline int XmlRpcSerializer::beginArray() {
-   return  XmlRpcSerializer_beginArray(this); }
-inline int XmlRpcSerializer::endArray() {
-   return  XmlRpcSerializer_endArray(this); }
-inline XmlRpcFault* XmlRpcSerializer::getFault() {
-   return XmlRpcSerializer_getFault(this); }
-#endif
-
-
-typedef struct XmlRpcPage
-#ifdef __cplusplus
- : public HttpPage
-{
-
-      
-      XmlRpcPage(const char* pageName,
-                 int dynBufStartSize,
-                 int dynBufExpandSize,
-                 AllocatorIntf* pool=AllocatorIntf::getDefault(),
-                 AllocatorIntf* alloc=AllocatorIntf::getDefault());
-
-      
-      void setMessageQueue(MqInterf* mq);
-#if 0
-}
-#endif
-#else
-{
-      HttpPage super; 
-#endif
-      SplayTree xmlRpcTree; 
-      AllocatorIntf* pool;
-      int dynBufStartSize;
-      int dynBufExpandSize;
-      AllocatorIntf* alloc;
-      MqInterf* mq;
-} XmlRpcPage;
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-BA_API void XmlRpcPage_constructor(
-   XmlRpcPage* o,
-   const char* pageName,
-   int dynBufStartSize,
-   int dynBufExpandSize,
-   AllocatorIntf* pool,
-   AllocatorIntf* alloc);
-#define XmlRpcPage_setMessageQueue(o, q) (o)->mq=q
-
-#ifdef __cplusplus
-}
-inline XmlRpcPage::XmlRpcPage(
-   const char* pageName,int dynBufStartSize,
-   int dynBufExpandSize,AllocatorIntf* pool,AllocatorIntf* alloc) {
-      XmlRpcPage_constructor(
-         this,pageName,dynBufStartSize,dynBufExpandSize,pool,alloc);
-}
-inline void XmlRpcPage::setMessageQueue(MqInterf* mq) {
-   XmlRpcPage_setMessageQueue(this, mq);
-}
-#endif
-
-
-
-typedef struct XmlRpcObj
-{
-#ifdef __cplusplus
-      
-
-      XmlRpcObj(XmlRpcPage* xmlRpcResource, const char* name,
-             const struct XmlRpcMethod* methods, int methodsSize);
-      ~XmlRpcObj();
-      const char* getName();
-#endif
-      SplayTreeNode super; 
-
-      XmlRpcPage* parentPage;
-      const struct XmlRpcMethod* methods;
-      int methodsSize;
-
-} XmlRpcObj;
-#ifdef __cplusplus
-extern "C" {
-#endif
-BA_API void XmlRpcObj_constructor(
-   XmlRpcObj* o,
-   XmlRpcPage* parentPage,
-   const char* name,
-   const struct XmlRpcMethod* methods,
-   int methodsSize);
-BA_API void XmlRpcObj_destructor(XmlRpcObj* o);
-#define XmlRpcObj_getName(o) \
-   ((const char*)SplayTreeNode_getKey((SplayTreeNode*)(o)))
-#ifdef __cplusplus
-}
-inline XmlRpcObj::XmlRpcObj(
-   XmlRpcPage* parentPage,const char* name,const struct XmlRpcMethod* methods,
-   int methodsSize) {
-     XmlRpcObj_constructor(this,parentPage,name,methods,methodsSize);
-}
-inline XmlRpcObj::~XmlRpcObj() {
-     XmlRpcObj_destructor(this); }
-inline const char* XmlRpcObj::getName() {
-   return XmlRpcObj_getName(this); }
-#endif
-
-
-typedef XmlRpcFiber* (*XmlRpcMethodCB)(
-   XmlRpcObj* rpc, XmlRpcFiber* fiber, XmlRpcSerializer* serializer);
-
-
-    
-typedef struct XmlRpcMethod
-{
-        const char* methodName;
-      XmlRpcMethodCB rpc;
-} XmlRpcMethod;
-
-
-
- 
-
-#endif
-
 
 
 #ifndef __xparser_h

@@ -9,7 +9,7 @@
  *                             Mako Server
  **************************************************************************
  *
- *   $Id: SendError.c 2820 2013-01-24 18:16:26Z wini $
+ *   $Id: SendError.c 3450 2014-08-15 17:41:37Z wini $
  *
  *   COPYRIGHT:  Real Time Logic, 2012
  *
@@ -33,20 +33,10 @@
  *
  */
 
-#define CRASH_HANDLER_URL "http://barracudadrive.com/crashhandler/"
+
 
 #include "mako.h"
-#ifndef USE_AMALGAMATED_BAS
-#include "../../../xrc/misc/HttpClient.h"
-#include <JSerializer.h>
-#endif
 
-static int BufPrint_sockWrite(BufPrint* o, int sizeRequired)
-{
-   HttpClient_sendData((HttpClient*)o->userData,o->buf,o->cursor);
-   o->cursor=0;
-   return 0;
-}
 
 void sendFatalError(const char* eMsg,
                     BaFatalErrorCodes ecode1,
@@ -54,45 +44,9 @@ void sendFatalError(const char* eMsg,
                     const char* file,
                     int line)
 {
-#ifdef CRASH_HANDLER_URL
-   SoDisp disp;
-   HttpClient http;
-   SoDisp_constructor(&disp,NULL);
-   HttpClient_constructor(&http,&disp,0);
-
-   if(!HttpClient_request(&http,HttpMethod_Put,
-                          CRASH_HANDLER_URL,
-                          0,0,0,0))
-   {
-      char outBuffer[256];
-      JErr err;
-      JSerializer js;
-      BufPrint out;
-      BufPrint_constructor(&out,&http,BufPrint_sockWrite);
-      out.buf = outBuffer;
-      out.bufSize = sizeof(outBuffer);
-      JErr_constructor(&err);
-      JSerializer_constructor(&js, &err, &out);
-      JSerializer_set(&js,"{sddsdss}",
-                      "emsg",eMsg,
-                      "ecode1",ecode1,
-                      "ecode2",ecode2,
-                      "file",file,
-                      "line",line,
-                      "platform",SERVER_SOFTWARE_NAME,
-                      "version",__DATE__);
-      JSerializer_commit(&js);
-      HttpClient_getStatus(&http);
-      JSerializer_destructor(&js);
-      BufPrint_destructor(&out);
-   }
-   HttpClient_destructor(&http);
-   SoDisp_destructor(&disp);
-#else
    (void)eMsg;
    (void)ecode1;
    (void)ecode2;
    (void)file;
    (void)line;
-#endif
 }
