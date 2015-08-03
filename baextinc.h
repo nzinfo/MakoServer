@@ -25,6 +25,7 @@
 #include "sys/stat.h"
 #include "dirent.h"
 #include "limits.h"
+#include "byteswap.h"
 #include "setjmp.h"
 #include "math.h"
 #include "assert.h"
