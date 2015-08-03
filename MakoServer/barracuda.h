@@ -275,6 +275,12 @@ BA_API int baErr2HttpCode(int ecode);
 
 
 
+#ifndef SHARKSSL_ENABLE_SNI
+#define SHARKSSL_ENABLE_SNI                              1
+#endif
+
+
+
 #ifndef SHARKSSL_ENABLE_RSA
 #define SHARKSSL_ENABLE_RSA                              1
 #endif
@@ -362,6 +368,18 @@ BA_API int baErr2HttpCode(int ecode);
 
 #ifndef SHARKSSL_ENABLE_RSA_PKCS1
 #define SHARKSSL_ENABLE_RSA_PKCS1                        1
+#endif
+
+
+
+#ifndef SHARKSSL_ENABLE_ECDSA_API
+#define SHARKSSL_ENABLE_ECDSA_API                        1
+#endif
+
+
+
+#ifndef SHARKSSL_ECDSA_ONLY_VERIFY
+#define SHARKSSL_ECDSA_ONLY_VERIFY                       0
 #endif
 
 
@@ -543,22 +561,22 @@ BA_API int baErr2HttpCode(int ecode);
 
 
 #ifndef SHARKSSL_OPTIMIZED_BIGINT_ASM
-#define SHARKSSL_OPTIMIZED_BIGINT_ASM	0
+#define SHARKSSL_OPTIMIZED_BIGINT_ASM                    0
 #endif
 
 
 #ifndef SHARKSSL_OPTIMIZED_CHACHA_ASM
-#define SHARKSSL_OPTIMIZED_CHACHA_ASM	0
+#define SHARKSSL_OPTIMIZED_CHACHA_ASM                    0
 #endif
 
 
 #ifndef SHARKSSL_OPTIMIZED_POLY1305_ASM
-#define SHARKSSL_OPTIMIZED_POLY1305_ASM	0
+#define SHARKSSL_OPTIMIZED_POLY1305_ASM                  0
 #endif
 
 
 #ifndef SHARKSSL_USE_RNG_TINYMT
-#define SHARKSSL_USE_RNG_TINYMT	0
+#define SHARKSSL_USE_RNG_TINYMT                          0
 #endif
 
 #ifndef SHARKSSL_NOPACK
@@ -1328,6 +1346,14 @@ void baFree(void* p);
 #define _SharkSslCrypto_h
 
 #define SHARKSSL_LIB 1
+#define SHARKSSL_MD5_HASH_LEN       16
+#define SHARKSSL_SHA1_HASH_LEN      20
+#define SHARKSSL_SHA256_HASH_LEN    32
+#define SHARKSSL_SHA384_HASH_LEN    48
+#define SHARKSSL_SHA512_HASH_LEN    64
+#define SHARKSSL_POLY1305_HASH_LEN  16
+
+
 #if SHARKSSL_USE_MD5
 
 typedef struct SharkSslMd5Ctx
@@ -1511,7 +1537,7 @@ SHARKSSL_API void  SharkSslMd5Ctx_constructor(SharkSslMd5Ctx* ctx);
 SHARKSSL_API void  SharkSslMd5Ctx_append(SharkSslMd5Ctx* ctx, const U8* data, U32 len);
 
 
-SHARKSSL_API void  SharkSslMd5Ctx_finish(SharkSslMd5Ctx* ctx, U8 digest[16]);
+SHARKSSL_API void  SharkSslMd5Ctx_finish(SharkSslMd5Ctx* ctx, U8 digest[SHARKSSL_MD5_HASH_LEN]);
 
 
 SHARKSSL_API int   sharkssl_md5(const U8*, U16, U8*);
@@ -1525,7 +1551,7 @@ SHARKSSL_API void  SharkSslSha1Ctx_constructor(SharkSslSha1Ctx* ctx);
 SHARKSSL_API void  SharkSslSha1Ctx_append(SharkSslSha1Ctx* ctx, const U8* data, U32 len);
 
 
-SHARKSSL_API void  SharkSslSha1Ctx_finish(SharkSslSha1Ctx*, U8 digest[20]);
+SHARKSSL_API void  SharkSslSha1Ctx_finish(SharkSslSha1Ctx*, U8 digest[SHARKSSL_SHA1_HASH_LEN]);
 
 
 SHARKSSL_API int   sharkssl_sha1(const U8*, U16, U8*);
@@ -1539,7 +1565,7 @@ SHARKSSL_API void  SharkSslSha256Ctx_constructor(SharkSslSha256Ctx* ctx);
 SHARKSSL_API void  SharkSslSha256Ctx_append(SharkSslSha256Ctx*, const U8* data, U32 len);
 
 
-SHARKSSL_API void  SharkSslSha256Ctx_finish(SharkSslSha256Ctx*, U8 digest[32]);
+SHARKSSL_API void  SharkSslSha256Ctx_finish(SharkSslSha256Ctx*, U8 digest[SHARKSSL_SHA256_HASH_LEN]);
 
 
 SHARKSSL_API int   sharkssl_sha256(const U8*, U16, U8*);
@@ -1553,7 +1579,7 @@ SHARKSSL_API void  SharkSslSha384Ctx_constructor(SharkSslSha384Ctx* ctx);
 SHARKSSL_API void  SharkSslSha384Ctx_append(SharkSslSha384Ctx*, const U8* data, U32 len);
 
 
-SHARKSSL_API void  SharkSslSha384Ctx_finish(SharkSslSha384Ctx*, U8 digest[48]);
+SHARKSSL_API void  SharkSslSha384Ctx_finish(SharkSslSha384Ctx*, U8 digest[SHARKSSL_SHA384_HASH_LEN]);
 
 
 SHARKSSL_API int   sharkssl_sha384(const U8*, U16, U8*);
@@ -1568,7 +1594,7 @@ SHARKSSL_API void  SharkSslSha512Ctx_constructor(SharkSslSha512Ctx* ctx);
    SharkSslSha384Ctx_append((SharkSslSha384Ctx*)ctx, d, l)
 
 
-SHARKSSL_API void  SharkSslSha512Ctx_finish(SharkSslSha512Ctx*, U8 digest[64]);
+SHARKSSL_API void  SharkSslSha512Ctx_finish(SharkSslSha512Ctx*, U8 digest[SHARKSSL_SHA512_HASH_LEN]);
 
 
 SHARKSSL_API int   sharkssl_sha512(const U8*, U16, U8*);
@@ -1584,7 +1610,7 @@ SHARKSSL_API void  SharkSslPoly1305Ctx_constructor(SharkSslPoly1305Ctx *ctx, con
 SHARKSSL_API void  SharkSslPoly1305Ctx_append(SharkSslPoly1305Ctx *ctx, const U8 *in, U32 len);
 
 
-SHARKSSL_API void  SharkSslPoly1305Ctx_finish(SharkSslPoly1305Ctx *ctx, U8 digest[16]);
+SHARKSSL_API void  SharkSslPoly1305Ctx_finish(SharkSslPoly1305Ctx *ctx, U8 digest[SHARKSSL_POLY1305_HASH_LEN]);
 
 
 SHARKSSL_API int   sharkssl_poly1305(const U8 *data, U16 len, U8 *digest, const U8 key[32]);
@@ -2421,6 +2447,13 @@ typedef struct SharkSslCertDN
    U8 *unit; 
    
    U8 *commonName;
+
+   U8 countryNameLen;   
+   U8 provinceLen;      
+   U8 localityLen;      
+   U8 organizationLen;  
+   U8 unitLen;          
+   U8 commonNameLen;    
 } SharkSslCertDN;
 
 
@@ -2595,6 +2628,16 @@ SHARKSSL_API U8  SharkSslCon_getProtocol(SharkSslCon *o);
 
 #endif
 
+#if SHARKSSL_ENABLE_SNI
+
+#if SHARKSSL_SSL_CLIENT_CODE
+
+SHARKSSL_API U8  SharkSslCon_setSNI(SharkSslCon *o, const char *name, U16 length); 
+#endif
+
+#endif
+
+
 #if (SHARKSSL_ENABLE_RSA || SHARKSSL_ENABLE_ECDSA)
 #if (SHARKSSL_SSL_CLIENT_CODE && SHARKSSL_ENABLE_CLIENT_AUTH)
 
@@ -2646,6 +2689,12 @@ U8  SharkSslCon_selectProtocol(SharkSslCon *o, U8 protocol);
 
 
 SHARKSSL_API U8    SharkSslSession_release(SharkSslSession *o, SharkSsl *s);
+
+#if SHARKSSL_SSL_SERVER_CODE
+
+SHARKSSL_API U8    SharkSslCon_releaseSession(SharkSslCon *o);
+#endif
+
 #if SHARKSSL_SSL_CLIENT_CODE 
 
 
@@ -2845,6 +2894,83 @@ SHARKSSL_API sharkssl_RSA_RetVal sharkssl_RSA_public_decrypt(
 
 
 
+
+
+#if SHARKSSL_USE_ECC
+
+
+typedef U8* SharkSslECCKey;
+
+#if SHARKSSL_ENABLE_PEM_API
+
+SHARKSSL_API SharkSslECCKey sharkssl_PEM_to_ECCKey(
+   const char *PEMKey, const char *passphrase);
+
+
+SHARKSSL_API void SharkSslECCKey_free(SharkSslECCKey key);
+#endif
+
+
+
+
+#if (SHARKSSL_ENABLE_ECDSA && SHARKSSL_ENABLE_ECDSA_API)
+
+typedef enum
+{
+   
+   SHARKSSL_ECDSA_OK = 0,
+
+   
+   SHARKSSL_ECDSA_ALLOCATION_ERROR = -3200,
+
+   
+   SHARKSSL_ECDSA_INTERNAL_ERROR = -3300,
+
+   
+   SHARKSSL_ECDSA_WRONG_PARAMETERS,
+
+   
+   SHARKSSL_ECDSA_WRONG_KEY_FORMAT,
+
+   
+   SHARKSSL_ECDSA_KEY_NOT_PRIVATE,
+
+   
+   SHARKSSL_ECDSA_KEY_NOT_PUBLIC,
+
+   
+   SHARKSSL_ECDSA_SIGLEN_TOO_SMALL,
+
+   
+   SHARKSSL_ECDSA_VERIFICATION_FAIL,
+
+   
+   SHARKSSL_ECDSA_WRONG_SIGNATURE
+} sharkssl_ECDSA_RetVal;
+
+  
+
+
+
+
+
+#if (!SHARKSSL_ECDSA_ONLY_VERIFY)
+
+SHARKSSL_API U8 sharkssl_ECDSA_siglen(SharkSslECCKey privkey);
+
+
+SHARKSSL_API sharkssl_ECDSA_RetVal sharkssl_ECDSA_sign_hash(
+   SharkSslECCKey privkey, U8 *sig, U8 *siglen, U8 *hash, U8 hashlen);
+#endif
+
+
+SHARKSSL_API sharkssl_ECDSA_RetVal sharkssl_ECDSA_verify_hash(
+   SharkSslECCKey pubkey, U8 *sig, U8 siglen, U8 *hash, U8 hashlen);
+
+#endif
+
+ 
+#endif
 
 
 #if (SHARKSSL_ENABLE_CA_LIST && SHARKSSL_ENABLE_CERTSTORE_API)
@@ -3230,7 +3356,7 @@ extern int basprintf(char* buf, const char* fmt, ...);
 
 
 
-#define BASLIB_VER "3650"
+#define BASLIB_VER "3752"
 
 
 
@@ -5596,6 +5722,9 @@ typedef struct HttpRequest
       const char* getParameter(const char* paramName);
 
       
+      int wsUpgrade();
+
+      
       HttpHeader* getHeaders(int* len);
 
 
@@ -5718,6 +5847,9 @@ inline HttpCookie* HttpRequest::getCookie(const char* name) {
    return HttpRequest_getCookie(this, name); }
 inline const char* HttpRequest::getParameter(const char* paramName) {
    return HttpRequest_getParameter(this, paramName); }
+inline int HttpRequest::wsUpgrade() {
+   return HttpRequest_wsUpgrade(this);
+}
 inline HttpHeader* HttpRequest::getHeaders(int* len) {
    return HttpRequest_getHeaders(this, len); }
 inline int HttpRequest::setUserObj(void* userObj, bool overwrite) {
@@ -9169,7 +9301,7 @@ inline int ClientConnection::blockRead(void* data, int len) {
 #ifndef _SharkSslEx_h
 #define _SharkSslEx_h
 
-int sharkStrCaseCmp(const char *a, const char *b);
+int sharkStrCaseCmp(const char *a, const char *b, int len);
 
 
 
@@ -9196,13 +9328,9 @@ typedef enum
 
 
 
-#if SHARKSSL_ENABLE_CLONE_CERTINFO
-
 
 SHARKSSL_API SharkSslConTrust SharkSslCon_trusted(
    SharkSslCon* o, const char* name, SharkSslCertInfo** cPtr);
-
-#endif
 
   
 
@@ -9265,7 +9393,7 @@ typedef struct HttpClient
       static int isURL(const char* url);
 
       
-      int trusted(void);
+      SharkSslConTrust trusted(void);
 
       
       void setAcceptTrusted(bool acceptTrusted);
@@ -9366,7 +9494,7 @@ void HttpClient_close(HttpClient* o);
 int HttpClient_getStatus(HttpClient* o);
 #define HttpClient_getError(o) (o)->lastError
 #define HttpClient_getSoDispCon(o) ((SoDispCon*)(o))
-int HttpClient_trusted(HttpClient* o);
+SharkSslConTrust HttpClient_trusted(HttpClient* o);
 #define HttpClient_setAcceptTrusted(o, t) (o)->acceptTrusted=t
 
 #ifdef __cplusplus
@@ -9393,7 +9521,7 @@ inline int HttpClient::isURL(const char* url) {
 }
 
 
-inline int HttpClient::trusted(void){
+inline SharkSslConTrust HttpClient::trusted(void){
    return HttpClient_trusted(this);
 }
 
@@ -9862,6 +9990,424 @@ inline void DigestAuthenticator::setStrictMode(bool enableStrictMode) {
 #define _SharkSslCon_h
 
 #define SHARKSSL_LIB 1
+
+#ifndef _SharkSslCert_h
+#define _SharkSslCert_h
+
+
+#ifndef _SharkSslEndian_h
+#define _SharkSslEndian_h
+
+#if   (defined(B_LITTLE_ENDIAN))
+#if   (defined(B_BIG_ENDIAN))
+#error B_LITTLE_ENDIAN and B_BIG_ENDIAN cannot be both #defined at the same time
+#endif
+#define GET_U8_A(w) (*(U8*)((U8*)(&(w)) + 3))
+#define GET_U8_B(w) (*(U8*)((U8*)(&(w)) + 2))
+#define GET_U8_C(w) (*(U8*)((U8*)(&(w)) + 1))
+#define GET_U8_D(w) (*(U8*)((U8*)(&(w)) + 0))
+
+#elif (defined(B_BIG_ENDIAN))
+#define GET_U8_A(w) (*(U8*)((U8*)(&(w)) + 0))
+#define GET_U8_B(w) (*(U8*)((U8*)(&(w)) + 1))
+#define GET_U8_C(w) (*(U8*)((U8*)(&(w)) + 2))
+#define GET_U8_D(w) (*(U8*)((U8*)(&(w)) + 3))
+
+#else  
+#define GET_U8_A(w) ((U8)((w) >> 24))
+#define GET_U8_B(w) ((U8)((w) >> 16))
+#define GET_U8_C(w) ((U8)((w) >> 8))
+#define GET_U8_D(w) ((U8)((w)))
+#endif
+
+
+#if   (__COLDFIRE__)  
+static inline asm U32 __declspec(register_abi) sharkssl_byteswap (U32 d) { byterev.l d0 }
+#define SHARKSSL_BYTESWAP_U32  sharkssl_byteswap
+
+#elif (__ICCARM__ && __ARM_PROFILE_M__)   
+#define SHARKSSL_BYTESWAP_U32  __REV
+#define __sharkssl_packed      __packed  
+   #if ((__CORE__==__ARM7M__) || (__CORE__==__ARM7EM__))  
+   #ifndef SHARKSSL_AES_DISABLE_SBOX
+   #define SHARKSSL_AES_DISABLE_SBOX 1
+   #endif
+   #endif
+
+#elif (__CC_ARM && __TARGET_PROFILE_M)   
+#define SHARKSSL_BYTESWAP_U32  __rev
+#define __sharkssl_packed      __packed  
+   #if ((__TARGET_ARCH_ARM == 0) && (__TARGET_ARCH_THUMB == 4))  
+   #ifndef SHARKSSL_AES_DISABLE_SBOX
+   #define SHARKSSL_AES_DISABLE_SBOX 1
+   #endif
+   #endif
+
+#elif (__ICCRX__)  
+static volatile inline U32 sharkssl_byteswap(U32 value) { asm ("REVL %0, %0" : "+r"(value)); return value; }
+#define SHARKSSL_BYTESWAP_U32  sharkssl_byteswap
+
+#elif (__GNUC__)  
+#if !defined(_OSX_) && GCC_VERSION >= 402
+#define SHARKSSL_BYTESWAP_U32  (U32)__builtin_bswap32
+#endif
+#endif
+
+
+#ifndef __sharkssl_packed
+#define __sharkssl_packed
+#endif
+
+
+#ifndef SHARKSSL_BYTESWAP_U32
+#define SHARKSSL_BYTESWAP_U32(x) (((x) >> 24) | (((x) << 8) & 0x00FF0000) | (((x) >> 8) & 0x0000FF00) | ((x) << 24))
+#endif
+
+
+#if   (defined(B_LITTLE_ENDIAN) && SHARKSSL_UNALIGNED_ACCESS)
+#define GET_U32_LE(w,a,i)  (w) = ((__sharkssl_packed U32*)(a))[(i) >> 2]
+#elif (defined(B_BIG_ENDIAN) && SHARKSSL_UNALIGNED_ACCESS)
+#define GET_U32_LE(w,a,i)  (w) = SHARKSSL_BYTESWAP_U32(((__sharkssl_packed U32*)(a))[(i) >> 2])
+#else
+#define GET_U32_LE(w,a,i)                 \
+{                                         \
+   (w) = ((U32)(a)[(i)])                  \
+       | ((U32)(a)[(i) + 1] <<  8)        \
+       | ((U32)(a)[(i) + 2] << 16)        \
+       | ((U32)(a)[(i) + 3] << 24);       \
+}
+#endif
+
+
+#if   (defined(B_LITTLE_ENDIAN) && SHARKSSL_UNALIGNED_ACCESS)
+#define PUT_U32_LE(w,a,i)  ((__sharkssl_packed U32*)(a))[(i) >> 2] = (w)
+#elif (defined(B_BIG_ENDIAN) && SHARKSSL_UNALIGNED_ACCESS)
+#define PUT_U32_LE(w,a,i)  ((__sharkssl_packed U32*)(a))[(i) >> 2] = SHARKSSL_BYTESWAP_U32(w)
+#else
+#define PUT_U32_LE(w,a,i)                 \
+{                                         \
+   (a)[(i)]     = (U8)((w));              \
+   (a)[(i) + 1] = (U8)((w) >>  8);        \
+   (a)[(i) + 2] = (U8)((w) >> 16);        \
+   (a)[(i) + 3] = (U8)((w) >> 24);        \
+}
+#endif
+
+
+#if (defined(B_BIG_ENDIAN) && SHARKSSL_UNALIGNED_ACCESS)
+#define GET_U32_BE(w,a,i)  (w) = ((__sharkssl_packed U32*)(a))[(i) >> 2]
+#elif (defined(B_LITTLE_ENDIAN) && SHARKSSL_UNALIGNED_ACCESS)
+#define GET_U32_BE(w,a,i)  (w) = SHARKSSL_BYTESWAP_U32(((__sharkssl_packed U32*)(a))[(i) >> 2])
+#else
+#define GET_U32_BE(w,a,i)                 \
+{                                         \
+   (w) = ((U32)(a)[(i)] << 24)            \
+       | ((U32)(a)[(i) + 1] << 16)        \
+       | ((U32)(a)[(i) + 2] <<  8)        \
+       | ((U32)(a)[(i) + 3]);             \
+}
+#endif
+
+
+#if (defined(B_BIG_ENDIAN) && SHARKSSL_UNALIGNED_ACCESS)
+#define PUT_U32_BE(w,a,i)  ((__sharkssl_packed U32*)(a))[(i) >> 2] = (w)
+#elif (defined(B_LITTLE_ENDIAN) && SHARKSSL_UNALIGNED_ACCESS)
+#define PUT_U32_BE(w,a,i)  ((__sharkssl_packed U32*)(a))[(i) >> 2] = SHARKSSL_BYTESWAP_U32(w)
+#else
+#define PUT_U32_BE(w,a,i)                 \
+{                                         \
+   (a)[(i)]     = (U8)((w) >> 24);        \
+   (a)[(i) + 1] = (U8)((w) >> 16);        \
+   (a)[(i) + 2] = (U8)((w) >>  8);        \
+   (a)[(i) + 3] = (U8)((w));              \
+}
+#endif
+
+
+#if (defined(B_BIG_ENDIAN) && SHARKSSL_UNALIGNED_ACCESS)
+#define GET_U64_BE(w,a,i)  (w) = ((__sharkssl_packed U64*)(a))[(i) >> 3]
+#elif (defined(B_LITTLE_ENDIAN) && SHARKSSL_UNALIGNED_ACCESS)
+#define GET_U64_BE(w,a,i)  (w) = ((U64)(SHARKSSL_BYTESWAP_U32(((__sharkssl_packed U32*)(a))[(i) >> 2])) << 32) + \
+                                 (SHARKSSL_BYTESWAP_U32(((__sharkssl_packed U32*)(a))[((i) >> 2) + 1]))
+#else
+#define GET_U64_BE(w,a,i)                 \
+{                                         \
+   (w) = ((U64)(a)[(i)]     << 56)        \
+       | ((U64)(a)[(i) + 1] << 48)        \
+       | ((U64)(a)[(i) + 2] << 40)        \
+       | ((U64)(a)[(i) + 3] << 32)        \
+       | ((U64)(a)[(i) + 4] << 24)        \
+       | ((U64)(a)[(i) + 5] << 16)        \
+       | ((U64)(a)[(i) + 6] <<  8)        \
+       | ((U64)(a)[(i) + 7]);             \
+}
+#endif
+
+
+#if (defined(B_BIG_ENDIAN) && SHARKSSL_UNALIGNED_ACCESS)
+#define PUT_U64_BE(w,a,i)  ((__sharkssl_packed U64*)(a))[(i) >> 3] = (w)
+#elif (defined(B_LITTLE_ENDIAN) && SHARKSSL_UNALIGNED_ACCESS)
+#define PUT_U64_BE(w,a,i)  ((__sharkssl_packed U32*)(a))[((i) >> 2) + 1] = SHARKSSL_BYTESWAP_U32(*(__sharkssl_packed U32*)&(w));  \
+                           ((__sharkssl_packed U32*)(a))[(i) >> 2] = SHARKSSL_BYTESWAP_U32(*(__sharkssl_packed U32*)((__sharkssl_packed U32*)&(w) + 1))
+#else
+#define PUT_U64_BE(w,a,i)                 \
+{                                         \
+   (a)[(i)]     = (U8)((w) >> 56);        \
+   (a)[(i) + 1] = (U8)((w) >> 48);        \
+   (a)[(i) + 2] = (U8)((w) >> 40);        \
+   (a)[(i) + 3] = (U8)((w) >> 32);        \
+   (a)[(i) + 4] = (U8)((w) >> 24);        \
+   (a)[(i) + 5] = (U8)((w) >> 16);        \
+   (a)[(i) + 6] = (U8)((w) >>  8);        \
+   (a)[(i) + 7] = (U8)((w));              \
+}
+#endif
+
+
+
+#ifndef UPTR
+#define UPTR                                       U32
+#endif
+#ifndef SHARKSSL_ALIGNMENT
+#define SHARKSSL_ALIGNMENT                         4   
+#endif
+#define SHARKSSL_ALIGN_SIZE(s)                     (((s) + (SHARKSSL_ALIGNMENT - 1)) & ((U32)-SHARKSSL_ALIGNMENT))
+#define SHARKSSL_ALIGNED_POINTER(p)                (U8*)(((UPTR)((UPTR)(p) + SHARKSSL_ALIGNMENT - 1)) & ((UPTR)-SHARKSSL_ALIGNMENT))
+#define SHARKSSL_POINTER_IS_ALIGNED(p)             (0 == ((unsigned int)(UPTR)(p) & (SHARKSSL_ALIGNMENT - 1)))
+#if   (SHARKSSL_BIGINT_WORDSIZE > 32)
+#error SHARKSSL_BIGINT_WORDSIZE must be 32, 16 or 8
+#elif (SHARKSSL_BIGINT_WORDSIZE == 64)
+#define SHARKSSL_BIGINT_WORDSIZE_ALIGN             7  
+#else
+#define SHARKSSL_BIGINT_WORDSIZE_ALIGN             ((U32)(SHARKSSL_BIGINT_WORDSIZE / 10))  
+#endif
+
+#if SHARKSSL_UNALIGNED_MALLOC
+#define SHARKSSL_MALLOC_ALIGN(s)                   ((s) + SHARKSSL_ALIGNMENT)
+#define SHARKSSL_PNTR_ALIGNMENT(p)                 SHARKSSL_ALIGNED_POINTER(p)
+#else
+#define SHARKSSL_MALLOC_ALIGN(s)                   (s)
+#define SHARKSSL_PNTR_ALIGNMENT(p)                 (U8*)(p)
+#endif
+
+#endif 
+#define SHARKSSL_OP_PUBLIC                         0x40  
+#define SHARKSSL_OP_PRIVATE                        0x80  
+#define SHARKSSL_OP_CALC_Y                         0x04  
+#define SHARKSSL_OP_CALC_XY                        0x04  
+#define SHARKSSL_OP_CALC_KEY                       0x08  
+#define SHARKSSL_OP_SIGN                           0x10  
+#define SHARKSSL_OP_VERIFY                         0x20  
+
+
+
+#define SHARKSSL_EXPLEN_GET_EXPLEN(e)              (U16)((e) & 0x00FF)
+#define SHARKSSL_EXPLEN_GET_FORMAT(e)              (U16)(((U16)(e) & 0x0F00) >> 8)
+#define SHARKSSL_EXPLEN_GET_CHAINLEN(e)            (U16)(((U16)(e) & 0xF000) >> 12)
+
+#define SHARKSSL_EXPLEN_KEYTYPE_RSA                0x0
+#define SHARKSSL_EXPLEN_KEYTYPE_EC                 0x2
+#define SHARKSSL_EXPLEN_KEYTYPE_MASK               0x6
+#define SHARKSSL_EXPLEN_PUBLIC_KEY                 0x8
+
+#define SHARKSSL_EXPLEN_IS_PUBKEY(e)               (SHARKSSL_EXPLEN_GET_FORMAT(e) & SHARKSSL_EXPLEN_PUBLIC_KEY)
+#define SHARKSSL_EXPLEN_GET_KEYTYPE(e)             (SHARKSSL_EXPLEN_GET_FORMAT(e) & SHARKSSL_EXPLEN_KEYTYPE_MASK)
+#define SHARKSSL_EXPLEN_IS_KEYTYPE_RSA(e)          (SHARKSSL_EXPLEN_GET_KEYTYPE(e) == SHARKSSL_EXPLEN_KEYTYPE_RSA)
+#define SHARKSSL_EXPLEN_IS_KEYTYPE_EC(e)           (SHARKSSL_EXPLEN_GET_KEYTYPE(e) == SHARKSSL_EXPLEN_KEYTYPE_EC)
+
+
+#define SHARKSSL_EXPLEN_SET_KEYTYPE_RSA_PUBLIC(e)  (e |= (U16)(SHARKSSL_EXPLEN_KEYTYPE_RSA + SHARKSSL_EXPLEN_PUBLIC_KEY) << 8);
+#define SHARKSSL_EXPLEN_SET_KEYTYPE_RSA_PRIVATE(e) (e |= (U16)(SHARKSSL_EXPLEN_KEYTYPE_RSA) << 8);
+#define SHARKSSL_EXPLEN_SET_KEYTYPE_EC_PUBLIC(e)   (e |= (U16)(SHARKSSL_EXPLEN_KEYTYPE_EC + SHARKSSL_EXPLEN_PUBLIC_KEY) << 8);
+#define SHARKSSL_EXPLEN_SET_KEYTYPE_EC_PRIVATE(e)  (e |= (U16)(SHARKSSL_EXPLEN_KEYTYPE_EC) << 8);
+
+
+
+#define SHARKSSL_MODLEN_GET_EC_PUBLEN(m)           (U16)((m) & 0x00FF)
+#define SHARKSSL_MODLEN_GET_RSA_MODLEN(m)          (m)
+#define SHARKSSL_MODLEN_GET_EC_OID(m)              (U16)(((U16)(m) & 0xFF00) >> 8)
+#define SHARKSSL_MODLEN_GET_RSA_OID(m)             0
+
+#define SHARKSSL_MODLEN_GET_MODLEN(m, e)           (SHARKSSL_EXPLEN_IS_KEYTYPE_EC(e) ? SHARKSSL_MODLEN_GET_EC_PUBLEN(m) : SHARKSSL_MODLEN_GET_RSA_MODLEN(m))
+#define SHARKSSL_MODLEN_GET_OID(m, e)              (SHARKSSL_EXPLEN_IS_KEYTYPE_EC(e) ? SHARKSSL_MODLEN_GET_EC_OID(m) : SHARKSSL_MODLEN_GET_RSA_OID(m))
+
+
+#define SHARKSSL_MODLEN_SET_OID(m, o)              (m = (((U16)l & 0xFF) << 8) | (m & 0xFF))
+
+
+
+#if (SHARKSSL_ENABLE_CA_LIST  || SHARKSSL_ENABLE_CERTSTORE_API)
+#define SHARKSSL_CA_LIST_NAME_SIZE                 8
+#define SHARKSSL_CA_LIST_ELEMENT_SIZE              (SHARKSSL_CA_LIST_NAME_SIZE + 4)
+#define SHARKSSL_CA_LIST_INDEX_TYPE                0x00
+
+#ifdef __IAR_SYSTEMS_ICC__
+
+#else
+#if (SHARKSSL_CA_LIST_NAME_SIZE != SHARKSSL_ALIGN_SIZE(SHARKSSL_CA_LIST_NAME_SIZE))
+#error SHARKSSL CA_STORE_API: UNSUPPORTED CA_LIST_NAME_SIZE
+#endif
+#endif
+
+#if (SHARKSSL_ENABLE_CA_LIST && SHARKSSL_ENABLE_CERTSTORE_API)
+#define SHARKSSL_CA_LIST_PTR_SIZE                  sizeof(U8*)
+#define SHARKSSL_CA_LIST_PTR_TYPE                  0xAD
+#define SHARKSSL_MAX_SNAME_LEN                     32
+
+#if (SHARKSSL_MAX_SNAME_LEN < SHARKSSL_CA_LIST_NAME_SIZE)
+#error SHARKS_MAX_SNAME_LEN must be >= SHARKSSL_CA_LIST_NAME_SIZE
+#endif
+
+typedef struct SharkSslCSCert
+{
+      DoubleLink super;
+      U8 *ptr;  
+      char name[SHARKSSL_MAX_SNAME_LEN + 1];  
+} SharkSslCSCert;
+
+#endif  
+#endif  
+
+
+
+#define SHARKSSL_SIGNATUREALGORITHM_RSA            0x01
+#define SHARKSSL_SIGNATUREALGORITHM_DSA            0x02
+#define SHARKSSL_SIGNATUREALGORITHM_ECDSA          0x03
+#define SHARKSSL_OID_EC_PUBLIC_KEY                 0x0C  
+
+
+#define SHARKSSL_HASHALGORITHM_NONE                0x00
+#define SHARKSSL_HASHALGORITHM_MD5                 0x01
+#define SHARKSSL_HASHALGORITHM_SHA1                0x02
+#define SHARKSSL_HASHALGORITHM_SHA224              0x03
+#define SHARKSSL_HASHALGORITHM_SHA256              0x04 
+#define SHARKSSL_HASHALGORITHM_SHA384              0x05
+#define SHARKSSL_HASHALGORITHM_SHA512              0x06
+#define SHARKSSL_HASHALGORITHM_TLS_MD5_SHA1        0xEE  
+
+
+#if (SHARKSSL_ENABLE_RSA || SHARKSSL_ENABLE_ECDSA)
+typedef struct SharkSslCertKey
+{
+   U8 *mod, *exp;
+   U16 modLen, expLen;
+} SharkSslCertKey;
+
+
+#if   SHARKSSL_USE_SHA_512
+#define SHARKSSL_MAX_HASH_LEN  SHARKSSL_SHA512_HASH_LEN
+#elif SHARKSSL_USE_SHA_384
+#define SHARKSSL_MAX_HASH_LEN  SHARKSSL_SHA384_HASH_LEN
+#else
+#define SHARKSSL_MAX_HASH_LEN  SHARKSSL_SHA256_HASH_LEN
+#endif
+
+typedef struct SharkSslSignature  
+{
+   #if (SHARKSSL_MAX_HASH_LEN > (SHARKSSL_MD5_HASH_LEN + SHARKSSL_SHA1_HASH_LEN))
+   U8 hash[SHARKSSL_MAX_HASH_LEN];
+   #else
+   U8 hash[SHARKSSL_MD5_HASH_LEN + SHARKSSL_SHA1_HASH_LEN];
+   #endif
+   U8 *signature;
+   U16 signLen;
+   U8  signatureAlgo;
+   U8  hashAlgo;
+} SharkSslSignature;
+
+
+typedef struct SharkSslCertParam
+{
+   SharkSslCertInfo  certInfo;
+   SharkSslCertKey   certKey;
+   SharkSslSignature signature;
+} SharkSslCertParam;
+
+
+typedef struct SharkSslSignParam  
+{
+   SharkSslCertKey  *pCertKey;
+   SharkSslSignature signature;
+} SharkSslSignParam;
+
+
+#if SHARKSSL_ENABLE_CLONE_CERTINFO
+typedef struct SharkSslClonedCertInfo
+{
+   SharkSslCertInfo ci;
+   #if SHARKSSL_ENABLE_SESSION_CACHE
+   U8 flags;
+   #endif
+} SharkSslClonedCertInfo;
+
+
+
+#define SHARKSSL_CCINFO_CERT_CLONED  0x01
+#define SHARKSSL_CCINFO_CERT_CACHED  0x02
+#endif  
+#endif  
+
+
+#if SHARKSSL_ENABLE_DHE_RSA
+typedef struct SharkSslDHParam
+{
+   U8 *p;     
+   U8 *g;     
+   U8 *Y;     
+   U8 *r;     
+   U16 pLen;  
+   U16 gLen;  
+} SharkSslDHParam;
+#endif
+
+
+#if (SHARKSSL_ENABLE_ECDHE_RSA || SHARKSSL_ENABLE_ECDH_RSA || SHARKSSL_ENABLE_ECDHE_ECDSA || SHARKSSL_ENABLE_ECDH_ECDSA)
+typedef struct SharkSslECDHParam
+{
+   U8 *XY;         
+   U8 *k;          
+   U16 xLen;       
+   U16 curveType;  
+} SharkSslECDHParam;
+#endif
+
+
+#if SHARKSSL_ENABLE_ECDSA
+typedef struct SharkSslECDSAParam
+{
+   U8 *R;          
+   U8 *S;          
+   U8 *key;        
+   U8 *hash;       
+   U16 keyLen;     
+   U16 hashLen;    
+   U16 curveType;  
+} SharkSslECDSAParam;
+#endif
+
+
+#if SHARKSSL_ENABLE_RSA
+SHARKSSL_API int SharkSslCertKey_RSA(const SharkSslCertKey *ck, U8 op, U8 *inout);
+int SharkSslCertKey_RSA_public_encrypt(const SharkSslCertKey *certKey, U16 len, U8 *in, U8 *out, U8 padding);
+int SharkSslCertKey_RSA_private_decrypt(const SharkSslCertKey *certKey, U16 len, U8 *in, U8 *out, U8 padding);
+int SharkSslCertKey_RSA_private_encrypt(const SharkSslCertKey *certKey, U16 len, U8 *in, U8 *out, U8 padding);
+int SharkSslCertKey_RSA_public_decrypt(const SharkSslCertKey *certKey, U16 len, U8 *in, U8 *out, U8 padding);
+#endif
+#if SHARKSSL_ENABLE_DHE_RSA
+int  SharkSslDHParam_DH(const SharkSslDHParam*, U8 op, U8*);
+#if SHARKSSL_SSL_SERVER_CODE
+void SharkSslDHParam_setParam(SharkSslDHParam *dh);
+#endif
+#endif  
+#if (SHARKSSL_ENABLE_ECDHE_RSA || SHARKSSL_ENABLE_ECDH_RSA || SHARKSSL_ENABLE_ECDHE_ECDSA || SHARKSSL_ENABLE_ECDH_ECDSA)
+int  SharkSslECDHParam_ECDH(const SharkSslECDHParam*, U8 op, U8*);
+#endif
+#if SHARKSSL_ENABLE_ECDSA
+int SharkSslECDSAParam_ECDSA(const SharkSslECDSAParam*, U8 op);
+#endif
+
+
+#endif 
 #if (SHARKSSL_SSL_SERVER_CODE && SHARKSSL_SSL_CLIENT_CODE)
 
 #define            SharkSsl_isServer(o) (o->role == SharkSsl_Server)
@@ -9888,7 +10434,7 @@ inline void DigestAuthenticator::setStrictMode(bool enableStrictMode) {
 #define SHARKSSL_CONTENT_TYPE_APPLICATION_DATA     23
 
 #define SHARKSSL_HANDSHAKETYPE_HELLO_REQUEST       0
-#define SHARKSSL_HANDSHAKETYPE_CLIENT_HELLO       1
+#define SHARKSSL_HANDSHAKETYPE_CLIENT_HELLO        1
 #define SHARKSSL_HANDSHAKETYPE_SERVER_HELLO        2
 #define SHARKSSL_HANDSHAKETYPE_CERTIFICATE         11
 #define SHARKSSL_HANDSHAKETYPE_SERVER_KEY_EXCHANGE 12
@@ -9898,20 +10444,6 @@ inline void DigestAuthenticator::setStrictMode(bool enableStrictMode) {
 #define SHARKSSL_HANDSHAKETYPE_CLIENT_KEY_EXCHANGE 16
 #define SHARKSSL_HANDSHAKETYPE_FINISHED            20
 #define SHARKSSL_HANDSHAKETYPE_COMPLETE            0xFF
-
-#define SHARKSSL_HASHALGORITHM_NONE                0x00
-#define SHARKSSL_HASHALGORITHM_MD5                 0x01
-#define SHARKSSL_HASHALGORITHM_SHA1                0x02
-#define SHARKSSL_HASHALGORITHM_SHA224              0x03
-#define SHARKSSL_HASHALGORITHM_SHA256              0x04
-#define SHARKSSL_HASHALGORITHM_SHA384              0x05
-#define SHARKSSL_HASHALGORITHM_SHA512              0x06
-#define SHARKSSL_HASHALGORITHM_TLS_MD5_SHA1        0xEE  
-
-#define SHARKSSL_SIGNATUREALGORITHM_RSA            0x01
-#define SHARKSSL_SIGNATUREALGORITHM_DSA            0x02
-#define SHARKSSL_SIGNATUREALGORITHM_ECDSA          0x03
-#define SHARKSSL_OID_EC_PUBLIC_KEY                 0x0C  
 
 #define SHARKSSL_CLIENTCERTTYPE_RSA                0x01
 #define SHARKSSL_CLIENTCERTTYPE_DSA                0x02
@@ -9996,6 +10528,9 @@ inline void DigestAuthenticator::setStrictMode(bool enableStrictMode) {
 #if ((!SHARKSSL_ECC_USE_SECP192R1) && (!SHARKSSL_ECC_USE_SECP224R1) && (!SHARKSSL_ECC_USE_SECP256R1) && \
       (!SHARKSSL_ECC_USE_SECP384R1) && (!SHARKSSL_ECC_USE_SECP521R1))
 #error no elliptic curve selected
+#endif
+#if (SHARKSSL_ECDSA_ONLY_VERIFY && (SHARKSSL_SSL_CLIENT_CODE || SHARKSSL_SSL_SERVER_CODE))
+#error SHARKSSL_ECDSA_ONLY_VERIFY must be 0 when SSL/TLS is enabled
 #endif
 #else
 #if SHARKSSL_ENABLE_ECDHE_RSA
@@ -10307,12 +10842,12 @@ inline void DigestAuthenticator::setStrictMode(bool enableStrictMode) {
 #endif  
 
 
-#define SHARKSSL_MD5_MAC_LEN                       16
-#define SHARKSSL_SHA1_MAC_LEN                      20
-#define SHARKSSL_SHA256_MAC_LEN                    32
-#define SHARKSSL_SHA384_MAC_LEN                    48
-#define SHARKSSL_SHA512_MAC_LEN                    64
-#define SHARKSSL_POLY1305_MAC_LEN                  16
+#define SHARKSSL_MD5_MAC_LEN                       SHARKSSL_MD5_HASH_LEN  
+#define SHARKSSL_SHA1_MAC_LEN                      SHARKSSL_SHA1_HASH_LEN
+#define SHARKSSL_SHA256_MAC_LEN                    SHARKSSL_SHA256_HASH_LEN
+#define SHARKSSL_SHA384_MAC_LEN                    SHARKSSL_SHA384_HASH_LEN
+#define SHARKSSL_SHA512_MAC_LEN                    SHARKSSL_SHA512_HASH_LEN
+#define SHARKSSL_POLY1305_MAC_LEN                  SHARKSSL_POLY1305_HASH_LEN
 
 #define SHARKSSL_MD5_BLOCK_LEN                     64
 #define SHARKSSL_SHA1_BLOCK_LEN                    64
@@ -10379,27 +10914,6 @@ inline void DigestAuthenticator::setStrictMode(bool enableStrictMode) {
 
 
 
-#ifndef UPTR
-#define UPTR                                       U32
-#endif
-#ifndef SHARKSSL_ALIGNMENT
-#define SHARKSSL_ALIGNMENT                         4   
-#endif
-#define SHARKSSL_ALIGN_SIZE(s)                     (((s) + (SHARKSSL_ALIGNMENT - 1)) & ((U32)-SHARKSSL_ALIGNMENT))
-#define SHARKSSL_ALIGNED_POINTER(p)                (U8*)(((UPTR)((UPTR)(p) + SHARKSSL_ALIGNMENT - 1)) & ((UPTR)-SHARKSSL_ALIGNMENT))
-#define SHARKSSL_POINTER_IS_ALIGNED(p)             (0 == ((unsigned int)(UPTR)(p) & (SHARKSSL_ALIGNMENT - 1)))
-
-#if SHARKSSL_UNALIGNED_MALLOC
-#define SHARKSSL_MALLOC_ALIGN(s)                   ((s) + SHARKSSL_ALIGNMENT)
-#define SHARKSSL_PNTR_ALIGNMENT(p)                 SHARKSSL_ALIGNED_POINTER(p)
-#else
-#define SHARKSSL_MALLOC_ALIGN(s)                   (s)
-#define SHARKSSL_PNTR_ALIGNMENT(p)                 (U8*)(p)
-#endif
-
-
-#define SHARKSSL_DIM_ARR(a)                        (sizeof(a)/sizeof(a[0]))
-
 #define SHARKSSL_BUF_EXPANDSIZE                    1024
 #define SHARKSSL_BUF_HEADROOM_SIZE                 (SHARKSSL_MAX_DIGEST_BLOCK_LEN + SHARKSSL_SEQ_NUM_LEN)
 
@@ -10452,13 +10966,6 @@ inline void DigestAuthenticator::setStrictMode(bool enableStrictMode) {
 #define SHARKSSL_OP_DESTRUCTOR                     (SHARKSSL_OP_INITIALIZE | SHARKSSL_OP_FINALIZE)
 #define SHARKSSL_OP_ENCRYPT                        0x10
 #define SHARKSSL_OP_DECRYPT                        0x20
-#define SHARKSSL_OP_PUBLIC                         0x40  
-#define SHARKSSL_OP_PRIVATE                        0x80  
-#define SHARKSSL_OP_CALC_Y                         0x04  
-#define SHARKSSL_OP_CALC_XY                        0x04  
-#define SHARKSSL_OP_CALC_KEY                       0x08  
-#define SHARKSSL_OP_SIGN                           0x10  
-#define SHARKSSL_OP_VERIFY                         0x20  
 
 
 
@@ -10474,75 +10981,6 @@ inline void DigestAuthenticator::setStrictMode(bool enableStrictMode) {
 #define SHARKSSL_CS_SHA512                         0x0200
 #define SHARKSSL_CS_SUITE_B                        0x0400
 #define SHARKSSL_CS_NULL                           0x0800
-
-
-
-#define SHARKSSL_EXPLEN_GET_EXPLEN(e)              (U16)((e) & 0x00FF)
-#define SHARKSSL_EXPLEN_GET_FORMAT(e)              (U16)(((U16)(e) & 0x0F00) >> 8)
-#define SHARKSSL_EXPLEN_GET_CHAINLEN(e)            (U16)(((U16)(e) & 0xF000) >> 12)
-
-#define SHARKSSL_EXPLEN_KEYTYPE_RSA                0x0
-#define SHARKSSL_EXPLEN_KEYTYPE_EC                 0x2
-#define SHARKSSL_EXPLEN_KEYTYPE_MASK               0x6
-#define SHARKSSL_EXPLEN_PUBLIC_KEY                 0x8
-
-#define SHARKSSL_EXPLEN_IS_PUBKEY(e)               (SHARKSSL_EXPLEN_GET_FORMAT(e) & SHARKSSL_EXPLEN_PUBLIC_KEY)
-#define SHARKSSL_EXPLEN_GET_KEYTYPE(e)             (SHARKSSL_EXPLEN_GET_FORMAT(e) & SHARKSSL_EXPLEN_KEYTYPE_MASK)
-#define SHARKSSL_EXPLEN_IS_KEYTYPE_RSA(e)          (SHARKSSL_EXPLEN_GET_KEYTYPE(e) == SHARKSSL_EXPLEN_KEYTYPE_RSA)
-#define SHARKSSL_EXPLEN_IS_KEYTYPE_EC(e)           (SHARKSSL_EXPLEN_GET_KEYTYPE(e) == SHARKSSL_EXPLEN_KEYTYPE_EC)
-
-
-#define SHARKSSL_EXPLEN_SET_KEYTYPE_RSA_PUBLIC(e)  (e |= (U16)(SHARKSSL_EXPLEN_KEYTYPE_RSA + SHARKSSL_EXPLEN_PUBLIC_KEY) << 8);
-#define SHARKSSL_EXPLEN_SET_KEYTYPE_RSA_PRIVATE(e) (e |= (U16)(SHARKSSL_EXPLEN_KEYTYPE_RSA) << 8);
-#define SHARKSSL_EXPLEN_SET_KEYTYPE_EC_PUBLIC(e)   (e |= (U16)(SHARKSSL_EXPLEN_KEYTYPE_EC + SHARKSSL_EXPLEN_PUBLIC_KEY) << 8);
-#define SHARKSSL_EXPLEN_SET_KEYTYPE_EC_PRIVATE(e)  (e |= (U16)(SHARKSSL_EXPLEN_KEYTYPE_EC) << 8);
-
-
-
-#define SHARKSSL_MODLEN_GET_EC_PUBLEN(m)           (U16)((m) & 0x00FF)
-#define SHARKSSL_MODLEN_GET_RSA_MODLEN(m)          (m)
-#define SHARKSSL_MODLEN_GET_EC_OID(m)              (U16)(((U16)(m) & 0xFF00) >> 8)
-#define SHARKSSL_MODLEN_GET_RSA_OID(m)             0
-
-#define SHARKSSL_MODLEN_GET_MODLEN(m, e)           (SHARKSSL_EXPLEN_IS_KEYTYPE_EC(e) ? SHARKSSL_MODLEN_GET_EC_PUBLEN(m) : SHARKSSL_MODLEN_GET_RSA_MODLEN(m))
-#define SHARKSSL_MODLEN_GET_OID(m, e)              (SHARKSSL_EXPLEN_IS_KEYTYPE_EC(e) ? SHARKSSL_MODLEN_GET_EC_OID(m) : SHARKSSL_MODLEN_GET_RSA_OID(m))
-
-
-#define SHARKSSL_MODLEN_SET_OID(m, o)              (m = (((U16)l & 0xFF) << 8) | (m & 0xFF))
-
-
-
-#if (SHARKSSL_ENABLE_CA_LIST  || SHARKSSL_ENABLE_CERTSTORE_API)
-#define SHARKSSL_CA_LIST_NAME_SIZE                 8
-#define SHARKSSL_CA_LIST_ELEMENT_SIZE              (SHARKSSL_CA_LIST_NAME_SIZE + 4)
-#define SHARKSSL_CA_LIST_INDEX_TYPE                0x00
-
-#ifdef __IAR_SYSTEMS_ICC__
-
-#else
-#if (SHARKSSL_CA_LIST_NAME_SIZE != SHARKSSL_ALIGN_SIZE(SHARKSSL_CA_LIST_NAME_SIZE))
-#error SHARKSSL CA_STORE_API: UNSUPPORTED CA_LIST_NAME_SIZE
-#endif
-#endif
-
-#if (SHARKSSL_ENABLE_CA_LIST && SHARKSSL_ENABLE_CERTSTORE_API)
-#define SHARKSSL_CA_LIST_PTR_SIZE                  sizeof(U8*)
-#define SHARKSSL_CA_LIST_PTR_TYPE                  0xAD
-#define SHARKSSL_MAX_SNAME_LEN                     32
-
-#if (SHARKSSL_MAX_SNAME_LEN < SHARKSSL_CA_LIST_NAME_SIZE)
-#error SHARKS_MAX_SNAME_LEN must be >= SHARKSSL_CA_LIST_NAME_SIZE
-#endif
-
-typedef struct SharkSslCSCert
-{
-      DoubleLink super;
-      U8 *ptr;  
-      char name[SHARKSSL_MAX_SNAME_LEN + 1];  
-} SharkSslCSCert;
-
-#endif  
-#endif  
 
 
 
@@ -10567,7 +11005,7 @@ typedef struct SharkSslBuf
 
 void    SharkSslBuf_constructor(SharkSslBuf*, U16);
 void    SharkSslBuf_destructor(SharkSslBuf*);
-#ifndef SHARKSSL_DISABLE_INBUF_EXPANSION
+#if (!SHARKSSL_DISABLE_INBUF_EXPANSION)
 U8     *SharkSslBuf_expand(SharkSslBuf*, U16);
 #endif
 void    SharkSslBuf_leftAlignData(SharkSslBuf*);
@@ -10619,97 +11057,7 @@ typedef struct SharkSslCertList
    SingleLink link;
    SharkSslCertParsed certP;
 } SharkSslCertList;
-
-
-typedef struct SharkSslCertKey
-{
-   U8 *mod, *exp;
-   U16 modLen, expLen;
-} SharkSslCertKey;
-
-
-typedef struct SharkSslSignature
-{
-   #if (SHARKSSL_MAX_DIGEST_LEN > (SHARKSSL_MD5_MAC_LEN + SHARKSSL_SHA1_MAC_LEN))
-   U8 hash[SHARKSSL_MAX_DIGEST_LEN];
-   #else
-   U8 hash[SHARKSSL_MD5_MAC_LEN + SHARKSSL_SHA1_MAC_LEN];
-   #endif
-   U8 *signature;
-   U16 signLen;
-   U8  signatureAlgo;
-   U8  hashAlgo;
-} SharkSslSignature;
-
-
-typedef struct SharkSslCertParam
-{
-   SharkSslCertInfo  certInfo;
-   SharkSslCertKey   certKey;
-   SharkSslSignature signature;
-} SharkSslCertParam;
-
-
-typedef struct SharkSslSignParam  
-{
-   SharkSslCertKey  *pCertKey;
-   SharkSslSignature signature;
-} SharkSslSignParam;
-
-
-#if SHARKSSL_ENABLE_CLONE_CERTINFO
-typedef struct SharkSslClonedCertInfo
-{
-   SharkSslCertInfo ci;
-   #if SHARKSSL_ENABLE_SESSION_CACHE
-   U8 flags;
-   #endif
-} SharkSslClonedCertInfo;
-
-
-
-#define SHARKSSL_CCINFO_CERT_CLONED  0x01
-#define SHARKSSL_CCINFO_CERT_CACHED  0x02
 #endif  
-#endif  
-
-
-#if SHARKSSL_ENABLE_DHE_RSA
-typedef struct SharkSslDHParam
-{
-   U8 *p;     
-   U8 *g;     
-   U8 *Y;     
-   U8 *r;     
-   U16 pLen;  
-   U16 gLen;  
-} SharkSslDHParam;
-#endif
-
-
-#if (SHARKSSL_ENABLE_ECDHE_RSA || SHARKSSL_ENABLE_ECDH_RSA || SHARKSSL_ENABLE_ECDHE_ECDSA || SHARKSSL_ENABLE_ECDH_ECDSA)
-typedef struct SharkSslECDHParam
-{
-   U8 *XY;         
-   U8 *k;          
-   U16 xLen;       
-   U16 curveType;  
-} SharkSslECDHParam;
-#endif
-
-
-#if SHARKSSL_ENABLE_ECDSA
-typedef struct SharkSslECDSAParam
-{
-   U8 *R;          
-   U8 *S;          
-   U8 *key;        
-   U8 *hash;       
-   U16 keyLen;     
-   U16 hashLen;    
-   U16 curveType;  
-} SharkSslECDSAParam;
-#endif
 
 
 typedef struct SharkSslHSParam
@@ -10947,25 +11295,6 @@ int  SharkSslCon_sha256(SharkSslCon*, const U8*, U16, U8*);
 int  SharkSslCon_sha384(SharkSslCon*, const U8*, U16, U8*);
 #endif
 int  SharkSslCon_HMAC(SharkSslCon *, U8, U8*, U16, U8*, U8, U8, SharkSslCon_digestFunc);
-#if SHARKSSL_ENABLE_RSA
-SHARKSSL_API int SharkSslCertKey_RSA(const SharkSslCertKey *ck, U8 op, U8 *inout);
-int SharkSslCertKey_RSA_public_encrypt(const SharkSslCertKey *certKey, U16 len, U8 *in, U8 *out, U8 padding);
-int SharkSslCertKey_RSA_private_decrypt(const SharkSslCertKey *certKey, U16 len, U8 *in, U8 *out, U8 padding);
-int SharkSslCertKey_RSA_private_encrypt(const SharkSslCertKey *certKey, U16 len, U8 *in, U8 *out, U8 padding);
-int SharkSslCertKey_RSA_public_decrypt(const SharkSslCertKey *certKey, U16 len, U8 *in, U8 *out, U8 padding);
-#endif
-#if SHARKSSL_ENABLE_DHE_RSA
-int  SharkSslDHParam_DH(const SharkSslDHParam*, U8 op, U8*);
-#if SHARKSSL_SSL_SERVER_CODE
-void SharkSslDHParam_setParam(SharkSslDHParam *dh);
-#endif
-#endif  
-#if (SHARKSSL_ENABLE_ECDHE_RSA || SHARKSSL_ENABLE_ECDH_RSA || SHARKSSL_ENABLE_ECDHE_ECDSA || SHARKSSL_ENABLE_ECDH_ECDSA)
-int  SharkSslECDHParam_ECDH(const SharkSslECDHParam*, U8 op, U8*);
-#endif
-#if SHARKSSL_ENABLE_ECDSA
-int SharkSslECDSAParam_ECDSA(const SharkSslECDSAParam*, U8 op);
-#endif
 #if SHARKSSL_USE_NULL_CIPHER
 int  SharkSslCon_null(SharkSslCon*, U8, U8*, U16);
 #endif
@@ -13558,8 +13887,10 @@ void    SharkSslECNISTCurve_constructor(SharkSslECNISTCurve *o, U16 type);
 
 int     SharkSslECNISTCurve_setPoint(SharkSslECNISTCurve *o, SharkSslECPoint *p);
 
+#if (!SHARKSSL_ECDSA_ONLY_VERIFY)
 int     SharkSslECNISTCurve_multiply(SharkSslECNISTCurve *o, SharkSslBigInt *k, 
                                      SharkSslECPoint *result);
+#endif
 
 #if (SHARKSSL_ENABLE_ECDSA || (SHARKSSL_ENABLE_ECDH_RSA && SHARKSSL_ENABLE_CLIENT_AUTH))                                     
 int     SharkSslECNISTCurve_multiply2(SharkSslECNISTCurve *S, SharkSslBigInt *d, 
@@ -15770,7 +16101,8 @@ typedef struct
    DoubleLink dlink;
    SharkSslSession* ss;
    const char* host;
-   int port;
+   U16 hostLen;
+   U16 port;
 } SharkSslSCMgrNode;
 
 
@@ -16744,7 +17076,7 @@ inline EventHandler* EhDir::getEventHandler() {
 #define SHARKSSL_CONTENT_TYPE_APPLICATION_DATA     23
 
 #define SHARKSSL_HANDSHAKETYPE_HELLO_REQUEST       0
-#define SHARKSSL_HANDSHAKETYPE_CLIENT_HELLO       1
+#define SHARKSSL_HANDSHAKETYPE_CLIENT_HELLO        1
 #define SHARKSSL_HANDSHAKETYPE_SERVER_HELLO        2
 #define SHARKSSL_HANDSHAKETYPE_CERTIFICATE         11
 #define SHARKSSL_HANDSHAKETYPE_SERVER_KEY_EXCHANGE 12
@@ -16754,20 +17086,6 @@ inline EventHandler* EhDir::getEventHandler() {
 #define SHARKSSL_HANDSHAKETYPE_CLIENT_KEY_EXCHANGE 16
 #define SHARKSSL_HANDSHAKETYPE_FINISHED            20
 #define SHARKSSL_HANDSHAKETYPE_COMPLETE            0xFF
-
-#define SHARKSSL_HASHALGORITHM_NONE                0x00
-#define SHARKSSL_HASHALGORITHM_MD5                 0x01
-#define SHARKSSL_HASHALGORITHM_SHA1                0x02
-#define SHARKSSL_HASHALGORITHM_SHA224              0x03
-#define SHARKSSL_HASHALGORITHM_SHA256              0x04
-#define SHARKSSL_HASHALGORITHM_SHA384              0x05
-#define SHARKSSL_HASHALGORITHM_SHA512              0x06
-#define SHARKSSL_HASHALGORITHM_TLS_MD5_SHA1        0xEE  
-
-#define SHARKSSL_SIGNATUREALGORITHM_RSA            0x01
-#define SHARKSSL_SIGNATUREALGORITHM_DSA            0x02
-#define SHARKSSL_SIGNATUREALGORITHM_ECDSA          0x03
-#define SHARKSSL_OID_EC_PUBLIC_KEY                 0x0C  
 
 #define SHARKSSL_CLIENTCERTTYPE_RSA                0x01
 #define SHARKSSL_CLIENTCERTTYPE_DSA                0x02
@@ -16852,6 +17170,9 @@ inline EventHandler* EhDir::getEventHandler() {
 #if ((!SHARKSSL_ECC_USE_SECP192R1) && (!SHARKSSL_ECC_USE_SECP224R1) && (!SHARKSSL_ECC_USE_SECP256R1) && \
       (!SHARKSSL_ECC_USE_SECP384R1) && (!SHARKSSL_ECC_USE_SECP521R1))
 #error no elliptic curve selected
+#endif
+#if (SHARKSSL_ECDSA_ONLY_VERIFY && (SHARKSSL_SSL_CLIENT_CODE || SHARKSSL_SSL_SERVER_CODE))
+#error SHARKSSL_ECDSA_ONLY_VERIFY must be 0 when SSL/TLS is enabled
 #endif
 #else
 #if SHARKSSL_ENABLE_ECDHE_RSA
@@ -17163,12 +17484,12 @@ inline EventHandler* EhDir::getEventHandler() {
 #endif  
 
 
-#define SHARKSSL_MD5_MAC_LEN                       16
-#define SHARKSSL_SHA1_MAC_LEN                      20
-#define SHARKSSL_SHA256_MAC_LEN                    32
-#define SHARKSSL_SHA384_MAC_LEN                    48
-#define SHARKSSL_SHA512_MAC_LEN                    64
-#define SHARKSSL_POLY1305_MAC_LEN                  16
+#define SHARKSSL_MD5_MAC_LEN                       SHARKSSL_MD5_HASH_LEN  
+#define SHARKSSL_SHA1_MAC_LEN                      SHARKSSL_SHA1_HASH_LEN
+#define SHARKSSL_SHA256_MAC_LEN                    SHARKSSL_SHA256_HASH_LEN
+#define SHARKSSL_SHA384_MAC_LEN                    SHARKSSL_SHA384_HASH_LEN
+#define SHARKSSL_SHA512_MAC_LEN                    SHARKSSL_SHA512_HASH_LEN
+#define SHARKSSL_POLY1305_MAC_LEN                  SHARKSSL_POLY1305_HASH_LEN
 
 #define SHARKSSL_MD5_BLOCK_LEN                     64
 #define SHARKSSL_SHA1_BLOCK_LEN                    64
@@ -17235,27 +17556,6 @@ inline EventHandler* EhDir::getEventHandler() {
 
 
 
-#ifndef UPTR
-#define UPTR                                       U32
-#endif
-#ifndef SHARKSSL_ALIGNMENT
-#define SHARKSSL_ALIGNMENT                         4   
-#endif
-#define SHARKSSL_ALIGN_SIZE(s)                     (((s) + (SHARKSSL_ALIGNMENT - 1)) & ((U32)-SHARKSSL_ALIGNMENT))
-#define SHARKSSL_ALIGNED_POINTER(p)                (U8*)(((UPTR)((UPTR)(p) + SHARKSSL_ALIGNMENT - 1)) & ((UPTR)-SHARKSSL_ALIGNMENT))
-#define SHARKSSL_POINTER_IS_ALIGNED(p)             (0 == ((unsigned int)(UPTR)(p) & (SHARKSSL_ALIGNMENT - 1)))
-
-#if SHARKSSL_UNALIGNED_MALLOC
-#define SHARKSSL_MALLOC_ALIGN(s)                   ((s) + SHARKSSL_ALIGNMENT)
-#define SHARKSSL_PNTR_ALIGNMENT(p)                 SHARKSSL_ALIGNED_POINTER(p)
-#else
-#define SHARKSSL_MALLOC_ALIGN(s)                   (s)
-#define SHARKSSL_PNTR_ALIGNMENT(p)                 (U8*)(p)
-#endif
-
-
-#define SHARKSSL_DIM_ARR(a)                        (sizeof(a)/sizeof(a[0]))
-
 #define SHARKSSL_BUF_EXPANDSIZE                    1024
 #define SHARKSSL_BUF_HEADROOM_SIZE                 (SHARKSSL_MAX_DIGEST_BLOCK_LEN + SHARKSSL_SEQ_NUM_LEN)
 
@@ -17308,13 +17608,6 @@ inline EventHandler* EhDir::getEventHandler() {
 #define SHARKSSL_OP_DESTRUCTOR                     (SHARKSSL_OP_INITIALIZE | SHARKSSL_OP_FINALIZE)
 #define SHARKSSL_OP_ENCRYPT                        0x10
 #define SHARKSSL_OP_DECRYPT                        0x20
-#define SHARKSSL_OP_PUBLIC                         0x40  
-#define SHARKSSL_OP_PRIVATE                        0x80  
-#define SHARKSSL_OP_CALC_Y                         0x04  
-#define SHARKSSL_OP_CALC_XY                        0x04  
-#define SHARKSSL_OP_CALC_KEY                       0x08  
-#define SHARKSSL_OP_SIGN                           0x10  
-#define SHARKSSL_OP_VERIFY                         0x20  
 
 
 
@@ -17330,75 +17623,6 @@ inline EventHandler* EhDir::getEventHandler() {
 #define SHARKSSL_CS_SHA512                         0x0200
 #define SHARKSSL_CS_SUITE_B                        0x0400
 #define SHARKSSL_CS_NULL                           0x0800
-
-
-
-#define SHARKSSL_EXPLEN_GET_EXPLEN(e)              (U16)((e) & 0x00FF)
-#define SHARKSSL_EXPLEN_GET_FORMAT(e)              (U16)(((U16)(e) & 0x0F00) >> 8)
-#define SHARKSSL_EXPLEN_GET_CHAINLEN(e)            (U16)(((U16)(e) & 0xF000) >> 12)
-
-#define SHARKSSL_EXPLEN_KEYTYPE_RSA                0x0
-#define SHARKSSL_EXPLEN_KEYTYPE_EC                 0x2
-#define SHARKSSL_EXPLEN_KEYTYPE_MASK               0x6
-#define SHARKSSL_EXPLEN_PUBLIC_KEY                 0x8
-
-#define SHARKSSL_EXPLEN_IS_PUBKEY(e)               (SHARKSSL_EXPLEN_GET_FORMAT(e) & SHARKSSL_EXPLEN_PUBLIC_KEY)
-#define SHARKSSL_EXPLEN_GET_KEYTYPE(e)             (SHARKSSL_EXPLEN_GET_FORMAT(e) & SHARKSSL_EXPLEN_KEYTYPE_MASK)
-#define SHARKSSL_EXPLEN_IS_KEYTYPE_RSA(e)          (SHARKSSL_EXPLEN_GET_KEYTYPE(e) == SHARKSSL_EXPLEN_KEYTYPE_RSA)
-#define SHARKSSL_EXPLEN_IS_KEYTYPE_EC(e)           (SHARKSSL_EXPLEN_GET_KEYTYPE(e) == SHARKSSL_EXPLEN_KEYTYPE_EC)
-
-
-#define SHARKSSL_EXPLEN_SET_KEYTYPE_RSA_PUBLIC(e)  (e |= (U16)(SHARKSSL_EXPLEN_KEYTYPE_RSA + SHARKSSL_EXPLEN_PUBLIC_KEY) << 8);
-#define SHARKSSL_EXPLEN_SET_KEYTYPE_RSA_PRIVATE(e) (e |= (U16)(SHARKSSL_EXPLEN_KEYTYPE_RSA) << 8);
-#define SHARKSSL_EXPLEN_SET_KEYTYPE_EC_PUBLIC(e)   (e |= (U16)(SHARKSSL_EXPLEN_KEYTYPE_EC + SHARKSSL_EXPLEN_PUBLIC_KEY) << 8);
-#define SHARKSSL_EXPLEN_SET_KEYTYPE_EC_PRIVATE(e)  (e |= (U16)(SHARKSSL_EXPLEN_KEYTYPE_EC) << 8);
-
-
-
-#define SHARKSSL_MODLEN_GET_EC_PUBLEN(m)           (U16)((m) & 0x00FF)
-#define SHARKSSL_MODLEN_GET_RSA_MODLEN(m)          (m)
-#define SHARKSSL_MODLEN_GET_EC_OID(m)              (U16)(((U16)(m) & 0xFF00) >> 8)
-#define SHARKSSL_MODLEN_GET_RSA_OID(m)             0
-
-#define SHARKSSL_MODLEN_GET_MODLEN(m, e)           (SHARKSSL_EXPLEN_IS_KEYTYPE_EC(e) ? SHARKSSL_MODLEN_GET_EC_PUBLEN(m) : SHARKSSL_MODLEN_GET_RSA_MODLEN(m))
-#define SHARKSSL_MODLEN_GET_OID(m, e)              (SHARKSSL_EXPLEN_IS_KEYTYPE_EC(e) ? SHARKSSL_MODLEN_GET_EC_OID(m) : SHARKSSL_MODLEN_GET_RSA_OID(m))
-
-
-#define SHARKSSL_MODLEN_SET_OID(m, o)              (m = (((U16)l & 0xFF) << 8) | (m & 0xFF))
-
-
-
-#if (SHARKSSL_ENABLE_CA_LIST  || SHARKSSL_ENABLE_CERTSTORE_API)
-#define SHARKSSL_CA_LIST_NAME_SIZE                 8
-#define SHARKSSL_CA_LIST_ELEMENT_SIZE              (SHARKSSL_CA_LIST_NAME_SIZE + 4)
-#define SHARKSSL_CA_LIST_INDEX_TYPE                0x00
-
-#ifdef __IAR_SYSTEMS_ICC__
-
-#else
-#if (SHARKSSL_CA_LIST_NAME_SIZE != SHARKSSL_ALIGN_SIZE(SHARKSSL_CA_LIST_NAME_SIZE))
-#error SHARKSSL CA_STORE_API: UNSUPPORTED CA_LIST_NAME_SIZE
-#endif
-#endif
-
-#if (SHARKSSL_ENABLE_CA_LIST && SHARKSSL_ENABLE_CERTSTORE_API)
-#define SHARKSSL_CA_LIST_PTR_SIZE                  sizeof(U8*)
-#define SHARKSSL_CA_LIST_PTR_TYPE                  0xAD
-#define SHARKSSL_MAX_SNAME_LEN                     32
-
-#if (SHARKSSL_MAX_SNAME_LEN < SHARKSSL_CA_LIST_NAME_SIZE)
-#error SHARKS_MAX_SNAME_LEN must be >= SHARKSSL_CA_LIST_NAME_SIZE
-#endif
-
-typedef struct SharkSslCSCert
-{
-      DoubleLink super;
-      U8 *ptr;  
-      char name[SHARKSSL_MAX_SNAME_LEN + 1];  
-} SharkSslCSCert;
-
-#endif  
-#endif  
 
 
 
@@ -17423,7 +17647,7 @@ typedef struct SharkSslBuf
 
 void    SharkSslBuf_constructor(SharkSslBuf*, U16);
 void    SharkSslBuf_destructor(SharkSslBuf*);
-#ifndef SHARKSSL_DISABLE_INBUF_EXPANSION
+#if (!SHARKSSL_DISABLE_INBUF_EXPANSION)
 U8     *SharkSslBuf_expand(SharkSslBuf*, U16);
 #endif
 void    SharkSslBuf_leftAlignData(SharkSslBuf*);
@@ -17475,97 +17699,7 @@ typedef struct SharkSslCertList
    SingleLink link;
    SharkSslCertParsed certP;
 } SharkSslCertList;
-
-
-typedef struct SharkSslCertKey
-{
-   U8 *mod, *exp;
-   U16 modLen, expLen;
-} SharkSslCertKey;
-
-
-typedef struct SharkSslSignature
-{
-   #if (SHARKSSL_MAX_DIGEST_LEN > (SHARKSSL_MD5_MAC_LEN + SHARKSSL_SHA1_MAC_LEN))
-   U8 hash[SHARKSSL_MAX_DIGEST_LEN];
-   #else
-   U8 hash[SHARKSSL_MD5_MAC_LEN + SHARKSSL_SHA1_MAC_LEN];
-   #endif
-   U8 *signature;
-   U16 signLen;
-   U8  signatureAlgo;
-   U8  hashAlgo;
-} SharkSslSignature;
-
-
-typedef struct SharkSslCertParam
-{
-   SharkSslCertInfo  certInfo;
-   SharkSslCertKey   certKey;
-   SharkSslSignature signature;
-} SharkSslCertParam;
-
-
-typedef struct SharkSslSignParam  
-{
-   SharkSslCertKey  *pCertKey;
-   SharkSslSignature signature;
-} SharkSslSignParam;
-
-
-#if SHARKSSL_ENABLE_CLONE_CERTINFO
-typedef struct SharkSslClonedCertInfo
-{
-   SharkSslCertInfo ci;
-   #if SHARKSSL_ENABLE_SESSION_CACHE
-   U8 flags;
-   #endif
-} SharkSslClonedCertInfo;
-
-
-
-#define SHARKSSL_CCINFO_CERT_CLONED  0x01
-#define SHARKSSL_CCINFO_CERT_CACHED  0x02
 #endif  
-#endif  
-
-
-#if SHARKSSL_ENABLE_DHE_RSA
-typedef struct SharkSslDHParam
-{
-   U8 *p;     
-   U8 *g;     
-   U8 *Y;     
-   U8 *r;     
-   U16 pLen;  
-   U16 gLen;  
-} SharkSslDHParam;
-#endif
-
-
-#if (SHARKSSL_ENABLE_ECDHE_RSA || SHARKSSL_ENABLE_ECDH_RSA || SHARKSSL_ENABLE_ECDHE_ECDSA || SHARKSSL_ENABLE_ECDH_ECDSA)
-typedef struct SharkSslECDHParam
-{
-   U8 *XY;         
-   U8 *k;          
-   U16 xLen;       
-   U16 curveType;  
-} SharkSslECDHParam;
-#endif
-
-
-#if SHARKSSL_ENABLE_ECDSA
-typedef struct SharkSslECDSAParam
-{
-   U8 *R;          
-   U8 *S;          
-   U8 *key;        
-   U8 *hash;       
-   U16 keyLen;     
-   U16 hashLen;    
-   U16 curveType;  
-} SharkSslECDSAParam;
-#endif
 
 
 typedef struct SharkSslHSParam
@@ -17803,25 +17937,6 @@ int  SharkSslCon_sha256(SharkSslCon*, const U8*, U16, U8*);
 int  SharkSslCon_sha384(SharkSslCon*, const U8*, U16, U8*);
 #endif
 int  SharkSslCon_HMAC(SharkSslCon *, U8, U8*, U16, U8*, U8, U8, SharkSslCon_digestFunc);
-#if SHARKSSL_ENABLE_RSA
-SHARKSSL_API int SharkSslCertKey_RSA(const SharkSslCertKey *ck, U8 op, U8 *inout);
-int SharkSslCertKey_RSA_public_encrypt(const SharkSslCertKey *certKey, U16 len, U8 *in, U8 *out, U8 padding);
-int SharkSslCertKey_RSA_private_decrypt(const SharkSslCertKey *certKey, U16 len, U8 *in, U8 *out, U8 padding);
-int SharkSslCertKey_RSA_private_encrypt(const SharkSslCertKey *certKey, U16 len, U8 *in, U8 *out, U8 padding);
-int SharkSslCertKey_RSA_public_decrypt(const SharkSslCertKey *certKey, U16 len, U8 *in, U8 *out, U8 padding);
-#endif
-#if SHARKSSL_ENABLE_DHE_RSA
-int  SharkSslDHParam_DH(const SharkSslDHParam*, U8 op, U8*);
-#if SHARKSSL_SSL_SERVER_CODE
-void SharkSslDHParam_setParam(SharkSslDHParam *dh);
-#endif
-#endif  
-#if (SHARKSSL_ENABLE_ECDHE_RSA || SHARKSSL_ENABLE_ECDH_RSA || SHARKSSL_ENABLE_ECDHE_ECDSA || SHARKSSL_ENABLE_ECDH_ECDSA)
-int  SharkSslECDHParam_ECDH(const SharkSslECDHParam*, U8 op, U8*);
-#endif
-#if SHARKSSL_ENABLE_ECDSA
-int SharkSslECDSAParam_ECDSA(const SharkSslECDSAParam*, U8 op);
-#endif
 #if SHARKSSL_USE_NULL_CIPHER
 int  SharkSslCon_null(SharkSslCon*, U8, U8*, U16);
 #endif
@@ -21186,7 +21301,7 @@ typedef struct HttpClient
       static int isURL(const char* url);
 
       
-      int trusted(void);
+      SharkSslConTrust trusted(void);
 
       
       void setAcceptTrusted(bool acceptTrusted);
@@ -21287,7 +21402,7 @@ void HttpClient_close(HttpClient* o);
 int HttpClient_getStatus(HttpClient* o);
 #define HttpClient_getError(o) (o)->lastError
 #define HttpClient_getSoDispCon(o) ((SoDispCon*)(o))
-int HttpClient_trusted(HttpClient* o);
+SharkSslConTrust HttpClient_trusted(HttpClient* o);
 #define HttpClient_setAcceptTrusted(o, t) (o)->acceptTrusted=t
 
 #ifdef __cplusplus
@@ -21314,7 +21429,7 @@ inline int HttpClient::isURL(const char* url) {
 }
 
 
-inline int HttpClient::trusted(void){
+inline SharkSslConTrust HttpClient::trusted(void){
    return HttpClient_trusted(this);
 }
 
