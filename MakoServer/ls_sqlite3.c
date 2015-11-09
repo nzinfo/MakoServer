@@ -3,8 +3,13 @@
 ** Author: Tiago Dionizio, Eduardo Quintao
 ** See Copyright Notice in license.html
 
-** $Id: ls_sqlite3.c 2990 2013-09-20 20:10:56Z wini $
+** $Id: ls_sqlite3.c 3786 2015-11-06 22:54:28Z wini $
 */
+
+
+#include "barracuda.h"
+#include "luasql.h"
+#include "sqlite3.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -26,11 +31,6 @@
 
 #define BASQLWEAKKEY "_BASQL3WK"
 
-#include "balua.h"
-#include "sqlite3.h"
-#include "lua.h"
-#include "lauxlib.h"
-#include "luasql.h"
 
 
 
@@ -588,7 +588,7 @@ static int stmt_bind(lua_State *L)
    cur_data *cur = getcursor(L);
    sqlite3_stmt *vm = cur->sql_vm;
    int bcount = sqlite3_bind_parameter_count(vm);
-   int i,rc;
+   int i;
 
    luaL_checktype(L, 2, LUA_TTABLE);
 
@@ -618,34 +618,31 @@ static int stmt_bind(lua_State *L)
       if (strcmp("BLOB",tp) == 0) {
          if (lua_isnumber(L,-1)) { /* treat as zero blob */
             int n = (int)lua_tointeger(L, -1);
-            rc = sqlite3_bind_zeroblob(vm, i, n);
+            sqlite3_bind_zeroblob(vm, i, n);
          }
          else {
             size_t l;
             const void* val = lua_tolstring(L, -1, &l);
-            rc = sqlite3_bind_blob(vm, i, val, l, SQLITE_TRANSIENT);
+            sqlite3_bind_blob(vm, i, val, l, SQLITE_TRANSIENT);
          }
       }
       else if (strcmp("TEXT",tp) == 0) {
          size_t l;
          const char* val = lua_tolstring(L, -1, &l);
-         rc = sqlite3_bind_text(vm, i, val, l, SQLITE_TRANSIENT);
+         sqlite3_bind_text(vm, i, val, l, SQLITE_TRANSIENT);
       }
       else if (strcmp("INTEGER",tp) == 0) {
          lua_Number val = lua_tonumber(L, -1);
-         if (val < (INT_MAX-2))
-            rc = sqlite3_bind_int(vm, i, lua_tointeger(L,-1));
-         else
-            rc = sqlite3_bind_int64(vm, i, (sqlite3_int64)val);
+         sqlite3_bind_int64(vm, i, (sqlite3_int64)val);
       }
 #ifndef SQLITE_OMIT_FLOATING_POINT
       else if (strcmp("FLOAT",tp) == 0) {
          lua_Number val = lua_tonumber(L, -1);
-         rc = sqlite3_bind_double(vm, i, val);
+         sqlite3_bind_double(vm, i, val);
       }
 #endif
       else if (strcmp("NULL",tp) == 0) {
-         rc = sqlite3_bind_null(vm, i);
+         sqlite3_bind_null(vm, i);
       }
       else {
          luaL_error(L, "invalid bind type parameter #u",i);
@@ -994,7 +991,7 @@ static int blob_write(lua_State* L)
    sqlite3_blob* sql_blob;
    size_t l;
    const char* p = luaL_checklstring(L,2,&l);
-   int bofs = luaL_optinteger(L,3,0);
+   int bofs = (int)luaL_optinteger(L,3,0);
 
    luaL_argcheck (L, blob != NULL&& blob->sql_blob != NULL, 1,
                   LUASQL_PREFIX"blob expected");
@@ -1019,8 +1016,8 @@ static int blob_read(lua_State* L)
    int rc;
    sqlite3_blob* sql_blob;
    luaL_Buffer b;
-   size_t n = luaL_checkinteger(L,2);  /* how much to read */
-   size_t bofs = luaL_checkinteger(L,3);  /* where to read */
+   size_t n = (size_t)luaL_checkinteger(L,2);  /* how much to read */
+   size_t bofs = (size_t)luaL_checkinteger(L,3);  /* where to read */
    size_t rlen = LUAL_BUFFERSIZE;  /* try to read that much each time */
 
    luaL_argcheck (L, blob != NULL&& blob->sql_blob != NULL, 1,
@@ -1062,14 +1059,14 @@ static int conn_blobzero(lua_State* L)
    const char *table=luaL_checkstring(L,2);
    const char *col=luaL_checkstring(L,3);
    sqlite3_int64 row = luaL_checkinteger(L,4);
-   size_t sz  = luaL_checkinteger(L,5);
+   size_t sz  = (size_t)luaL_checkinteger(L,5);
    sqlite3_stmt *vm;
    const char *errmsg;
    const char *tail;
    int rc;
    char* stmt;
 
-   stmt = sqlite3_mprintf("update %s set %s = ? where _ROWID_ = %u;",
+   stmt = sqlite3_mprintf("update %Q set %Q = ? where _ROWID_ = %llu;",
                           table, col, row);
 
    rc = sqlite3_prepare_v2(conn->sql_conn, stmt, -1, &vm, &tail);

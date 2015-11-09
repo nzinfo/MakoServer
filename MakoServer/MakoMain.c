@@ -10,7 +10,7 @@
  ****************************************************************************
  *            PROGRAM MODULE
  *
- *   $Id: MakoMain.c 3641 2015-01-07 00:53:26Z wini $
+ *   $Id: MakoMain.c 3786 2015-11-06 22:54:28Z wini $
  *
  *   COPYRIGHT:  Real Time Logic LLC, 2012 - 2015
  *
@@ -666,38 +666,38 @@ loadConfigData(lua_State* L)
       lua_call(L,0,0);
    *paramPtr="commandcnt";
    lua_getglobal(L, *paramPtr);
-   HttpServerConfig_setNoOfHttpCommands(cfg,(U16)luaL_optint(L,-1,3));
+   HttpServerConfig_setNoOfHttpCommands(cfg,(U16)luaL_optinteger(L,-1,3));
 
    *paramPtr="sessioncnt";
    lua_getglobal(L, *paramPtr);
-   HttpServerConfig_setMaxSessions(cfg,(U16)luaL_optint(L,-1,50));
+   HttpServerConfig_setMaxSessions(cfg,(U16)luaL_optinteger(L,-1,50));
 
    *paramPtr="conncnt";
    lua_getglobal(L, *paramPtr);
-   HttpServerConfig_setNoOfHttpConnections(cfg,(U16)luaL_optint(L,-1,50));
+   HttpServerConfig_setNoOfHttpConnections(cfg,(U16)luaL_optinteger(L,-1,50));
 
    *paramPtr="rspsz";
    lua_getglobal(L, *paramPtr);
-   HttpServerConfig_setResponseData(cfg,(U16)luaL_optint(L,-1,8*1024));
+   HttpServerConfig_setResponseData(cfg,(U16)luaL_optinteger(L,-1,8*1024));
 
    *paramPtr="reqminsz";
    lua_getglobal(L, *paramPtr);
-   val=(U16)luaL_optint(L,-1,4*1024);
+   val=(U16)luaL_optinteger(L,-1,4*1024);
    *paramPtr="reqmaxsz";
    lua_getglobal(L, *paramPtr);
-   HttpServerConfig_setRequest(cfg,val,(U16)luaL_optint(L,-1,8*1024));
+   HttpServerConfig_setRequest(cfg,val,(U16)luaL_optinteger(L,-1,8*1024));
 
    *paramPtr="tracker_nodes";
    lua_getglobal(L, *paramPtr);
-   cfgParams->trackerNodes=(int)luaL_optint(L,-1,100);
+   cfgParams->trackerNodes=(int)luaL_optinteger(L,-1,100);
 
    *paramPtr="tracker_maxlogin";
    lua_getglobal(L, *paramPtr);
-   cfgParams->maxlogin=(int)luaL_optint(L,-1,4);
+   cfgParams->maxlogin=(int)luaL_optinteger(L,-1,4);
 
    *paramPtr="tracker_bantime";
    lua_getglobal(L, *paramPtr);
-   cfgParams->bantime=(int)luaL_optint(L,-1,10*60);
+   cfgParams->bantime=(int)luaL_optinteger(L,-1,10*60);
 
    return 0;
 }
