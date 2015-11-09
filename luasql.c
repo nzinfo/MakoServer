@@ -12,13 +12,12 @@
 #define LUA_LIB
 #endif
 
-#include "balua.h"
+#include "barracuda.h"
 
 #include "luasql.h"
 
 /* this header cross depoendency is needed for the one
    basnprintf() call */
-#include "BufPrint.h"
 
 /*
 ** Typical database error situation

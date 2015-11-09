@@ -511,12 +511,12 @@ BA_API int baErr2HttpCode(int ecode);
 
 
 #ifndef SHARKSSL_ECC_USE_SECP192R1
-#define SHARKSSL_ECC_USE_SECP192R1                       1
+#define SHARKSSL_ECC_USE_SECP192R1                       0
 #endif
 
 
 #ifndef SHARKSSL_ECC_USE_SECP224R1
-#define SHARKSSL_ECC_USE_SECP224R1                       1
+#define SHARKSSL_ECC_USE_SECP224R1                       0
 #endif
 
 
@@ -2440,13 +2440,14 @@ typedef enum
 
 typedef struct SharkSslCertDN
 {
-   U8 *countryName; 
-   U8 *province;  
-   U8 *locality;  
-   U8 *organization; 
-   U8 *unit; 
+   const U8 *countryName; 
+   const U8 *province;  
+   const U8 *locality;  
+   const U8 *organization; 
+   const U8 *unit; 
    
-   U8 *commonName;
+   const U8 *commonName;
+   const U8 *emailAddress;
 
    U8 countryNameLen;   
    U8 provinceLen;      
@@ -2454,7 +2455,23 @@ typedef struct SharkSslCertDN
    U8 organizationLen;  
    U8 unitLen;          
    U8 commonNameLen;    
+   U8 emailAddressLen;    
 } SharkSslCertDN;
+
+#define SharkSslCertDN_constructor(o) memset(o,0,sizeof(SharkSslCertDN))
+
+#define SharkSslCertDN_setCountryName(o, countryNameMA) \
+   (o)->countryName=(const U8*)countryNameMA,(o)->countryNameLen=(U8)strlen(countryNameMA)
+#define SharkSslCertDN_setProvince(o, provinceMA) \
+   (o)->province=(const U8*)provinceMA,(o)->provinceLen=(U8)strlen(provinceMA)
+#define SharkSslCertDN_setLocality(o, localityMA) \
+   (o)->locality=(const U8*)localityMA,(o)->localityLen=(U8)strlen(localityMA)
+#define SharkSslCertDN_setOrganization(o, organizationMA) \
+   (o)->organization=(const U8*)organizationMA,(o)->organizationLen=(U8)strlen(organizationMA)
+#define SharkSslCertDN_setUnit(o, unitMA) \
+   (o)->unit=(const U8*)unitMA,(o)->unitLen=(U8)strlen(unitMA)
+#define SharkSslCertDN_setCommonName(o, commonNameMA) \
+   (o)->commonName=(const U8*)commonNameMA,(o)->commonNameLen=(U8)strlen(commonNameMA)
 
 
 
@@ -2899,13 +2916,29 @@ SHARKSSL_API sharkssl_RSA_RetVal sharkssl_RSA_public_decrypt(
 #if SHARKSSL_USE_ECC
 
 
+#define SHARKSSL_EC_CURVE_ID_SECP192R1  19
+#define SHARKSSL_EC_CURVE_ID_SECP224R1  21
+#define SHARKSSL_EC_CURVE_ID_SECP256R1  23
+#define SHARKSSL_EC_CURVE_ID_SECP384R1  24
+#define SHARKSSL_EC_CURVE_ID_SECP521R1  25
+
+
+
 typedef U8* SharkSslECCKey;
 
 #if SHARKSSL_ENABLE_PEM_API
 
 SHARKSSL_API SharkSslECCKey sharkssl_PEM_to_ECCKey(
    const char *PEMKey, const char *passphrase);
+#endif
 
+
+#if SHARKSSL_ENABLE_ECCKEY_CREATE
+int SharkSslECCKey_create(SharkSslECCKey *key, U16 curveID);
+#endif
+
+
+#if (SHARKSSL_ENABLE_PEM_API || SHARKSSL_ENABLE_ECCKEY_CREATE)
 
 SHARKSSL_API void SharkSslECCKey_free(SharkSslECCKey key);
 #endif
@@ -3339,14 +3372,13 @@ extern int basprintf(char* buf, const char* fmt, ...);
 #endif
 
 #ifdef NO_LOCALDECPOINT
-#define getlocaledecpoint() '.'
+#define lua_getlocaledecpoint() '.'
 #endif
 
 
 
-
-#ifndef lconfig_h
-#define lconfig_h
+#ifndef luaconf_h
+#define luaconf_h
 
 
 
@@ -3356,7 +3388,7 @@ extern int basprintf(char* buf, const char* fmt, ...);
 
 
 
-#define BASLIB_VER "3752"
+#define BASLIB_VER "3790"
 
 
 
@@ -7290,89 +7322,153 @@ struct HttpTraceWriteLock
 
 #define luai_makeseed() baGetMsClock()
 
-
-
-
-
-#if !defined(LUA_ANSI) && defined(__STRICT_ANSI__)
-#define LUA_ANSI
+#if !defined(lua_writestringerror)
+#define lua_writestringerror(s,p) HttpTrace_printf(0, (s), (p))
 #endif
 
 
-#if !defined(LUA_ANSI) && defined(_WIN32) && !defined(_WIN32_WCE)
-#define LUA_WIN		
+
+
+
+
+
+
+
+
+
+
+
+
+
+#if !defined(LUA_USE_C89) && defined(_WIN32) && !defined(_WIN32_WCE)
+#define LUA_USE_WINDOWS  
 #endif
 
-#if defined(LUA_WIN)
-#define LUA_DL_DLL
-#define LUA_USE_AFORMAT		
-#endif
 
+#if defined(LUA_USE_WINDOWS)
+#define LUA_DL_DLL	
+#define LUA_USE_C89	
+#endif
 
 
 #if defined(LUA_USE_LINUX)
 #define LUA_USE_POSIX
-#ifndef LUA_NO_DLOPEN
 #define LUA_USE_DLOPEN		
-#endif
 #define LUA_USE_READLINE	
-#if !defined(ANDROID) && !defined(__ANDROID__)
-#define LUA_USE_STRTODHEX	
 #endif
-#define LUA_USE_AFORMAT		
-#define LUA_USE_LONGLONG	
-#endif
+
 
 #if defined(LUA_USE_MACOSX)
 #define LUA_USE_POSIX
 #define LUA_USE_DLOPEN		
 #define LUA_USE_READLINE	
-#define LUA_USE_STRTODHEX	
-#define LUA_USE_AFORMAT		
-#define LUA_USE_LONGLONG	
+#endif
+
+#ifdef LUA_NO_DLOPEN
+#undef LUA_USE_DLOPEN
 #endif
 
 
 
 
-#if defined(LUA_USE_POSIX)
-#define LUA_USE_MKSTEMP
-#define LUA_USE_ISATTY
-#define LUA_USE_POPEN
-#define LUA_USE_ULONGJMP
-#define LUA_USE_GMTIME_R
+#if defined(LUA_USE_C89) && !defined(LUA_USE_WINDOWS)
+#define LUA_C89_NUMBERS
 #endif
 
 
 
 
+
+#if ((INT_MAX >> 15) >> 15) >= 1
+#define LUAI_BITSINT	32
+#else
+
+#define LUAI_BITSINT	16
+#endif
+
+
+
+
+
+#define LUA_INT_INT		1
+#define LUA_INT_LONG		2
+#define LUA_INT_LONGLONG	3
+
+
+#define LUA_FLOAT_FLOAT		1
+#define LUA_FLOAT_DOUBLE	2
+#define LUA_FLOAT_LONGDOUBLE	3
+
+#if !defined(LUA_INT_TYPE) && !defined(LUA_FLOAT_TYPE)
+#if defined(LUA_32BITS)		
+
+#if LUAI_BITSINT >= 32  
+#define LUA_INT_TYPE	LUA_INT_INT
+#else  
+#define LUA_INT_TYPE	LUA_INT_LONG
+#endif
+#define LUA_FLOAT_TYPE	LUA_FLOAT_FLOAT
+
+#elif defined(LUA_C89_NUMBERS)	
+
+#define LUA_INT_TYPE	LUA_INT_LONG
+#define LUA_FLOAT_TYPE	LUA_FLOAT_DOUBLE
+
+#endif				
+#endif
+
+
+
+#if !defined(LUA_INT_TYPE)
+#define LUA_INT_TYPE	LUA_INT_LONGLONG
+#endif
+
+#if !defined(LUA_FLOAT_TYPE)
+#define LUA_FLOAT_TYPE	LUA_FLOAT_DOUBLE
+#endif								
+
+
+
+
+
+
+
+
+
+#define LUA_VDIR	LUA_VERSION_MAJOR "." LUA_VERSION_MINOR
 #if defined(_WIN32)	
 
 #define LUA_LDIR	"!\\lua\\"
 #define LUA_CDIR	"!\\"
+#define LUA_SHRDIR	"!\\..\\share\\lua\\" LUA_VDIR "\\"
 #ifndef LUA_PATH_DEFAULT
 #define LUA_PATH_DEFAULT  \
 		LUA_LDIR"?.lua;"  LUA_LDIR"?\\init.lua;" \
-		LUA_CDIR"?.lua;"  LUA_CDIR"?\\init.lua;" ".\\?.lua"
+		LUA_CDIR"?.lua;"  LUA_CDIR"?\\init.lua;" \
+		LUA_SHRDIR"?.lua;" LUA_SHRDIR"?\\init.lua;" \
+		".\\?.lua;" ".\\?\\init.lua"
 #endif
 #ifndef LUA_CPATH_DEFAULT
 #define LUA_CPATH_DEFAULT \
-		LUA_CDIR"?.dll;" LUA_CDIR"loadall.dll;" ".\\?.dll"
+		LUA_CDIR"?.dll;" \
+		LUA_CDIR"..\\lib\\lua\\" LUA_VDIR "\\?.dll;" \
+		LUA_CDIR"loadall.dll;" ".\\?.dll"
 #endif
 #else			
-#define LUA_VDIR	LUA_VERSION_MAJOR "." LUA_VERSION_MINOR "/"
+
 #define LUA_ROOT	"/usr/local/"
-#define LUA_LDIR	LUA_ROOT "share/lua/" LUA_VDIR
-#define LUA_CDIR	LUA_ROOT "lib/lua/" LUA_VDIR
+#define LUA_LDIR	LUA_ROOT "share/lua/" LUA_VDIR "/"
+#define LUA_CDIR	LUA_ROOT "lib/lua/" LUA_VDIR "/"
 #ifndef LUA_PATH_DEFAULT
 #define LUA_PATH_DEFAULT  \
 		LUA_LDIR"?.lua;"  LUA_LDIR"?/init.lua;" \
-		LUA_CDIR"?.lua;"  LUA_CDIR"?/init.lua;" "./?.lua"
-#endif
+		LUA_CDIR"?.lua;"  LUA_CDIR"?/init.lua;" \
+		"./?.lua;" "./?/init.lua"
+#endif			
 #ifndef LUA_CPATH_DEFAULT
 #define LUA_CPATH_DEFAULT \
 		LUA_CDIR"?.so;" LUA_CDIR"loadall.so;" "./?.so"
-#endif
+#endif			
 #endif			
 
 
@@ -7387,7 +7483,7 @@ struct HttpTraceWriteLock
 
 
 
-#define LUA_ENV		"_ENV"
+
 
 
 
@@ -7415,51 +7511,41 @@ struct HttpTraceWriteLock
 #if defined(__GNUC__) && ((__GNUC__*100 + __GNUC_MINOR__) >= 302) && \
     defined(__ELF__)		
 #define LUAI_FUNC	__attribute__((visibility("hidden"))) extern
+#else				
+#define LUAI_FUNC	extern
+#endif				
+
 #define LUAI_DDEC	LUAI_FUNC
 #define LUAI_DDEF	
 
-#else				
-#define LUAI_FUNC	extern
-#define LUAI_DDEC	extern
-#define LUAI_DDEF	
+
+
+
+
+
+
+#if defined(LUA_COMPAT_5_2)	
+
+
+#define LUA_COMPAT_MATHLIB
+
+
+#define LUA_COMPAT_BITLIB
+
+
+#define LUA_COMPAT_IPAIRS
+
+
+#define LUA_COMPAT_APIINTCASTS
+
 #endif				
 
 
+#if defined(LUA_COMPAT_5_1)	
 
 
-#define LUA_QL(x)	"'" x "'"
-#define LUA_QS		LUA_QL("%s")
-
-
-
-#define LUA_IDSIZE	60
-
-#ifdef NO_BA_SERVER
-
-
-#define luai_writestring(s,l)	fwrite((s), sizeof(char), (l), stdout)
-#define luai_writeline()	(luai_writestring("\n", 1), fflush(stdout))
-
-
-#define luai_writestringerror(s,p) \
-	(fprintf(stderr, (s), (p)), fflush(stderr))
-
-
-#else
-#define luai_writestring(s,l)      HttpTrace_write(0,s,-1)
-#define luai_writeline()	   HttpTrace_write(0,"\n",1),HttpTrace_flush()
-#define luai_writestringerror(s,p) HttpTrace_printf(0,s,p),HttpTrace_flush()
-#endif
-
-
-
-#define LUAI_MAXSHORTLEN        40
-
-
-
-
-
-#if defined(LUA_COMPAT_ALL)	
+#define LUA_COMPAT_MATHLIB
+#define LUA_COMPAT_APIINTCASTS
 
 
 #define LUA_COMPAT_UNPACK
@@ -7496,37 +7582,262 @@ struct HttpTraceWriteLock
 
 #endif				
 
+#if LUA_NUMBER_INTEGER
+
+#define LUA_NZERO 0
+#define LUA_INTEGER		long
+#define LUA_INTEGER_FRMLEN	"l"
+#undef HUGE_VAL
+#define HUGE_VAL LUA_MAXINTEGER
+#define LUAI_UACINT		LUA_INTEGER
+#define LUA_UNSIGNED		unsigned LUAI_UACINT
+#define LUA_MAXINTEGER		LONG_MAX
+#define LUA_MININTEGER		LONG_MIN
+#define LUA_INTEGER_FMT		"%d"
+#define lua_integer2str(s,n)	basprintf((s), LUA_INTEGER_FMT, (n))
+#define lua_number2str(s,n)	basprintf((s), LUA_NUMBER_FMT, (n))
+
+#define LUA_NUMBER		LUA_INTEGER
+#define LUAI_UACNUMBER		LUAI_UACINT
+#define LUA_NUMBER_FRMLEN	LUA_INTEGER_FRMLEN
+#define LUA_NUMBER_FMT		LUA_INTEGER_FMT
+
+#define luai_numpow(L,a,b)	bapower(a,b,1)
+#define luai_nummod(L,a,b,m)	((m) = luaV_mod(L, (a), (b)))
+#define luai_numdiv(L,a,b)	luaV_div(L, a, b)
+#define luai_numidiv(L,a,b)	luaV_div(L, a, b)
+
+#define l_floor(x)	(x)
+
+#define l_mathop(op)	int_##op
+#define int_ldexp(x, exp) x*(2^exp)
+#define int_floor(x) x
+#define int_frexp(x, exp) (x)
+
+#define LUA_COMPAT_FLOATSTRING
+
+#define lua_str2number(s,p)     strtoul((s),(p),10)
+
+#define l_hashfloat(n)	(n)
+
+#define l_mathlim(x)	(LUAI_##x)
+#define LUAI_MANT_DIG	63
+#define LUAI_MAX_10_EXP	10	
+
+#define lua_numbertointeger(n,p)	(*(p)=(n), 1)
+
+extern int bapower(int a, int x, int k);
+
+#else 
+
+#define LUA_NZERO 0.0
 
 
 
 
 
 
-#ifndef LUAI_BITSINT
 
 
-#if INT_MAX-20 < 32760		
-#define LUAI_BITSINT	16
-#elif INT_MAX > 2147483640L	
 
-#define LUAI_BITSINT	32
+
+
+
+#if LUA_FLOAT_TYPE == LUA_FLOAT_FLOAT		
+
+#define LUA_NUMBER	float
+
+#define l_mathlim(n)		(FLT_##n)
+
+#define LUAI_UACNUMBER	double
+
+#define LUA_NUMBER_FRMLEN	""
+#define LUA_NUMBER_FMT		"%.7g"
+
+#define l_mathop(op)		op##f
+
+#define lua_str2number(s,p)	strtof((s), (p))
+
+
+#elif LUA_FLOAT_TYPE == LUA_FLOAT_LONGDOUBLE	
+
+#define LUA_NUMBER	long double
+
+#define l_mathlim(n)		(LDBL_##n)
+
+#define LUAI_UACNUMBER	long double
+
+#define LUA_NUMBER_FRMLEN	"L"
+#define LUA_NUMBER_FMT		"%.19Lg"
+
+#define l_mathop(op)		op##l
+
+#define lua_str2number(s,p)	strtold((s), (p))
+
+#elif LUA_FLOAT_TYPE == LUA_FLOAT_DOUBLE	
+
+#define LUA_NUMBER	double
+
+#define l_mathlim(n)		(DBL_##n)
+
+#define LUAI_UACNUMBER	double
+
+#define LUA_NUMBER_FRMLEN	""
+#define LUA_NUMBER_FMT		"%.14g"
+
+#define l_mathop(op)		op
+
+#define lua_str2number(s,p)	strtod((s), (p))
+
+#else						
+
+#error "numeric float type not defined"
+
+#endif					
+
+
+#define l_floor(x)		(l_mathop(floor)(x))
+
+#define lua_number2str(s,n)	basprintf((s), LUA_NUMBER_FMT, (n))
+
+
+
+#define lua_numbertointeger(n,p) \
+  ((n) >= (LUA_NUMBER)(LUA_MININTEGER) && \
+   (n) < -(LUA_NUMBER)(LUA_MININTEGER) && \
+      (*(p) = (LUA_INTEGER)(n), 1))
+
+
+
+
+
+
+
+
+#define LUA_INTEGER_FMT		"%" LUA_INTEGER_FRMLEN "d"
+#define lua_integer2str(s,n)	basprintf((s), LUA_INTEGER_FMT, (n))
+
+#define LUAI_UACINT		LUA_INTEGER
+
+
+#define LUA_UNSIGNED		unsigned LUAI_UACINT
+
+
+
+
+#if LUA_INT_TYPE == LUA_INT_INT		
+
+#define LUA_INTEGER		int
+#define LUA_INTEGER_FRMLEN	""
+
+#define LUA_MAXINTEGER		INT_MAX
+#define LUA_MININTEGER		INT_MIN
+
+#elif LUA_INT_TYPE == LUA_INT_LONG	
+
+#define LUA_INTEGER		long
+#define LUA_INTEGER_FRMLEN	"l"
+
+#define LUA_MAXINTEGER		LONG_MAX
+#define LUA_MININTEGER		LONG_MIN
+
+#elif LUA_INT_TYPE == LUA_INT_LONGLONG	
+
+#if defined(LLONG_MAX)		
+
+
+#define LUA_INTEGER		long long
+#define LUA_INTEGER_FRMLEN	"ll"
+
+#define LUA_MAXINTEGER		LLONG_MAX
+#define LUA_MININTEGER		LLONG_MIN
+
+#elif defined(LUA_USE_WINDOWS) 
+
+#define LUA_INTEGER		__int64
+#define LUA_INTEGER_FRMLEN	"I64"
+
+#define LUA_MAXINTEGER		_I64_MAX
+#define LUA_MININTEGER		_I64_MIN
+
 #else				
-#error "you must define LUA_BITSINT with number of bits in an integer"
+
+#error "Compiler does not support 'long long'. Use option '-DLUA_32BITS' \
+  or '-DLUA_C89_NUMBERS' (see file 'luaconf.h' for details)"
+
 #endif				
+
+#else				
+
+#error "numeric integer type not defined"
+
+#endif				
+
+#endif 
+
+
+
+
+
+
+
+#if !defined(LUA_USE_C89)
 
 #endif
 
 
-#if LUAI_BITSINT >= 32		
-#define LUA_INT32	int
-#define LUAI_UMEM	size_t
-#define LUAI_MEM	ptrdiff_t
-#else				
 
-#define LUA_INT32	long
-#define LUAI_UMEM	unsigned long
-#define LUAI_MEM	long
-#endif				
+#if !defined(LUA_USE_C89)
+
+#endif
+
+
+
+#if LUA_NUMBER_INTEGER == 0
+#if defined(LUA_USE_C89) || (defined(HUGE_VAL) && !defined(HUGE_VALF))
+#undef l_mathop  
+#undef lua_str2number
+#define l_mathop(op)		(lua_Number)op  
+#define lua_str2number(s,p)	((lua_Number)strtod((s), (p)))
+#endif
+#endif
+
+
+
+#define LUA_KCONTEXT	ptrdiff_t
+
+#if !defined(LUA_USE_C89) && defined(__STDC_VERSION__) && \
+    __STDC_VERSION__ >= 199901L
+#if defined(INTPTR_MAX)  
+#undef LUA_KCONTEXT
+#define LUA_KCONTEXT	intptr_t
+#endif
+#endif
+
+
+
+#if !defined(lua_getlocaledecpoint)
+#define lua_getlocaledecpoint()		(localeconv()->decimal_point[0])
+#endif
+
+
+
+
+
+
+
+
+
+
+
+
+#if defined(LUA_USE_APICHECK)
+#define luai_apicheck(l,e)	baAssert(e)
+#endif
+
+
+
+
 
 
 
@@ -7537,204 +7848,66 @@ struct HttpTraceWriteLock
 #endif
 
 
-#define LUAI_FIRSTPSEUDOIDX	(-LUAI_MAXSTACK - 1000)
+
+#define LUA_EXTRASPACE		(sizeof(void *))
 
 
 
-
-
-#define LUAL_BUFFERSIZE		BUFSIZ
-
+#define LUA_IDSIZE	60
 
 
 
-
-
-
-#define l_mathop(x)		(x)
-
-
-#ifndef LUA_NUMBER
-
-#ifdef LUA_NUMBER_INTEGER
-#define luai_hashnum(i,n)(i)=(n)
-#define lua_number2int(i,n)	((i)=(n))
-#define lua_number2integer(i,n)	((i)=(n))
-#define LUA_NUMBER	long
-#define LUAI_UACNUMBER	long
-#define LUA_NUMBER_SCAN         "%ld"
-#define LUA_NUMBER_FMT          "%d"
-#define LUAI_MAXNUMBER2STR	32
-#define lua_str2number(s,p)     strtoul((s),(p),10) 
-#else 
-
-#define LUA_NUMBER_DOUBLE
-#define LUA_NUMBER	double
-
-
-#define LUAI_UACNUMBER	double
-
-
-
-#define LUA_NUMBER_SCAN		"%lf"
-#define LUA_NUMBER_FMT		"%.14g"
-#define LUAI_MAXNUMBER2STR	32 
-
-
-
-#define lua_str2number(s,p)	strtod((s), (p))
-
-#if defined(LUA_USE_STRTODHEX)
-#define lua_strx2number(s,p)	strtod((s), (p))
-#endif
-
-
-
-#endif 
-
-
-#ifdef NO_BA_SERVER
-#define lua_number2str(s,n)	sprintf((s), LUA_NUMBER_FMT, (n))
+#if defined(LUA_USE_WINDOWS) || defined(LUA_USE_LINUX) || defined(LUA_USE_MACOSX)
+#if defined(LUA_FLOAT_LONGDOUBLE)
+#define LUAL_BUFFERSIZE		8192
 #else
-#define lua_number2str(s,n)	basnprintf((s), 1000, LUA_NUMBER_FMT, (n))
+#define LUAL_BUFFERSIZE   ((int)(0x80 * sizeof(void*) * sizeof(lua_Integer)))
 #endif
-#endif 
-
-
-#ifdef LUA_NUMBER_INTEGER
-extern int bapower(int a, int x, int k);
-extern int bamod(int a,int b);
-#endif
-
-
-
-
-
-
-#if defined(lobject_c) || defined(lvm_c)
-#ifdef LUA_NUMBER_INTEGER
-#define luai_nummod(L,a,b)         bamod(a,b)
-#define luai_numpow(L,a,b)         bapower(a,b,1)
 #else
-#define luai_nummod(L,a,b)	((a) - l_mathop(floor)((a)/(b))*(b))
-#define luai_numpow(L,a,b)	(l_mathop(pow)(a,b))
-#endif
-#endif
 
-
-#if defined(LUA_CORE)
-#define luai_numadd(L,a,b)	((a)+(b))
-#define luai_numsub(L,a,b)	((a)-(b))
-#define luai_nummul(L,a,b)	((a)*(b))
-#ifdef LUA_NUMBER_INTEGER
-#define luai_numdiv(L,a,b)	((b)?(a)/(b):0)
-#else
-#define luai_numdiv(L,a,b)	((a)/(b))
-#endif
-#define luai_numunm(L,a)	(-(a))
-#define luai_numeq(a,b)		((a)==(b))
-#define luai_numlt(L,a,b)	((a)<(b))
-#define luai_numle(L,a,b)	((a)<=(b))
-#define luai_numisnan(L,a)	(!luai_numeq((a), (a)))
+#define LUAL_BUFFERSIZE 1024
 #endif
 
 
 
 
-#ifdef LUA_NUMBER_INTEGER
-#define LUA_INTEGER	long
-#else
-#define LUA_INTEGER	ptrdiff_t
+#define LUA_QL(x)	"'" x "'"
+#define LUA_QS		LUA_QL("%s")
+
+
+
+
+
+
+
+
+
+
+
+
 #endif
 
-#define LUA_UNSIGNED	unsigned LUA_INT32
-
-
-
-
-
-#if defined(LUA_NUMBER_DOUBLE) && !defined(LUA_ANSI)	
-
-
-
-#if defined(LUA_WIN) && defined(_MSC_VER) && defined(_M_IX86)	
-
-#define LUA_MSASMTRICK
-#define LUA_IEEEENDIAN		0
-#define LUA_NANTRICK
-
-
-
-#elif defined(__i386__) || defined(__i386) || defined(__X86__) 
-
-#define LUA_IEEE754TRICK
-#define LUA_IEEELL
-#define LUA_IEEEENDIAN		0
-#define LUA_NANTRICK
-
-
-#elif defined(__x86_64)						
-
-#define LUA_IEEE754TRICK
-#define LUA_IEEEENDIAN		0
-
-#elif defined(__POWERPC__) || defined(__ppc__)			
-
-#define LUA_IEEE754TRICK
-#define LUA_IEEEENDIAN		1
-
-#else								
-
-
-#define LUA_IEEE754TRICK
-
-#endif								
-
-#endif							
-
-
-
-
-
-
-
-
-
-
-
-
-
-#undef LUA_USE_AFORMAT
-#ifndef LUA_USE_LONGLONG
-#define LUA_USE_LONGLONG
-#endif
-
-#ifdef LUA_NUMBER_INTEGER
-#undef LUA_USE_LONGLONG
-#endif
-
-#endif
 #endif
 #define LUA_VERSION_MAJOR	"5"
-#define LUA_VERSION_MINOR	"2"
-#define LUA_VERSION_NUM		502
-#define LUA_VERSION_RELEASE	"2"
+#define LUA_VERSION_MINOR	"3"
+#define LUA_VERSION_NUM		503
+#define LUA_VERSION_RELEASE	"1"
 
 #define LUA_VERSION	"Lua " LUA_VERSION_MAJOR "." LUA_VERSION_MINOR
 #define LUA_RELEASE	LUA_VERSION "." LUA_VERSION_RELEASE
-#define LUA_COPYRIGHT	LUA_RELEASE "  Copyright (C) 1994-2013 Lua.org, PUC-Rio"
+#define LUA_COPYRIGHT	LUA_RELEASE "  Copyright (C) 1994-2015 Lua.org, PUC-Rio"
 #define LUA_AUTHORS	"R. Ierusalimschy, L. H. de Figueiredo, W. Celes"
 
 
 
-#define LUA_SIGNATURE	"\033Lua"
+#define LUA_SIGNATURE	"\x1bLua"
 
 
 #define LUA_MULTRET	(-1)
 
 
 
-#define LUA_REGISTRYINDEX	LUAI_FIRSTPSEUDOIDX
+#define LUA_REGISTRYINDEX	(-LUAI_MAXSTACK - 1000)
 #define lua_upvalueindex(i)	(LUA_REGISTRYINDEX - (i))
 
 
@@ -7749,18 +7922,6 @@ extern int bamod(int a,int b);
 
 
 typedef struct lua_State lua_State;
-
-typedef int (*lua_CFunction) (lua_State *L);
-
-
-
-typedef const char * (*lua_Reader) (lua_State *L, void *ud, size_t *sz);
-
-typedef int (*lua_Writer) (lua_State *L, const void* p, size_t sz, void* ud);
-
-
-
-typedef void * (*lua_Alloc) (void *ud, void *ptr, size_t osize, size_t nsize);
 
 
 
@@ -7801,6 +7962,26 @@ typedef LUA_INTEGER lua_Integer;
 typedef LUA_UNSIGNED lua_Unsigned;
 
 
+typedef LUA_KCONTEXT lua_KContext;
+
+
+
+typedef int (*lua_CFunction) (lua_State *L);
+
+
+typedef int (*lua_KFunction) (lua_State *L, int status, lua_KContext ctx);
+
+
+
+typedef const char * (*lua_Reader) (lua_State *L, void *ud, size_t *sz);
+
+typedef int (*lua_Writer) (lua_State *L, const void *p, size_t sz, void *ud);
+
+
+
+typedef void * (*lua_Alloc) (void *ud, void *ptr, size_t osize, size_t nsize);
+
+
 
 
 #if defined(LUA_USER_H)
@@ -7828,11 +8009,9 @@ LUA_API int   (lua_absindex) (lua_State *L, int idx);
 LUA_API int   (lua_gettop) (lua_State *L);
 LUA_API void  (lua_settop) (lua_State *L, int idx);
 LUA_API void  (lua_pushvalue) (lua_State *L, int idx);
-LUA_API void  (lua_remove) (lua_State *L, int idx);
-LUA_API void  (lua_insert) (lua_State *L, int idx);
-LUA_API void  (lua_replace) (lua_State *L, int idx);
+LUA_API void  (lua_rotate) (lua_State *L, int idx, int n);
 LUA_API void  (lua_copy) (lua_State *L, int fromidx, int toidx);
-LUA_API int   (lua_checkstack) (lua_State *L, int sz);
+LUA_API int   (lua_checkstack) (lua_State *L, int n);
 
 LUA_API void  (lua_xmove) (lua_State *from, lua_State *to, int n);
 
@@ -7842,13 +8021,13 @@ LUA_API void  (lua_xmove) (lua_State *from, lua_State *to, int n);
 LUA_API int             (lua_isnumber) (lua_State *L, int idx);
 LUA_API int             (lua_isstring) (lua_State *L, int idx);
 LUA_API int             (lua_iscfunction) (lua_State *L, int idx);
+LUA_API int             (lua_isinteger) (lua_State *L, int idx);
 LUA_API int             (lua_isuserdata) (lua_State *L, int idx);
 LUA_API int             (lua_type) (lua_State *L, int idx);
 LUA_API const char     *(lua_typename) (lua_State *L, int tp);
 
 LUA_API lua_Number      (lua_tonumberx) (lua_State *L, int idx, int *isnum);
 LUA_API lua_Integer     (lua_tointegerx) (lua_State *L, int idx, int *isnum);
-LUA_API lua_Unsigned    (lua_tounsignedx) (lua_State *L, int idx, int *isnum);
 LUA_API int             (lua_toboolean) (lua_State *L, int idx);
 LUA_API const char     *(lua_tolstring) (lua_State *L, int idx, size_t *len);
 LUA_API size_t          (lua_rawlen) (lua_State *L, int idx);
@@ -7863,10 +8042,17 @@ LUA_API const void     *(lua_topointer) (lua_State *L, int idx);
 #define LUA_OPADD	0	
 #define LUA_OPSUB	1
 #define LUA_OPMUL	2
-#define LUA_OPDIV	3
-#define LUA_OPMOD	4
-#define LUA_OPPOW	5
-#define LUA_OPUNM	6
+#define LUA_OPMOD	3
+#define LUA_OPPOW	4
+#define LUA_OPDIV	5
+#define LUA_OPIDIV	6
+#define LUA_OPBAND	7
+#define LUA_OPBOR	8
+#define LUA_OPBXOR	9
+#define LUA_OPSHL	10
+#define LUA_OPSHR	11
+#define LUA_OPUNM	12
+#define LUA_OPBNOT	13
 
 LUA_API void  (lua_arith) (lua_State *L, int op);
 
@@ -7882,8 +8068,7 @@ LUA_API int   (lua_compare) (lua_State *L, int idx1, int idx2, int op);
 LUA_API void        (lua_pushnil) (lua_State *L);
 LUA_API void        (lua_pushnumber) (lua_State *L, lua_Number n);
 LUA_API void        (lua_pushinteger) (lua_State *L, lua_Integer n);
-LUA_API void        (lua_pushunsigned) (lua_State *L, lua_Unsigned n);
-LUA_API const char *(lua_pushlstring) (lua_State *L, const char *s, size_t l);
+LUA_API const char *(lua_pushlstring) (lua_State *L, const char *s, size_t len);
 LUA_API const char *(lua_pushstring) (lua_State *L, const char *s);
 LUA_API const char *(lua_pushvfstring) (lua_State *L, const char *fmt,
                                                       va_list argp);
@@ -7895,53 +8080,56 @@ LUA_API int   (lua_pushthread) (lua_State *L);
 
 
 
-LUA_API void  (lua_getglobal) (lua_State *L, const char *var);
-LUA_API void  (lua_gettable) (lua_State *L, int idx);
-LUA_API void  (lua_getfield) (lua_State *L, int idx, const char *k);
-LUA_API void  (lua_rawget) (lua_State *L, int idx);
-LUA_API void  (lua_rawgeti) (lua_State *L, int idx, int n);
-LUA_API void  (lua_rawgetp) (lua_State *L, int idx, const void *p);
+LUA_API int (lua_getglobal) (lua_State *L, const char *name);
+LUA_API int (lua_gettable) (lua_State *L, int idx);
+LUA_API int (lua_getfield) (lua_State *L, int idx, const char *k);
+LUA_API int (lua_geti) (lua_State *L, int idx, lua_Integer n);
+LUA_API int (lua_rawget) (lua_State *L, int idx);
+LUA_API int (lua_rawgeti) (lua_State *L, int idx, lua_Integer n);
+LUA_API int (lua_rawgetp) (lua_State *L, int idx, const void *p);
+
 LUA_API void  (lua_createtable) (lua_State *L, int narr, int nrec);
 LUA_API void *(lua_newuserdata) (lua_State *L, size_t sz);
 LUA_API int   (lua_getmetatable) (lua_State *L, int objindex);
-LUA_API void  (lua_getuservalue) (lua_State *L, int idx);
+LUA_API int  (lua_getuservalue) (lua_State *L, int idx);
 
 
 
-LUA_API void  (lua_setglobal) (lua_State *L, const char *var);
+LUA_API void  (lua_setglobal) (lua_State *L, const char *name);
 LUA_API void  (lua_settable) (lua_State *L, int idx);
 LUA_API void  (lua_setfield) (lua_State *L, int idx, const char *k);
+LUA_API void  (lua_seti) (lua_State *L, int idx, lua_Integer n);
 LUA_API void  (lua_rawset) (lua_State *L, int idx);
-LUA_API void  (lua_rawseti) (lua_State *L, int idx, int n);
+LUA_API void  (lua_rawseti) (lua_State *L, int idx, lua_Integer n);
 LUA_API void  (lua_rawsetp) (lua_State *L, int idx, const void *p);
 LUA_API int   (lua_setmetatable) (lua_State *L, int objindex);
 LUA_API void  (lua_setuservalue) (lua_State *L, int idx);
 
 
 
-LUA_API void  (lua_callk) (lua_State *L, int nargs, int nresults, int ctx,
-                           lua_CFunction k);
+LUA_API void  (lua_callk) (lua_State *L, int nargs, int nresults,
+                           lua_KContext ctx, lua_KFunction k);
 #define lua_call(L,n,r)		lua_callk(L, (n), (r), 0, NULL)
 
-LUA_API int   (lua_getctx) (lua_State *L, int *ctx);
-
 LUA_API int   (lua_pcallk) (lua_State *L, int nargs, int nresults, int errfunc,
-                            int ctx, lua_CFunction k);
+                            lua_KContext ctx, lua_KFunction k);
 #define lua_pcall(L,n,r,f)	lua_pcallk(L, (n), (r), (f), 0, NULL)
 
 LUA_API int   (lua_load) (lua_State *L, lua_Reader reader, void *dt,
-                                        const char *chunkname,
-                                        const char *mode);
+                          const char *chunkname, const char *mode);
 
-LUA_API int (lua_dump) (lua_State *L, lua_Writer writer, void *data);
-
+LUA_API int (lua_dump) (lua_State *L, lua_Writer writer, void *data, int strip);
 
 
-LUA_API int  (lua_yieldk) (lua_State *L, int nresults, int ctx,
-                           lua_CFunction k);
+
+LUA_API int  (lua_yieldk)     (lua_State *L, int nresults, lua_KContext ctx,
+                               lua_KFunction k);
+LUA_API int  (lua_resume)     (lua_State *L, lua_State *from, int narg);
+LUA_API int  (lua_status)     (lua_State *L);
+LUA_API int (lua_isyieldable) (lua_State *L);
+
 #define lua_yield(L,n)		lua_yieldk(L, (n), 0, NULL)
-LUA_API int  (lua_resume) (lua_State *L, lua_State *from, int narg);
-LUA_API int  (lua_status) (lua_State *L);
+
 
 
 
@@ -7953,10 +8141,7 @@ LUA_API int  (lua_status) (lua_State *L);
 #define LUA_GCSTEP		5
 #define LUA_GCSETPAUSE		6
 #define LUA_GCSETSTEPMUL	7
-#define LUA_GCSETMAJORINC	8
 #define LUA_GCISRUNNING		9
-#define LUA_GCGEN		10
-#define LUA_GCINC		11
 
 LUA_API int (lua_gc) (lua_State *L, int what, int data);
 
@@ -7970,6 +8155,8 @@ LUA_API int   (lua_next) (lua_State *L, int idx);
 LUA_API void  (lua_concat) (lua_State *L, int n);
 LUA_API void  (lua_len)    (lua_State *L, int idx);
 
+LUA_API size_t   (lua_stringtonumber) (lua_State *L, const char *s);
+
 LUA_API lua_Alloc (lua_getallocf) (lua_State *L, void **ud);
 LUA_API void      (lua_setallocf) (lua_State *L, lua_Alloc f, void *ud);
 
@@ -7977,9 +8164,10 @@ LUA_API void      (lua_setallocf) (lua_State *L, lua_Alloc f, void *ud);
 
 
 
-#define lua_tonumber(L,i)	lua_tonumberx(L,i,NULL)
-#define lua_tointeger(L,i)	lua_tointegerx(L,i,NULL)
-#define lua_tounsigned(L,i)	lua_tounsignedx(L,i,NULL)
+#define lua_getextraspace(L)	((void *)((char *)(L) - LUA_EXTRASPACE))
+
+#define lua_tonumber(L,i)	lua_tonumberx(L,(i),NULL)
+#define lua_tointeger(L,i)	lua_tointegerx(L,(i),NULL)
 
 #define lua_pop(L,n)		lua_settop(L, -(n)-1)
 
@@ -7998,14 +8186,31 @@ LUA_API void      (lua_setallocf) (lua_State *L, lua_Alloc f, void *ud);
 #define lua_isnone(L,n)		(lua_type(L, (n)) == LUA_TNONE)
 #define lua_isnoneornil(L, n)	(lua_type(L, (n)) <= 0)
 
-#define lua_pushliteral(L, s)	\
-	lua_pushlstring(L, "" s, (sizeof(s)/sizeof(char))-1)
+#define lua_pushliteral(L, s)	lua_pushstring(L, "" s)
 
 #define lua_pushglobaltable(L)  \
 	lua_rawgeti(L, LUA_REGISTRYINDEX, LUA_RIDX_GLOBALS)
 
 #define lua_tostring(L,i)	lua_tolstring(L, (i), NULL)
 
+
+#define lua_insert(L,idx)	lua_rotate(L, (idx), 1)
+
+#define lua_remove(L,idx)	(lua_rotate(L, (idx), -1), lua_pop(L, 1))
+
+#define lua_replace(L,idx)	(lua_copy(L, -1, (idx)), lua_pop(L, 1))
+
+
+
+
+
+#if defined(LUA_COMPAT_APIINTCASTS)
+
+#define lua_pushunsigned(L,n)	lua_pushinteger(L, (lua_Integer)(n))
+#define lua_tounsignedx(L,i,is)	((lua_Unsigned)lua_tointegerx(L,i,is))
+#define lua_tounsigned(L,i)	lua_tounsignedx(L,(i),NULL)
+
+#endif
 
 
 
@@ -8043,7 +8248,7 @@ LUA_API void *(lua_upvalueid) (lua_State *L, int fidx, int n);
 LUA_API void  (lua_upvaluejoin) (lua_State *L, int fidx1, int n1,
                                                int fidx2, int n2);
 
-LUA_API int (lua_sethook) (lua_State *L, lua_Hook func, int mask, int count);
+LUA_API void (lua_sethook) (lua_State *L, lua_Hook func, int mask, int count);
 LUA_API lua_Hook (lua_gethook) (lua_State *L);
 LUA_API int (lua_gethookmask) (lua_State *L);
 LUA_API int (lua_gethookcount) (lua_State *L);
@@ -8090,30 +8295,30 @@ typedef struct luaL_Reg {
 } luaL_Reg;
 
 
-LUALIB_API void (luaL_checkversion_) (lua_State *L, lua_Number ver);
-#define luaL_checkversion(L)	luaL_checkversion_(L, LUA_VERSION_NUM)
+#define LUAL_NUMSIZES	(sizeof(lua_Integer)*16 + sizeof(lua_Number))
+
+LUALIB_API void (luaL_checkversion_) (lua_State *L, lua_Number ver, size_t sz);
+#define luaL_checkversion(L)  \
+	  luaL_checkversion_(L, LUA_VERSION_NUM, LUAL_NUMSIZES)
 
 LUALIB_API int (luaL_getmetafield) (lua_State *L, int obj, const char *e);
 LUALIB_API int (luaL_callmeta) (lua_State *L, int obj, const char *e);
 LUALIB_API const char *(luaL_tolstring) (lua_State *L, int idx, size_t *len);
-LUALIB_API int (luaL_argerror) (lua_State *L, int numarg, const char *extramsg);
-LUALIB_API const char *(luaL_checklstring) (lua_State *L, int numArg,
+LUALIB_API int (luaL_argerror) (lua_State *L, int arg, const char *extramsg);
+LUALIB_API const char *(luaL_checklstring) (lua_State *L, int arg,
                                                           size_t *l);
-LUALIB_API const char *(luaL_optlstring) (lua_State *L, int numArg,
+LUALIB_API const char *(luaL_optlstring) (lua_State *L, int arg,
                                           const char *def, size_t *l);
-LUALIB_API lua_Number (luaL_checknumber) (lua_State *L, int numArg);
-LUALIB_API lua_Number (luaL_optnumber) (lua_State *L, int nArg, lua_Number def);
+LUALIB_API lua_Number (luaL_checknumber) (lua_State *L, int arg);
+LUALIB_API lua_Number (luaL_optnumber) (lua_State *L, int arg, lua_Number def);
 
-LUALIB_API lua_Integer (luaL_checkinteger) (lua_State *L, int numArg);
-LUALIB_API lua_Integer (luaL_optinteger) (lua_State *L, int nArg,
+LUALIB_API lua_Integer (luaL_checkinteger) (lua_State *L, int arg);
+LUALIB_API lua_Integer (luaL_optinteger) (lua_State *L, int arg,
                                           lua_Integer def);
-LUALIB_API lua_Unsigned (luaL_checkunsigned) (lua_State *L, int numArg);
-LUALIB_API lua_Unsigned (luaL_optunsigned) (lua_State *L, int numArg,
-                                            lua_Unsigned def);
 
 LUALIB_API void (luaL_checkstack) (lua_State *L, int sz, const char *msg);
-LUALIB_API void (luaL_checktype) (lua_State *L, int narg, int t);
-LUALIB_API void (luaL_checkany) (lua_State *L, int narg);
+LUALIB_API void (luaL_checktype) (lua_State *L, int arg, int t);
+LUALIB_API void (luaL_checkany) (lua_State *L, int arg);
 
 LUALIB_API int   (luaL_newmetatable) (lua_State *L, const char *tname);
 LUALIB_API void  (luaL_setmetatable) (lua_State *L, const char *tname);
@@ -8123,7 +8328,7 @@ LUALIB_API void *(luaL_checkudata) (lua_State *L, int ud, const char *tname);
 LUALIB_API void (luaL_where) (lua_State *L, int lvl);
 LUALIB_API int (luaL_error) (lua_State *L, const char *fmt, ...);
 
-LUALIB_API int (luaL_checkoption) (lua_State *L, int narg, const char *def,
+LUALIB_API int (luaL_checkoption) (lua_State *L, int arg, const char *def,
                                    const char *const lst[]);
 
 LUALIB_API int (luaL_fileresult) (lua_State *L, int stat, const char *fname);
@@ -8147,7 +8352,7 @@ LUALIB_API int (luaL_loadstring) (lua_State *L, const char *s);
 
 LUALIB_API lua_State *(luaL_newstate) (void);
 
-LUALIB_API int (luaL_len) (lua_State *L, int idx);
+LUALIB_API lua_Integer (luaL_len) (lua_State *L, int idx);
 
 LUALIB_API const char *(luaL_gsub) (lua_State *L, const char *s, const char *p,
                                                   const char *r);
@@ -8168,16 +8373,13 @@ LUALIB_API void (luaL_requiref) (lua_State *L, const char *modname,
 #define luaL_newlibtable(L,l)	\
   lua_createtable(L, 0, sizeof(l)/sizeof((l)[0]) - 1)
 
-#define luaL_newlib(L,l)	(luaL_newlibtable(L,l), luaL_setfuncs(L,l,0))
+#define luaL_newlib(L,l)  \
+  (luaL_checkversion(L), luaL_newlibtable(L,l), luaL_setfuncs(L,l,0))
 
-#define luaL_argcheck(L, cond,numarg,extramsg)	\
-		((void)((cond) || luaL_argerror(L, (numarg), (extramsg))))
+#define luaL_argcheck(L, cond,arg,extramsg)	\
+		((void)((cond) || luaL_argerror(L, (arg), (extramsg))))
 #define luaL_checkstring(L,n)	(luaL_checklstring(L, (n), NULL))
 #define luaL_optstring(L,n,d)	(luaL_optlstring(L, (n), (d), NULL))
-#define luaL_checkint(L,n)	((int)luaL_checkinteger(L, (n)))
-#define luaL_optint(L,n,d)	((int)luaL_optinteger(L, (n), (d)))
-#define luaL_checklong(L,n)	((long)luaL_checkinteger(L, (n)))
-#define luaL_optlong(L,n,d)	((long)luaL_optinteger(L, (n), (d)))
 
 #define luaL_typename(L,i)	lua_typename(L, lua_type(L,(i)))
 
@@ -8255,6 +8457,45 @@ LUALIB_API void (luaL_openlib) (lua_State *L, const char *libname,
 #define luaL_register(L,n,l)	(luaL_openlib(L,(n),(l),0))
 
 #endif
+
+
+
+
+
+#if !defined(lua_writestring)
+#define lua_writestring(s,l)   fwrite((s), sizeof(char), (l), stdout)
+#endif
+
+
+#if !defined(lua_writeline)
+#define lua_writeline()        (lua_writestring("\n", 1), fflush(stdout))
+#endif
+
+
+#if !defined(lua_writestringerror)
+#define lua_writestringerror(s,p) \
+        (fprintf(stderr, (s), (p)), fflush(stderr))
+#endif
+
+
+
+
+
+#if defined(LUA_COMPAT_APIINTCASTS)
+
+#define luaL_checkunsigned(L,a)	((lua_Unsigned)luaL_checkinteger(L,a))
+#define luaL_optunsigned(L,a,d)	\
+	((lua_Unsigned)luaL_optinteger(L,a,(lua_Integer)(d)))
+
+#define luaL_checkint(L,n)	((int)luaL_checkinteger(L, (n)))
+#define luaL_optint(L,n,d)	((int)luaL_optinteger(L, (n), (d)))
+
+#define luaL_checklong(L,n)	((long)luaL_checkinteger(L, (n)))
+#define luaL_optlong(L,n,d)	((long)luaL_optinteger(L, (n), (d)))
+
+#endif
+
+
 
 
 #endif
@@ -10188,6 +10429,15 @@ static volatile inline U32 sharkssl_byteswap(U32 value) { asm ("REVL %0, %0" : "
 #else
 #define SHARKSSL_MALLOC_ALIGN(s)                   (s)
 #define SHARKSSL_PNTR_ALIGNMENT(p)                 (U8*)(p)
+#endif
+
+
+#if ((SHARKSSL_BIGINT_WORDSIZE == 8) || defined(B_BIG_ENDIAN))
+#define memmove_endianess memmove
+
+#else
+
+void memmove_endianess(U8 *d, const U8 *s, U16 len);
 #endif
 
 #endif 
@@ -12647,10 +12897,11 @@ typedef S64 SharkSslBigIntDoubleWordS;
 #endif
 
 
+
 typedef struct SharkSslBigInt
 {
    SharkSslBigIntWord *mem, *beg;
-   U16  len;   
+   U16  len;
 } SharkSslBigInt;
 
 
@@ -13844,6 +14095,74 @@ ZEXTERN const uLongf * ZEXPORT get_crc_table    OF((void));
 
 #endif 
 
+#ifndef _SharkSslASN1_h
+#define _SharkSslASN1_h
+
+#define SHARKSSL_ASN1_BOOLEAN                 0x01
+#define SHARKSSL_ASN1_INTEGER                 0x02
+#define SHARKSSL_ASN1_BIT_STRING              0x03
+#define SHARKSSL_ASN1_OCTET_STRING            0x04
+#define SHARKSSL_ASN1_NULL                    0x05
+#define SHARKSSL_ASN1_OID                     0x06
+#define SHARKSSL_ASN1_UTF8_STRING             0x0C
+#define SHARKSSL_ASN1_SEQUENCE                0x10
+#define SHARKSSL_ASN1_SET                     0x11
+#define SHARKSSL_ASN1_PRINTABLE_STRING        0x13
+#define SHARKSSL_ASN1_T61_STRING              0x14
+#define SHARKSSL_ASN1_IA5_STRING              0x16
+#define SHARKSSL_ASN1_UTC_TIME                0x17
+#define SHARKSSL_ASN1_GENERALIZED_TIME        0x18
+#define SHARKSSL_ASN1_BMP_STRING              0x1E
+#define SHARKSSL_ASN1_CONSTRUCTED             0x20
+#define SHARKSSL_ASN1_CONTEXT_SPECIFIC        0x80
+
+
+#define SHARKSSL_X509_TAG_ISSUERUNIQUEID      0x01
+#define SHARKSSL_X509_TAG_SUBJECTUNIQUEID     0x02
+#define SHARKSSL_X509_TAG_EXTENSIONS          0x03
+
+
+#define SHARKSSL_ECC_PRIVKEY_TAG_PARAMETERS   0x00
+#define SHARKSSL_ECC_PRIVKEY_TAG_PUBLIC_KEY   0x01
+
+
+typedef struct SharkSslParseASN1
+{
+   U8 *ptr, *dataptr; 
+   U32 len,  datalen;
+} SharkSslParseASN1;
+
+
+
+int SharkSslParseASN1_getLength(SharkSslParseASN1 *o);
+int SharkSslParseASN1_getType(SharkSslParseASN1 *o, U8 ASN1type);  
+int SharkSslParseASN1_getSetSeq(SharkSslParseASN1 *o, U8 ASN1id);
+
+
+#define SharkSslParseASN1_getBool(o)            SharkSslParseASN1_getType(o, SHARKSSL_ASN1_BOOLEAN)
+#define SharkSslParseASN1_getInt(o)             SharkSslParseASN1_getType(o, SHARKSSL_ASN1_INTEGER)
+#define SharkSslParseASN1_getBitString(o)       SharkSslParseASN1_getType(o, SHARKSSL_ASN1_BIT_STRING)
+#define SharkSslParseASN1_getOctetString(o)     SharkSslParseASN1_getType(o, SHARKSSL_ASN1_OCTET_STRING)
+#define SharkSslParseASN1_getNULL(o)            SharkSslParseASN1_getType(o, SHARKSSL_ASN1_NULL)
+#define SharkSslParseASN1_getOID(o)             SharkSslParseASN1_getType(o, SHARKSSL_ASN1_OID)
+#define SharkSslParseASN1_getUTCTime(o)         SharkSslParseASN1_getType(o, SHARKSSL_ASN1_UTC_TIME) 
+#define SharkSslParseASN1_getGenTime(o)         SharkSslParseASN1_getType(o, SHARKSSL_ASN1_GENERALIZED_TIME)
+
+#define SharkSslParseASN1_getIssuerUniqueID(o)  SharkSslParseASN1_getType(o, SHARKSSL_ASN1_CONTEXT_SPECIFIC | SHARKSSL_ASN1_CONSTRUCTED | SHARKSSL_X509_TAG_ISSUERUNIQUEID)
+#define SharkSslParseASN1_getSubjectUniqueID(o) SharkSslParseASN1_getType(o, SHARKSSL_ASN1_CONTEXT_SPECIFIC | SHARKSSL_ASN1_CONSTRUCTED | SHARKSSL_X509_TAG_SUBJECTUNIQUEID)
+#define SharkSslParseASN1_getExtensions(o)      SharkSslParseASN1_getType(o, SHARKSSL_ASN1_CONTEXT_SPECIFIC | SHARKSSL_ASN1_CONSTRUCTED | SHARKSSL_X509_TAG_EXTENSIONS)
+
+#define SharkSslParseASN1_getECParameters(o)    SharkSslParseASN1_getSetSeq(o, SHARKSSL_ASN1_CONTEXT_SPECIFIC | SHARKSSL_ASN1_CONSTRUCTED | SHARKSSL_ECC_PRIVKEY_TAG_PARAMETERS)
+#define SharkSslParseASN1_getECPublicKey(o)     SharkSslParseASN1_getSetSeq(o, SHARKSSL_ASN1_CONTEXT_SPECIFIC | SHARKSSL_ASN1_CONSTRUCTED | SHARKSSL_ECC_PRIVKEY_TAG_PUBLIC_KEY)
+
+#define SharkSslParseASN1_getA0(o)              SharkSslParseASN1_getSetSeq(o, 0xA0)  
+#define SharkSslParseASN1_get00(o)              SharkSslParseASN1_getSetSeq(o, 0x00)  
+
+#define SharkSslParseASN1_getSet(o)             SharkSslParseASN1_getSetSeq(o, SHARKSSL_ASN1_SET | SHARKSSL_ASN1_CONSTRUCTED)
+#define SharkSslParseASN1_getSequence(o)        SharkSslParseASN1_getSetSeq(o, SHARKSSL_ASN1_SEQUENCE | SHARKSSL_ASN1_CONSTRUCTED)
+
+#endif
+
 #ifndef _SharkSslECC_h
 #define _SharkSslECC_h
 
@@ -13867,14 +14186,6 @@ typedef struct
 
 
 #define SHARKSSL_EC_CURVE_ID_UNKNOWN    0
-
-#define SHARKSSL_EC_CURVE_ID_SECP192R1  19
-#define SHARKSSL_EC_CURVE_ID_SECP224R1  21
-#define SHARKSSL_EC_CURVE_ID_SECP256R1  23
-#define SHARKSSL_EC_CURVE_ID_SECP384R1  24
-#define SHARKSSL_EC_CURVE_ID_SECP521R1  25
-
-
 #define SHARKSSL_EC_POINT_UNCOMPRESSED  0x04
 
 
@@ -18315,6 +18626,9 @@ LUAMOD_API int (luaopen_os) (lua_State *L);
 #define LUA_STRLIBNAME	"string"
 LUAMOD_API int (luaopen_string) (lua_State *L);
 
+#define LUA_UTF8LIBNAME	"utf8"
+LUAMOD_API int (luaopen_utf8) (lua_State *L);
+
 #define LUA_BITLIBNAME	"bit32"
 LUAMOD_API int (luaopen_bit32) (lua_State *L);
 
@@ -18525,6 +18839,41 @@ extern "C" {
 #endif
 
 
+#ifndef lprefix_h
+#define lprefix_h
+
+
+
+#if !defined(LUA_USE_C89)	
+
+#if !defined(_XOPEN_SOURCE)
+#define _XOPEN_SOURCE           600
+#elif _XOPEN_SOURCE == 0
+#undef _XOPEN_SOURCE  
+#endif
+
+
+#if !defined(LUA_32BITS) && !defined(_FILE_OFFSET_BITS)
+#define _LARGEFILE_SOURCE       1
+#define _FILE_OFFSET_BITS       64
+#endif
+
+#endif				
+
+
+
+#if defined(_WIN32) 	
+
+#if !defined(_CRT_SECURE_NO_WARNINGS)
+#define _CRT_SECURE_NO_WARNINGS  
+#endif
+
+#endif			
+
+#endif
+
+
+
 #ifndef ldebug_h
 #define ldebug_h
 
@@ -18547,42 +18896,55 @@ extern "C" {
 #define llimits_h
 
 
-typedef unsigned LUA_INT32 lu_int32;
-
+#if defined(LUAI_MEM)		
 typedef LUAI_UMEM lu_mem;
-
 typedef LUAI_MEM l_mem;
-
+#elif LUAI_BITSINT >= 32	
+typedef size_t lu_mem;
+typedef ptrdiff_t l_mem;
+#else  	
+typedef unsigned long lu_mem;
+typedef long l_mem;
+#endif				
 
 
 
 typedef unsigned char lu_byte;
 
 
-#define MAX_SIZET	((size_t)(~(size_t)0)-2)
 
-#define MAX_LUMEM	((lu_mem)(~(lu_mem)0)-2)
-
-#define MAX_LMEM	((l_mem) ((MAX_LUMEM >> 1) - 2))
+#define MAX_SIZET	((size_t)(~(size_t)0))
 
 
-#define MAX_INT (INT_MAX-2)  
+#define MAX_SIZE	(sizeof(size_t) < sizeof(lua_Integer) ? MAX_SIZET \
+                          : (size_t)(LUA_MAXINTEGER))
 
 
-#define IntPoint(p)  ((unsigned int)(lu_mem)(p))
+#define MAX_LUMEM	((lu_mem)(~(lu_mem)0))
+
+#define MAX_LMEM	((l_mem)(MAX_LUMEM >> 1))
+
+
+#define MAX_INT		INT_MAX  
+
+
+
+#define point2uint(p)	((unsigned int)((size_t)(p) & UINT_MAX))
 
 
 
 
-#if !defined(LUAI_USER_ALIGNMENT_T)
-#define LUAI_USER_ALIGNMENT_T	union { double u; void *s; long l; }
+#if defined(LUAI_USER_ALIGNMENT_T)
+typedef LUAI_USER_ALIGNMENT_T L_Umaxalign;
+#else
+typedef union { double u; void *s; lua_Integer i; long l; } L_Umaxalign;
 #endif
 
-typedef LUAI_USER_ALIGNMENT_T L_Umaxalign;
 
 
 
 typedef LUAI_UACNUMBER l_uacNumber;
+typedef LUAI_UACINT l_uacInt;
 
 
 
@@ -18598,25 +18960,22 @@ typedef LUAI_UACNUMBER l_uacNumber;
 
 
 #if !defined(luai_apicheck)
-
-#if defined(LUA_USE_APICHECK)
-#define luai_apicheck(L,e)	assert(e)
-#else
-#define luai_apicheck(L,e)	lua_assert(e)
-#endif
-
+#define luai_apicheck(l,e)	lua_assert(e)
 #endif
 
 #define api_check(l,e,msg)	luai_apicheck(l,(e) && msg)
 
 
+
 #if !defined(UNUSED)
-#define UNUSED(x)	((void)(x))	
+#define UNUSED(x)	((void)(x))
 #endif
+
 
 
 #define cast(t, exp)	((t)(exp))
 
+#define cast_void(i)	cast(void, (i))
 #define cast_byte(i)	cast(lu_byte, (i))
 #define cast_num(i)	cast(lua_Number, (i))
 #define cast_int(i)	cast(int, (i))
@@ -18624,9 +18983,20 @@ typedef LUAI_UACNUMBER l_uacNumber;
 
 
 
+#if !defined(l_castS2U)
+#define l_castS2U(i)	((lua_Unsigned)(i))
+#endif
+
+
+#if !defined(l_castU2S)
+#define l_castU2S(i)	((lua_Integer)(i))
+#endif
+
+
+
 #if defined(__GNUC__)
 #define l_noret		void __attribute__((noreturn))
-#elif defined(_MSC_VER)
+#elif defined(_MSC_VER) && _MSC_VER >= 1200
 #define l_noret		void __declspec(noreturn)
 #else
 #define l_noret		void
@@ -18640,22 +19010,31 @@ typedef LUAI_UACNUMBER l_uacNumber;
 #endif
 
 
-#define MAXUPVAL	UCHAR_MAX
+
+
+#if LUAI_BITSINT >= 32
+typedef unsigned int Instruction;
+#else
+typedef unsigned long Instruction;
+#endif
 
 
 
-typedef lu_int32 Instruction;
 
-
-
-
-#define MAXSTACK	250
-
+#if !defined(LUAI_MAXSHORTLEN)
+#define LUAI_MAXSHORTLEN	40
+#endif
 
 
 
 #if !defined(MINSTRTABSIZE)
-#define MINSTRTABSIZE	32
+#define MINSTRTABSIZE	128
+#endif
+
+
+
+#if !defined(STRCACHE_SIZE)
+#define STRCACHE_SIZE		127
 #endif
 
 
@@ -18665,13 +19044,15 @@ typedef lu_int32 Instruction;
 #endif
 
 
+
 #if !defined(lua_lock)
-#define lua_lock(L)     ((void) 0)
-#define lua_unlock(L)   ((void) 0)
+#define lua_lock(L)	((void) 0)
+#define lua_unlock(L)	((void) 0)
 #endif
 
+
 #if !defined(luai_threadyield)
-#define luai_threadyield(L)     {lua_unlock(L); lua_lock(L);}
+#define luai_threadyield(L)	{lua_unlock(L); lua_lock(L);}
 #endif
 
 
@@ -18693,98 +19074,51 @@ typedef lu_int32 Instruction;
 #endif
 
 #if !defined(luai_userstateresume)
-#define luai_userstateresume(L,n)       ((void)L)
+#define luai_userstateresume(L,n)	((void)L)
 #endif
 
 #if !defined(luai_userstateyield)
-#define luai_userstateyield(L,n)        ((void)L)
+#define luai_userstateyield(L,n)	((void)L)
 #endif
 
 
 
-#ifndef LUA_NUMBER_INTEGER
-
-#if defined(MS_ASMTRICK) || defined(LUA_MSASMTRICK)	
-
-
-#define lua_number2int(i,n)  __asm {__asm fld n   __asm fistp i}
-#define lua_number2integer(i,n)		lua_number2int(i, n)
-#define lua_number2unsigned(i,n)  \
-  {__int64 l; __asm {__asm fld n   __asm fistp l} i = (unsigned int)l;}
-
-
-#elif defined(LUA_IEEE754TRICK)		
-
-
-union luai_Cast { double l_d; LUA_INT32 l_p[2]; };
-
-#if !defined(LUA_IEEEENDIAN)	
-#define LUAI_EXTRAIEEE	\
-  static const union luai_Cast ieeeendian = {-(33.0 + 6755399441055744.0)};
-#define LUA_IEEEENDIANLOC	(ieeeendian.l_p[1] == 33)
-#else
-#define LUA_IEEEENDIANLOC	LUA_IEEEENDIAN
-#define LUAI_EXTRAIEEE		
-#endif				
-
-#define lua_number2int32(i,n,t) \
-  { LUAI_EXTRAIEEE \
-    volatile union luai_Cast u; u.l_d = (n) + 6755399441055744.0; \
-    (i) = (t)u.l_p[LUA_IEEEENDIANLOC]; }
-
-#define luai_hashnum(i,n)  \
-  { volatile union luai_Cast u; u.l_d = (n) + 1.0;   \
-    (i) = u.l_p[0]; (i) += u.l_p[1]; }  
-
-#define lua_number2int(i,n)		lua_number2int32(i, n, int)
-#define lua_number2unsigned(i,n)	lua_number2int32(i, n, lua_Unsigned)
-
-
-#if defined(LUA_IEEELL)
-#define lua_number2integer(i,n)		lua_number2int32(i, n, lua_Integer)
-#endif
-
-#endif				
-
-#endif 
 
 
 
-#if !defined(lua_number2int)
-#define lua_number2int(i,n)	((i)=(int)(n))
-#endif
-
-#if !defined(lua_number2integer)
-#define lua_number2integer(i,n)	((i)=(lua_Integer)(n))
-#endif
-
-#if !defined(lua_number2unsigned)	
-
-#if defined(LUA_NUMBER_DOUBLE) || defined(LUA_NUMBER_FLOAT)
-#define SUPUNSIGNED	((lua_Number)(~(lua_Unsigned)0) + 1)
-#define lua_number2unsigned(i,n)  \
-	((i)=(lua_Unsigned)((n) - floor((n)/SUPUNSIGNED)*SUPUNSIGNED))
-#else
-#define lua_number2unsigned(i,n)	((i)=(lua_Unsigned)(n))
-#endif
-#endif				
-
-
-#if !defined(lua_unsigned2number)
-
-#define lua_unsigned2number(u)  \
-    (((u) <= (lua_Unsigned)INT_MAX) ? (lua_Number)(int)(u) : (lua_Number)(u))
+#if !defined(luai_numidiv)
+#define luai_numidiv(L,a,b)     ((void)L, l_floor(luai_numdiv(L,a,b)))
 #endif
 
 
-
-#if defined(ltable_c) && !defined(luai_hashnum)
-
-#define luai_hashnum(i,n) { int e;  \
-  n = l_mathop(frexp)(n, &e) * (lua_Number)(INT_MAX - DBL_MAX_EXP);  \
-  lua_number2int(i, n); i += e; }
-
+#if !defined(luai_numdiv)
+#define luai_numdiv(L,a,b)      ((a)/(b))
 #endif
+
+
+#if !defined(luai_nummod)
+#define luai_nummod(L,a,b,m)  \
+  { (m) = l_mathop(fmod)(a,b); if ((m)*(b) < 0) (m) += (b); }
+#endif
+
+
+#if !defined(luai_numpow)
+#define luai_numpow(L,a,b)      ((void)L, l_mathop(pow)(a,b))
+#endif
+
+
+#if !defined(luai_numadd)
+#define luai_numadd(L,a,b)      ((a)+(b))
+#define luai_numsub(L,a,b)      ((a)-(b))
+#define luai_nummul(L,a,b)      ((a)*(b))
+#define luai_numunm(L,a)        (-(a))
+#define luai_numeq(a,b)         ((a)==(b))
+#define luai_numlt(a,b)         ((a)<(b))
+#define luai_numle(a,b)         ((a)<=(b))
+#define luai_numisnan(a)        (!luai_numeq((a), (a)))
+#endif
+
+
 
 
 
@@ -18805,16 +19139,13 @@ union luai_Cast { double l_d; LUA_INT32 l_p[2]; };
 
 #endif
 #define LUA_TPROTO	LUA_NUMTAGS
-#define LUA_TUPVAL	(LUA_NUMTAGS+1)
-#define LUA_TDEADKEY	(LUA_NUMTAGS+2)
+#define LUA_TDEADKEY	(LUA_NUMTAGS+1)
 
 
-#define LUA_TOTALTAGS	(LUA_TUPVAL+2)
-
+#define LUA_TOTALTAGS	(LUA_TPROTO + 2)
 
 
 
-#define VARBITS		(3 << 4)
 
 
 
@@ -18831,6 +19162,11 @@ union luai_Cast { double l_d; LUA_INT32 l_p[2]; };
 
 
 
+#define LUA_TNUMFLT	(LUA_TNUMBER | (0 << 4))  
+#define LUA_TNUMINT	(LUA_TNUMBER | (1 << 4))  
+
+
+
 #define BIT_ISCOLLECTABLE	(1 << 6)
 
 
@@ -18838,7 +19174,7 @@ union luai_Cast { double l_d; LUA_INT32 l_p[2]; };
 
 
 
-typedef union GCObject GCObject;
+typedef struct GCObject GCObject;
 
 
 
@@ -18846,23 +19182,21 @@ typedef union GCObject GCObject;
 
 
 
-typedef struct GCheader {
+struct GCObject {
   CommonHeader;
-} GCheader;
+};
 
 
 
 
-typedef union LValue LValue;
-
-
-#define numfield	lua_Number n;    
+typedef union LuaValue LuaValue;
 
 
 
 
 
-#define TValuefields	LValue value_; int tt_
+
+#define TValuefields	LuaValue value_; int tt_
 
 typedef struct lua_TValue TValue;
 
@@ -18872,7 +19206,6 @@ typedef struct lua_TValue TValue;
 
 
 #define val_(o)		((o)->value_)
-#define num_(o)		(val_(o).n)
 
 
 
@@ -18885,13 +19218,15 @@ typedef struct lua_TValue TValue;
 #define ttype(o)	(rttype(o) & 0x3F)
 
 
-#define ttypenv(o)	(novariant(rttype(o)))
+#define ttnov(o)	(novariant(rttype(o)))
 
 
 
 #define checktag(o,t)		(rttype(o) == (t))
-#define checktype(o,t)		(ttypenv(o) == (t))
-#define ttisnumber(o)		checktag((o), LUA_TNUMBER)
+#define checktype(o,t)		(ttnov(o) == (t))
+#define ttisnumber(o)		checktype((o), LUA_TNUMBER)
+#define ttisfloat(o)		checktag((o), LUA_TNUMFLT)
+#define ttisinteger(o)		checktag((o), LUA_TNUMINT)
 #define ttisnil(o)		checktag((o), LUA_TNIL)
 #define ttisboolean(o)		checktag((o), LUA_TBOOLEAN)
 #define ttislightuserdata(o)	checktag((o), LUA_TLIGHTUSERDATA)
@@ -18904,27 +19239,27 @@ typedef struct lua_TValue TValue;
 #define ttisCclosure(o)		checktag((o), ctb(LUA_TCCL))
 #define ttisLclosure(o)		checktag((o), ctb(LUA_TLCL))
 #define ttislcf(o)		checktag((o), LUA_TLCF)
-#define ttisuserdata(o)		checktag((o), ctb(LUA_TUSERDATA))
+#define ttisfulluserdata(o)	checktag((o), ctb(LUA_TUSERDATA))
 #define ttisthread(o)		checktag((o), ctb(LUA_TTHREAD))
 #define ttisdeadkey(o)		checktag((o), LUA_TDEADKEY)
 
-#define ttisequal(o1,o2)	(rttype(o1) == rttype(o2))
 
 
-#define nvalue(o)	check_exp(ttisnumber(o), num_(o))
+#define ivalue(o)	check_exp(ttisinteger(o), val_(o).i)
+#define fltvalue(o)	check_exp(ttisfloat(o), val_(o).n)
+#define nvalue(o)	check_exp(ttisnumber(o), \
+	(ttisinteger(o) ? cast_num(ivalue(o)) : fltvalue(o)))
 #define gcvalue(o)	check_exp(iscollectable(o), val_(o).gc)
 #define pvalue(o)	check_exp(ttislightuserdata(o), val_(o).p)
-#define rawtsvalue(o)	check_exp(ttisstring(o), &val_(o).gc->ts)
-#define tsvalue(o)	(&rawtsvalue(o)->tsv)
-#define rawuvalue(o)	check_exp(ttisuserdata(o), &val_(o).gc->u)
-#define uvalue(o)	(&rawuvalue(o)->uv)
-#define clvalue(o)	check_exp(ttisclosure(o), &val_(o).gc->cl)
-#define clLvalue(o)	check_exp(ttisLclosure(o), &val_(o).gc->cl.l)
-#define clCvalue(o)	check_exp(ttisCclosure(o), &val_(o).gc->cl.c)
+#define tsvalue(o)	check_exp(ttisstring(o), gco2ts(val_(o).gc))
+#define uvalue(o)	check_exp(ttisfulluserdata(o), gco2u(val_(o).gc))
+#define clvalue(o)	check_exp(ttisclosure(o), gco2cl(val_(o).gc))
+#define clLvalue(o)	check_exp(ttisLclosure(o), gco2lcl(val_(o).gc))
+#define clCvalue(o)	check_exp(ttisCclosure(o), gco2ccl(val_(o).gc))
 #define fvalue(o)	check_exp(ttislcf(o), val_(o).f)
-#define hvalue(o)	check_exp(ttistable(o), &val_(o).gc->h)
+#define hvalue(o)	check_exp(ttistable(o), gco2t(val_(o).gc))
 #define bvalue(o)	check_exp(ttisboolean(o), val_(o).b)
-#define thvalue(o)	check_exp(ttisthread(o), &val_(o).gc->th)
+#define thvalue(o)	check_exp(ttisthread(o), gco2th(val_(o).gc))
 
 #define deadvalue(o)	check_exp(ttisdeadkey(o), cast(void *, val_(o).gc))
 
@@ -18935,7 +19270,7 @@ typedef struct lua_TValue TValue;
 
 
 
-#define righttt(obj)		(ttype(obj) == gcvalue(obj)->gch.tt)
+#define righttt(obj)		(ttype(obj) == gcvalue(obj)->tt)
 
 #define checkliveness(g,obj) \
 	lua_longassert(!iscollectable(obj) || \
@@ -18945,8 +19280,17 @@ typedef struct lua_TValue TValue;
 
 #define settt_(o,t)	((o)->tt_=(t))
 
-#define setnvalue(obj,x) \
-  { TValue *io=(obj); num_(io)=(x); settt_(io, LUA_TNUMBER); }
+#define setfltvalue(obj,x) \
+  { TValue *io=(obj); val_(io).n=(x); settt_(io, LUA_TNUMFLT); }
+
+#define chgfltvalue(obj,x) \
+  { TValue *io=(obj); lua_assert(ttisfloat(io)); val_(io).n=(x); }
+
+#define setivalue(obj,x) \
+  { TValue *io=(obj); val_(io).i=(x); settt_(io, LUA_TNUMINT); }
+
+#define chgivalue(obj,x) \
+  { TValue *io=(obj); lua_assert(ttisinteger(io)); val_(io).i=(x); }
 
 #define setnilvalue(obj) settt_(obj, LUA_TNIL)
 
@@ -18960,38 +19304,37 @@ typedef struct lua_TValue TValue;
   { TValue *io=(obj); val_(io).b=(x); settt_(io, LUA_TBOOLEAN); }
 
 #define setgcovalue(L,obj,x) \
-  { TValue *io=(obj); GCObject *i_g=(x); \
-    val_(io).gc=i_g; settt_(io, ctb(gch(i_g)->tt)); }
+  { TValue *io = (obj); GCObject *i_g=(x); \
+    val_(io).gc = i_g; settt_(io, ctb(i_g->tt)); }
 
 #define setsvalue(L,obj,x) \
-  { TValue *io=(obj); \
-    TString *x_ = (x); \
-    val_(io).gc=cast(GCObject *, x_); settt_(io, ctb(x_->tsv.tt)); \
+  { TValue *io = (obj); TString *x_ = (x); \
+    val_(io).gc = obj2gco(x_); settt_(io, ctb(x_->tt)); \
     checkliveness(G(L),io); }
 
 #define setuvalue(L,obj,x) \
-  { TValue *io=(obj); \
-    val_(io).gc=cast(GCObject *, (x)); settt_(io, ctb(LUA_TUSERDATA)); \
+  { TValue *io = (obj); Udata *x_ = (x); \
+    val_(io).gc = obj2gco(x_); settt_(io, ctb(LUA_TUSERDATA)); \
     checkliveness(G(L),io); }
 
 #define setthvalue(L,obj,x) \
-  { TValue *io=(obj); \
-    val_(io).gc=cast(GCObject *, (x)); settt_(io, ctb(LUA_TTHREAD)); \
+  { TValue *io = (obj); lua_State *x_ = (x); \
+    val_(io).gc = obj2gco(x_); settt_(io, ctb(LUA_TTHREAD)); \
     checkliveness(G(L),io); }
 
 #define setclLvalue(L,obj,x) \
-  { TValue *io=(obj); \
-    val_(io).gc=cast(GCObject *, (x)); settt_(io, ctb(LUA_TLCL)); \
+  { TValue *io = (obj); LClosure *x_ = (x); \
+    val_(io).gc = obj2gco(x_); settt_(io, ctb(LUA_TLCL)); \
     checkliveness(G(L),io); }
 
 #define setclCvalue(L,obj,x) \
-  { TValue *io=(obj); \
-    val_(io).gc=cast(GCObject *, (x)); settt_(io, ctb(LUA_TCCL)); \
+  { TValue *io = (obj); CClosure *x_ = (x); \
+    val_(io).gc = obj2gco(x_); settt_(io, ctb(LUA_TCCL)); \
     checkliveness(G(L),io); }
 
 #define sethvalue(L,obj,x) \
-  { TValue *io=(obj); \
-    val_(io).gc=cast(GCObject *, (x)); settt_(io, ctb(LUA_TTABLE)); \
+  { TValue *io = (obj); Table *x_ = (x); \
+    val_(io).gc = obj2gco(x_); settt_(io, ctb(LUA_TTABLE)); \
     checkliveness(G(L),io); }
 
 #define setdeadvalue(obj)	settt_(obj, LUA_TDEADKEY)
@@ -18999,9 +19342,8 @@ typedef struct lua_TValue TValue;
 
 
 #define setobj(L,obj1,obj2) \
-	{ const TValue *io2=(obj2); TValue *io1=(obj1); \
-	  io1->value_ = io2->value_; io1->tt_ = io2->tt_; \
-	  checkliveness(G(L),io1); }
+	{ TValue *io1=(obj1); *io1 = *(obj2); \
+	  (void)L; checkliveness(G(L),io1); }
 
 
 
@@ -19023,118 +19365,17 @@ typedef struct lua_TValue TValue;
 
 
 
-#define luai_checknum(L,o,c)	{  }
-
-
-
-#if defined(LUA_NANTRICK)
 
 
 
 
-#if !defined(NNMARK)	
-
-
-#if !defined(LUA_IEEEENDIAN)
-#error option 'LUA_NANTRICK' needs 'LUA_IEEEENDIAN'
-#endif
-
-
-#define NNMARK		0x7FF7A500
-#define NNMASK		0x7FFFFF00
-
-#undef TValuefields
-#undef NILCONSTANT
-
-#if (LUA_IEEEENDIAN == 0)	
-
-
-#define TValuefields  \
-	union { struct { LValue v__; int tt__; } i; double d__; } u
-#define NILCONSTANT	{{{NULL}, tag2tt(LUA_TNIL)}}
-
-#define v_(o)		((o)->u.i.v__)
-#define d_(o)		((o)->u.d__)
-#define tt_(o)		((o)->u.i.tt__)
-
-#else				
-
-
-#define TValuefields  \
-	union { struct { int tt__; LValue v__; } i; double d__; } u
-#define NILCONSTANT	{{tag2tt(LUA_TNIL), {NULL}}}
-
-#define v_(o)		((o)->u.i.v__)
-#define d_(o)		((o)->u.d__)
-#define tt_(o)		((o)->u.i.tt__)
-
-#endif				
-
-#endif			
-
-
-
-#undef val_
-#define val_(o)		v_(o)
-#undef num_
-#define num_(o)		d_(o)
-
-
-#undef numfield
-#define numfield	
-
-
-#undef ttisnumber
-#define ttisnumber(o)	((tt_(o) & NNMASK) != NNMARK)
-
-#define tag2tt(t)	(NNMARK | (t))
-
-#undef rttype
-#define rttype(o)	(ttisnumber(o) ? LUA_TNUMBER : tt_(o) & 0xff)
-
-#undef settt_
-#define settt_(o,t)	(tt_(o) = tag2tt(t))
-
-#undef setnvalue
-#define setnvalue(obj,x) \
-	{ TValue *io_=(obj); num_(io_)=(x); lua_assert(ttisnumber(io_)); }
-
-#undef setobj
-#define setobj(L,obj1,obj2) \
-	{ const TValue *o2_=(obj2); TValue *o1_=(obj1); \
-	  o1_->u = o2_->u; \
-	  checkliveness(G(L),o1_); }
-
-
-
-
-#undef checktag
-#undef checktype
-#define checktag(o,t)	(tt_(o) == tag2tt(t))
-#define checktype(o,t)	(ctb(tt_(o) | VARBITS) == ctb(tag2tt(t) | VARBITS))
-
-#undef ttisequal
-#define ttisequal(o1,o2)  \
-	(ttisnumber(o1) ? ttisnumber(o2) : (tt_(o1) == tt_(o2)))
-
-
-#undef luai_checknum
-#define luai_checknum(L,o,c)	{ if (!ttisnumber(o)) c; }
-
-#endif
-
-
-
-
-
-
-
-union LValue {
+union LuaValue {
   GCObject *gc;    
   void *p;         
   int b;           
   lua_CFunction f; 
-  numfield         
+  lua_Integer i;   
+  lua_Number n;    
 };
 
 
@@ -19149,35 +19390,71 @@ typedef TValue *StkId;
 
 
 
-typedef union TString {
-  L_Umaxalign dummy;  
-  struct {
-    CommonHeader;
-    lu_byte extra;  
-    unsigned int hash;
-    size_t len;  
-  } tsv;
+typedef struct TString {
+  CommonHeader;
+  lu_byte extra;  
+  lu_byte shrlen;  
+  unsigned int hash;
+  union {
+    size_t lnglen;  
+    struct TString *hnext;  
+  } u;
 } TString;
 
 
 
-#define getstr(ts)	cast(const char *, (ts) + 1)
-
-
-#define svalue(o)       getstr(rawtsvalue(o))
-
-
-
-typedef union Udata {
+typedef union UTString {
   L_Umaxalign dummy;  
-  struct {
-    CommonHeader;
-    struct Table *metatable;
-    struct Table *env;
-    size_t len;  
-  } uv;
+  TString tsv;
+} UTString;
+
+
+
+#define getaddrstr(ts)	(cast(char *, (ts)) + sizeof(UTString))
+#define getstr(ts)  \
+  check_exp(sizeof((ts)->extra), cast(const char*, getaddrstr(ts)))
+
+
+#define svalue(o)       getstr(tsvalue(o))
+
+
+#define tsslen(s)	((s)->tt == LUA_TSHRSTR ? (s)->shrlen : (s)->u.lnglen)
+
+
+#define vslen(o)	tsslen(tsvalue(o))
+
+
+
+typedef struct Udata {
+  CommonHeader;
+  lu_byte ttuv_;  
+  struct Table *metatable;
+  size_t len;  
+  union LuaValue user_;  
 } Udata;
 
+
+
+typedef union UUdata {
+  L_Umaxalign dummy;  
+  Udata uv;
+} UUdata;
+
+
+
+#define getudatamem(u)  \
+  check_exp(sizeof((u)->ttuv_), (cast(char*, (u)) + sizeof(UUdata)))
+
+#define setuservalue(L,u,o) \
+	{ const TValue *io=(o); Udata *iu = (u); \
+	  iu->user_ = io->value_; iu->ttuv_ = rttype(io); \
+	  checkliveness(G(L),io); }
+
+
+#define getuservalue(L,u,o) \
+	{ TValue *io=(o); const Udata *iu = (u); \
+	  io->value_ = iu->user_; settt_(io, iu->ttuv_); \
+	  checkliveness(G(L),io); }
 
 
 
@@ -19199,14 +19476,9 @@ typedef struct LocVar {
 
 typedef struct Proto {
   CommonHeader;
-  TValue *k;  
-  Instruction *code;
-  struct Proto **p;  
-  int *lineinfo;  
-  LocVar *locvars;  
-  Upvaldesc *upvalues;  
-  union Closure *cache;  
-  TString  *source;  
+  lu_byte numparams;  
+  lu_byte is_vararg;
+  lu_byte maxstacksize;  
   int sizeupvalues;  
   int sizek;  
   int sizecode;
@@ -19215,26 +19487,21 @@ typedef struct Proto {
   int sizelocvars;
   int linedefined;
   int lastlinedefined;
+  TValue *k;  
+  Instruction *code;  
+  struct Proto **p;  
+  int *lineinfo;  
+  LocVar *locvars;  
+  Upvaldesc *upvalues;  
+  struct LClosure *cache;  
+  TString  *source;  
   GCObject *gclist;
-  lu_byte numparams;  
-  lu_byte is_vararg;
-  lu_byte maxstacksize;  
 } Proto;
 
 
 
 
-typedef struct UpVal {
-  CommonHeader;
-  TValue *v;  
-  union {
-    TValue value;  
-    struct {  
-      struct UpVal *prev;
-      struct UpVal *next;
-    } l;
-  } u;
-} UpVal;
+typedef struct UpVal UpVal;
 
 
 
@@ -19272,10 +19539,17 @@ typedef union Closure {
 typedef union TKey {
   struct {
     TValuefields;
-    struct Node *next;  
+    int next;  
   } nk;
   TValue tvk;
 } TKey;
+
+
+
+#define setnodekey(L,key,obj) \
+	{ TKey *k_=(key); const TValue *io_=(obj); \
+	  k_->nk.value_ = io_->value_; k_->nk.tt_ = io_->tt_; \
+	  (void)L; checkliveness(G(L),io_); }
 
 
 typedef struct Node {
@@ -19288,12 +19562,12 @@ typedef struct Table {
   CommonHeader;
   lu_byte flags;  
   lu_byte lsizenode;  
-  struct Table *metatable;
+  unsigned int sizearray;  
   TValue *array;  
   Node *node;
   Node *lastfree;  
+  struct Table *metatable;
   GCObject *gclist;
-  int sizearray;  
 } Table;
 
 
@@ -19314,12 +19588,17 @@ typedef struct Table {
 LUAI_DDEC const TValue luaO_nilobject_;
 
 
+#define UTF8BUFFSZ	8
+
 LUAI_FUNC int luaO_int2fb (unsigned int x);
 LUAI_FUNC int luaO_fb2int (int x);
+LUAI_FUNC int luaO_utf8esc (char *buff, unsigned long x);
 LUAI_FUNC int luaO_ceillog2 (unsigned int x);
-LUAI_FUNC lua_Number luaO_arith (int op, lua_Number v1, lua_Number v2);
-LUAI_FUNC int luaO_str2d (const char *s, size_t len, lua_Number *result);
+LUAI_FUNC void luaO_arith (lua_State *L, int op, const TValue *p1,
+                           const TValue *p2, TValue *res);
+LUAI_FUNC size_t luaO_str2num (const char *s, TValue *o);
 LUAI_FUNC int luaO_hexavalue (int c);
+LUAI_FUNC void luaO_tostring (lua_State *L, StkId obj);
 LUAI_FUNC const char *luaO_pushvfstring (lua_State *L, const char *fmt,
                                                        va_list argp);
 LUAI_FUNC const char *luaO_pushfstring (lua_State *L, const char *fmt, ...);
@@ -19344,10 +19623,17 @@ typedef enum {
   TM_ADD,
   TM_SUB,
   TM_MUL,
-  TM_DIV,
   TM_MOD,
   TM_POW,
+  TM_DIV,
+  TM_IDIV,
+  TM_BAND,
+  TM_BOR,
+  TM_BXOR,
+  TM_SHL,
+  TM_SHR,
   TM_UNM,
+  TM_BNOT,
   TM_LT,
   TM_LE,
   TM_CONCAT,
@@ -19363,7 +19649,7 @@ typedef enum {
 #define fasttm(l,et,e)	gfasttm(G(l), et, e)
 
 #define ttypename(x)	luaT_typenames_[(x) + 1]
-#define objtypename(x)	ttypename(ttypenv(x))
+#define objtypename(x)	ttypename(ttnov(x))
 
 LUAI_DDEC const char *const luaT_typenames_[LUA_TOTALTAGS];
 
@@ -19372,6 +19658,17 @@ LUAI_FUNC const TValue *luaT_gettm (Table *events, TMS event, TString *ename);
 LUAI_FUNC const TValue *luaT_gettmbyobj (lua_State *L, const TValue *o,
                                                        TMS event);
 LUAI_FUNC void luaT_init (lua_State *L);
+
+LUAI_FUNC void luaT_callTM (lua_State *L, const TValue *f, const TValue *p1,
+                            const TValue *p2, TValue *p3, int hasres);
+LUAI_FUNC int luaT_callbinTM (lua_State *L, const TValue *p1, const TValue *p2,
+                              StkId res, TMS event);
+LUAI_FUNC void luaT_trybinTM (lua_State *L, const TValue *p1, const TValue *p2,
+                              StkId res, TMS event);
+LUAI_FUNC int luaT_callorderTM (lua_State *L, const TValue *p1,
+                                const TValue *p2, TMS event);
+
+
 
 #endif
 
@@ -19387,13 +19684,17 @@ LUAI_FUNC void luaT_init (lua_State *L);
 
 
 #define luaM_reallocv(L,b,on,n,e) \
-  (cast(void, \
-     (cast(size_t, (n)+1) > MAX_SIZET/(e)) ? (luaM_toobig(L), 0) : 0), \
+  (((sizeof(n) >= sizeof(size_t) && cast(size_t, (n)) + 1 > MAX_SIZET/(e)) \
+      ? luaM_toobig(L) : cast_void(0)) , \
    luaM_realloc_(L, (b), (on)*(e), (n)*(e)))
+
+
+#define luaM_reallocvchar(L,b,on,n)  \
+    cast(char *, luaM_realloc_(L, (b), (on)*sizeof(char), (n)*sizeof(char)))
 
 #define luaM_freemem(L, b, s)	luaM_realloc_(L, (b), (s), 0)
 #define luaM_free(L, b)		luaM_realloc_(L, (b), sizeof(*(b)), 0)
-#define luaM_freearray(L, b, n)   luaM_reallocv(L, (b), n, 0, sizeof((b)[0]))
+#define luaM_freearray(L, b, n)   luaM_realloc_(L, (b), (n)*sizeof(*(b)), 0)
 
 #define luaM_malloc(L,s)	luaM_realloc_(L, NULL, 0, (s))
 #define luaM_new(L,t)		cast(t *, luaM_malloc(L, sizeof(t)))
@@ -19439,11 +19740,13 @@ typedef struct Mbuffer {
 #define luaZ_sizebuffer(buff)	((buff)->buffsize)
 #define luaZ_bufflen(buff)	((buff)->n)
 
+#define luaZ_buffremove(buff,i)	((buff)->n -= (i))
 #define luaZ_resetbuffer(buff) ((buff)->n = 0)
 
 
 #define luaZ_resizebuffer(L, buff, size) \
-	(luaM_reallocvector(L, (buff)->buffer, (buff)->buffsize, size, char), \
+	((buff)->buffer = luaM_reallocvchar(L, (buff)->buffer, \
+				(buff)->buffsize, size), \
 	(buff)->buffsize = size)
 
 #define luaZ_freebuffer(L, buff)	luaZ_resizebuffer(L, buff, 0)
@@ -19452,7 +19755,7 @@ typedef struct Mbuffer {
 LUAI_FUNC char *luaZ_openspace (lua_State *L, Mbuffer *buff, size_t n);
 LUAI_FUNC void luaZ_init (lua_State *L, ZIO *z, lua_Reader reader,
                                         void *data);
-LUAI_FUNC size_t luaZ_read (ZIO* z, void* b, size_t n);	
+LUAI_FUNC size_t luaZ_read (ZIO* z, void *b, size_t n);	
 
 
 
@@ -19462,7 +19765,7 @@ struct Zio {
   size_t n;			
   const char *p;		
   lua_Reader reader;		
-  void* data;			
+  void *data;			
   lua_State *L;			
 };
 
@@ -19484,12 +19787,11 @@ struct lua_longjmp;
 
 #define KGC_NORMAL	0
 #define KGC_EMERGENCY	1	
-#define KGC_GEN		2	
 
 
 typedef struct stringtable {
-  GCObject **hash;
-  lu_int32 nuse;  
+  TString **hash;
+  int nuse;  
   int size;
 } stringtable;
 
@@ -19499,37 +19801,38 @@ typedef struct CallInfo {
   StkId func;  
   StkId	top;  
   struct CallInfo *previous, *next;  
-  short nresults;  
-  lu_byte callstatus;
-  ptrdiff_t extra;
   union {
     struct {  
       StkId base;  
       const Instruction *savedpc;
     } l;
     struct {  
-      int ctx;  
-      lua_CFunction k;  
+      lua_KFunction k;  
       ptrdiff_t old_errfunc;
-      lu_byte old_allowhook;
-      lu_byte status;
+      lua_KContext ctx;  
     } c;
   } u;
+  ptrdiff_t extra;
+  short nresults;  
+  lu_byte callstatus;
 } CallInfo;
 
 
 
-#define CIST_LUA	(1<<0)	
-#define CIST_HOOKED	(1<<1)	
-#define CIST_REENTRY	(1<<2)	
-#define CIST_YIELDED	(1<<3)	
+#define CIST_OAH	(1<<0)	
+#define CIST_LUA	(1<<1)	
+#define CIST_HOOKED	(1<<2)	
+#define CIST_REENTRY	(1<<3)	
 #define CIST_YPCALL	(1<<4)	
-#define CIST_STAT	(1<<5)	
-#define CIST_TAIL	(1<<6)	
-#define CIST_HOOKYIELD	(1<<7)	
-
+#define CIST_TAIL	(1<<5)	
+#define CIST_HOOKYIELD	(1<<6)	
+#define CIST_LEQ	(1<<7)  
 
 #define isLua(ci)	((ci)->callstatus & CIST_LUA)
+
+
+#define setoah(st,v)	((st) = ((st) & ~CIST_OAH) | (v))
+#define getoah(st)	((st) & CIST_OAH)
 
 
 
@@ -19547,21 +19850,20 @@ typedef struct global_State {
   lu_byte gcstate;  
   lu_byte gckind;  
   lu_byte gcrunning;  
-  int sweepstrgc;  
   GCObject *allgc;  
-  GCObject *finobj;  
   GCObject **sweepgc;  
-  GCObject **sweepfin;  
+  GCObject *finobj;  
   GCObject *gray;  
   GCObject *grayagain;  
   GCObject *weak;  
   GCObject *ephemeron;  
   GCObject *allweak;  
   GCObject *tobefnz;  
-  UpVal uvhead;  
+  GCObject *fixedgc;  
+  struct lua_State *twups;  
   Mbuffer buff;  
+  unsigned int gcfinnum;  
   int gcpause;  
-  int gcmajorinc;  
   int gcstepmul;  
   lua_CFunction panic;  
   struct lua_State *mainthread;
@@ -19569,6 +19871,7 @@ typedef struct global_State {
   TString *memerrmsg;  
   TString *tmname[TM_N];  
   struct Table *mt[LUA_NUMTAGS];  
+  TString *strcache[STRCACHE_SIZE][1];  
 } global_State;
 
 
@@ -19582,19 +19885,20 @@ struct lua_State {
   const Instruction *oldpc;  
   StkId stack_last;  
   StkId stack;  
+  UpVal *openupval;  
+  GCObject *gclist;
+  struct lua_State *twups;  
+  struct lua_longjmp *errorJmp;  
+  CallInfo base_ci;  
+  lua_Hook hook;
+  ptrdiff_t errfunc;  
   int stacksize;
+  int basehookcount;
+  int hookcount;
   unsigned short nny;  
   unsigned short nCcalls;  
   lu_byte hookmask;
   lu_byte allowhook;
-  int basehookcount;
-  int hookcount;
-  lua_Hook hook;
-  GCObject *openupval;  
-  GCObject *gclist;
-  struct lua_longjmp *errorJmp;  
-  ptrdiff_t errfunc;  
-  CallInfo base_ci;  
 };
 
 
@@ -19602,37 +19906,35 @@ struct lua_State {
 
 
 
-union GCObject {
-  GCheader gch;  
-  union TString ts;
-  union Udata u;
+union GCUnion {
+  GCObject gc;  
+  struct TString ts;
+  struct Udata u;
   union Closure cl;
   struct Table h;
   struct Proto p;
-  struct UpVal uv;
   struct lua_State th;  
 };
 
 
-#define gch(o)		(&(o)->gch)
+#define cast_u(o)	cast(union GCUnion *, (o))
 
 
-#define rawgco2ts(o)  \
-	check_exp(novariant((o)->gch.tt) == LUA_TSTRING, &((o)->ts))
-#define gco2ts(o)	(&rawgco2ts(o)->tsv)
-#define rawgco2u(o)	check_exp((o)->gch.tt == LUA_TUSERDATA, &((o)->u))
-#define gco2u(o)	(&rawgco2u(o)->uv)
-#define gco2lcl(o)	check_exp((o)->gch.tt == LUA_TLCL, &((o)->cl.l))
-#define gco2ccl(o)	check_exp((o)->gch.tt == LUA_TCCL, &((o)->cl.c))
+#define gco2ts(o)  \
+	check_exp(novariant((o)->tt) == LUA_TSTRING, &((cast_u(o))->ts))
+#define gco2u(o)  check_exp((o)->tt == LUA_TUSERDATA, &((cast_u(o))->u))
+#define gco2lcl(o)  check_exp((o)->tt == LUA_TLCL, &((cast_u(o))->cl.l))
+#define gco2ccl(o)  check_exp((o)->tt == LUA_TCCL, &((cast_u(o))->cl.c))
 #define gco2cl(o)  \
-	check_exp(novariant((o)->gch.tt) == LUA_TFUNCTION, &((o)->cl))
-#define gco2t(o)	check_exp((o)->gch.tt == LUA_TTABLE, &((o)->h))
-#define gco2p(o)	check_exp((o)->gch.tt == LUA_TPROTO, &((o)->p))
-#define gco2uv(o)	check_exp((o)->gch.tt == LUA_TUPVAL, &((o)->uv))
-#define gco2th(o)	check_exp((o)->gch.tt == LUA_TTHREAD, &((o)->th))
+	check_exp(novariant((o)->tt) == LUA_TFUNCTION, &((cast_u(o))->cl))
+#define gco2t(o)  check_exp((o)->tt == LUA_TTABLE, &((cast_u(o))->h))
+#define gco2p(o)  check_exp((o)->tt == LUA_TPROTO, &((cast_u(o))->p))
+#define gco2th(o)  check_exp((o)->tt == LUA_TTHREAD, &((cast_u(o))->th))
 
 
-#define obj2gco(v)	(cast(GCObject *, (v)))
+
+#define obj2gco(v) \
+	check_exp(novariant((v)->tt) < LUA_TDEADKEY, (&(cast_u(v)->gc)))
 
 
 
@@ -19642,29 +19944,35 @@ LUAI_FUNC void luaE_setdebt (global_State *g, l_mem debt);
 LUAI_FUNC void luaE_freethread (lua_State *L, lua_State *L1);
 LUAI_FUNC CallInfo *luaE_extendCI (lua_State *L);
 LUAI_FUNC void luaE_freeCI (lua_State *L);
+LUAI_FUNC void luaE_shrinkCI (lua_State *L);
 
 
 #endif
 
 #define pcRel(pc, p)	(cast(int, (pc) - (p)->code) - 1)
 
-#define getfuncline(f,pc)	(((f)->lineinfo) ? (f)->lineinfo[pc] : 0)
+#define getfuncline(f,pc)	(((f)->lineinfo) ? (f)->lineinfo[pc] : -1)
 
 #define resethookcount(L)	(L->hookcount = L->basehookcount)
 
 
-#define ci_func(ci)		(clLvalue((ci)->func))
-
-
 LUAI_FUNC l_noret luaG_typeerror (lua_State *L, const TValue *o,
                                                 const char *opname);
-LUAI_FUNC l_noret luaG_concaterror (lua_State *L, StkId p1, StkId p2);
-LUAI_FUNC l_noret luaG_aritherror (lua_State *L, const TValue *p1,
+LUAI_FUNC l_noret luaG_concaterror (lua_State *L, const TValue *p1,
+                                                  const TValue *p2);
+LUAI_FUNC l_noret luaG_opinterror (lua_State *L, const TValue *p1,
+                                                 const TValue *p2,
+                                                 const char *msg);
+LUAI_FUNC l_noret luaG_tointerror (lua_State *L, const TValue *p1,
                                                  const TValue *p2);
 LUAI_FUNC l_noret luaG_ordererror (lua_State *L, const TValue *p1,
                                                  const TValue *p2);
 LUAI_FUNC l_noret luaG_runerror (lua_State *L, const char *fmt, ...);
+LUAI_FUNC const char *luaG_addinfo (lua_State *L, const char *msg,
+                                                  TString *src, int line);
 LUAI_FUNC l_noret luaG_errormsg (lua_State *L);
+LUAI_FUNC void luaG_traceexec (lua_State *L);
+
 
 #endif
 
@@ -19694,7 +20002,7 @@ LUAI_FUNC void luaD_call (lua_State *L, StkId func, int nResults,
                                         int allowyield);
 LUAI_FUNC int luaD_pcall (lua_State *L, Pfunc func, void *u,
                                         ptrdiff_t oldtop, ptrdiff_t ef);
-LUAI_FUNC int luaD_poscall (lua_State *L, StkId firstResult);
+LUAI_FUNC int luaD_poscall (lua_State *L, StkId firstResult, int nres);
 LUAI_FUNC void luaD_reallocstack (lua_State *L, int newsize);
 LUAI_FUNC void luaD_growstack (lua_State *L, int n);
 LUAI_FUNC void luaD_shrinkstack (lua_State *L);
@@ -19719,26 +20027,21 @@ LUAI_FUNC int luaD_rawrunprotected (lua_State *L, Pfunc f, void *ud);
 
 #define GCSpropagate	0
 #define GCSatomic	1
-#define GCSsweepstring	2
-#define GCSsweepudata	3
-#define GCSsweep	4
-#define GCSpause	5
+#define GCSswpallgc	2
+#define GCSswpfinobj	3
+#define GCSswptobefnz	4
+#define GCSswpend	5
+#define GCScallfin	6
+#define GCSpause	7
 
 
 #define issweepphase(g)  \
-	(GCSsweepstring <= (g)->gcstate && (g)->gcstate <= GCSsweep)
-
-#define isgenerational(g)	((g)->gckind == KGC_GEN)
+	(GCSswpallgc <= (g)->gcstate && (g)->gcstate <= GCSswpend)
 
 
 
-#define keepinvariant(g)	(isgenerational(g) || g->gcstate <= GCSatomic)
 
-
-
-#define keepinvariantout(g)  \
-  check_exp(g->gcstate == GCSpropagate || !isgenerational(g),  \
-            g->gcstate <= GCSatomic)
+#define keepinvariant(g)	((g)->gcstate <= GCSatomic)
 
 
 
@@ -19757,32 +20060,24 @@ LUAI_FUNC int luaD_rawrunprotected (lua_State *L, Pfunc f, void *ud);
 #define WHITE1BIT	1  
 #define BLACKBIT	2  
 #define FINALIZEDBIT	3  
-#define SEPARATED	4  
-#define FIXEDBIT	5  
-#define OLDBIT		6  
 
 
 #define WHITEBITS	bit2mask(WHITE0BIT, WHITE1BIT)
 
 
-#define iswhite(x)      testbits((x)->gch.marked, WHITEBITS)
-#define isblack(x)      testbit((x)->gch.marked, BLACKBIT)
+#define iswhite(x)      testbits((x)->marked, WHITEBITS)
+#define isblack(x)      testbit((x)->marked, BLACKBIT)
 #define isgray(x)    \
-	(!testbits((x)->gch.marked, WHITEBITS | bitmask(BLACKBIT)))
+	(!testbits((x)->marked, WHITEBITS | bitmask(BLACKBIT)))
 
-#define isold(x)	testbit((x)->gch.marked, OLDBIT)
+#define tofinalize(x)	testbit((x)->marked, FINALIZEDBIT)
 
-
-#define resetoldbit(o)	resetbit((o)->gch.marked, OLDBIT)
-
-#define otherwhite(g)	(g->currentwhite ^ WHITEBITS)
+#define otherwhite(g)	((g)->currentwhite ^ WHITEBITS)
 #define isdeadm(ow,m)	(!(((m) ^ WHITEBITS) & (ow)))
-#define isdead(g,v)	isdeadm(otherwhite(g), (v)->gch.marked)
+#define isdead(g,v)	isdeadm(otherwhite(g), (v)->marked)
 
-#define changewhite(x)	((x)->gch.marked ^= WHITEBITS)
-#define gray2black(x)	l_setbit((x)->gch.marked, BLACKBIT)
-
-#define valiswhite(x)	(iscollectable(x) && iswhite(gcvalue(x)))
+#define changewhite(x)	((x)->marked ^= WHITEBITS)
+#define gray2black(x)	l_setbit((x)->marked, BLACKBIT)
 
 #define luaC_white(g)	cast(lu_byte, (g)->currentwhite & WHITEBITS)
 
@@ -19792,35 +20087,34 @@ LUAI_FUNC int luaD_rawrunprotected (lua_State *L, Pfunc f, void *ud);
 #define luaC_checkGC(L)		luaC_condGC(L, luaC_step(L);)
 
 
-#define luaC_barrier(L,p,v) { if (valiswhite(v) && isblack(obj2gco(p)))  \
+#define luaC_barrier(L,p,v) {  \
+	if (iscollectable(v) && isblack(p) && iswhite(gcvalue(v)))  \
 	luaC_barrier_(L,obj2gco(p),gcvalue(v)); }
 
-#define luaC_barrierback(L,p,v) { if (valiswhite(v) && isblack(obj2gco(p)))  \
+#define luaC_barrierback(L,p,v) {  \
+	if (iscollectable(v) && isblack(p) && iswhite(gcvalue(v)))  \
 	luaC_barrierback_(L,p); }
 
-#define luaC_objbarrier(L,p,o)  \
-	{ if (iswhite(obj2gco(o)) && isblack(obj2gco(p))) \
+#define luaC_objbarrier(L,p,o) {  \
+	if (isblack(p) && iswhite(o)) \
 		luaC_barrier_(L,obj2gco(p),obj2gco(o)); }
 
-#define luaC_objbarrierback(L,p,o)  \
-   { if (iswhite(obj2gco(o)) && isblack(obj2gco(p))) luaC_barrierback_(L,p); }
+#define luaC_upvalbarrier(L,uv) \
+  { if (iscollectable((uv)->v) && !upisopen(uv)) \
+         luaC_upvalbarrier_(L,uv); }
 
-#define luaC_barrierproto(L,p,c) \
-   { if (isblack(obj2gco(p))) luaC_barrierproto_(L,p,c); }
-
+LUAI_FUNC void luaC_fix (lua_State *L, GCObject *o);
 LUAI_FUNC void luaC_freeallobjects (lua_State *L);
 LUAI_FUNC void luaC_step (lua_State *L);
-LUAI_FUNC void luaC_forcestep (lua_State *L);
 LUAI_FUNC void luaC_runtilstate (lua_State *L, int statesmask);
 LUAI_FUNC void luaC_fullgc (lua_State *L, int isemergency);
-LUAI_FUNC GCObject *luaC_newobj (lua_State *L, int tt, size_t sz,
-                                 GCObject **list, int offset);
+LUAI_FUNC GCObject *luaC_newobj (lua_State *L, int tt, size_t sz);
 LUAI_FUNC void luaC_barrier_ (lua_State *L, GCObject *o, GCObject *v);
-LUAI_FUNC void luaC_barrierback_ (lua_State *L, GCObject *o);
-LUAI_FUNC void luaC_barrierproto_ (lua_State *L, Proto *p, Closure *c);
+LUAI_FUNC void luaC_barrierback_ (lua_State *L, Table *o);
+LUAI_FUNC void luaC_upvalbarrier_ (lua_State *L, UpVal *uv);
 LUAI_FUNC void luaC_checkfinalizer (lua_State *L, GCObject *o, Table *mt);
-LUAI_FUNC void luaC_checkupvalcolor (global_State *g, UpVal *uv);
-LUAI_FUNC void luaC_changemode (lua_State *L, int mode);
+LUAI_FUNC void luaC_upvdeccount (lua_State *L, UpVal *uv);
+
 
 #endif
 
@@ -19828,29 +20122,30 @@ LUAI_FUNC void luaC_changemode (lua_State *L, int mode);
 #ifndef lstring_h
 #define lstring_h
 
-#define sizestring(s)	(sizeof(union TString)+((s)->len+1)*sizeof(char))
+#define sizelstring(l)  (sizeof(union UTString) + ((l) + 1) * sizeof(char))
 
-#define sizeudata(u)	(sizeof(union Udata)+(u)->len)
+#define sizeludata(l)	(sizeof(union UUdata) + (l))
+#define sizeudata(u)	sizeludata((u)->len)
 
 #define luaS_newliteral(L, s)	(luaS_newlstr(L, "" s, \
                                  (sizeof(s)/sizeof(char))-1))
 
-#define luaS_fix(s)	l_setbit((s)->tsv.marked, FIXEDBIT)
+
+
+#define isreserved(s)	((s)->tt == LUA_TSHRSTR && (s)->extra > 0)
 
 
 
-#define isreserved(s)	((s)->tsv.tt == LUA_TSHRSTR && (s)->tsv.extra > 0)
-
-
-
-#define eqshrstr(a,b)	check_exp((a)->tsv.tt == LUA_TSHRSTR, (a) == (b))
+#define eqshrstr(a,b)	check_exp((a)->tt == LUA_TSHRSTR, (a) == (b))
 
 
 LUAI_FUNC unsigned int luaS_hash (const char *str, size_t l, unsigned int seed);
 LUAI_FUNC int luaS_eqlngstr (TString *a, TString *b);
-LUAI_FUNC int luaS_eqstr (TString *a, TString *b);
 LUAI_FUNC void luaS_resize (lua_State *L, int newsize);
-LUAI_FUNC Udata *luaS_newudata (lua_State *L, size_t s, Table *e);
+LUAI_FUNC void luaS_clearcache (global_State *g);
+LUAI_FUNC void luaS_init (lua_State *L);
+LUAI_FUNC void luaS_remove (lua_State *L, TString *ts);
+LUAI_FUNC Udata *luaS_newudata (lua_State *L, size_t s);
 LUAI_FUNC TString *luaS_newlstr (lua_State *L, const char *str, size_t l);
 LUAI_FUNC TString *luaS_new (lua_State *L, const char *str);
 
@@ -19862,22 +20157,34 @@ LUAI_FUNC TString *luaS_new (lua_State *L, const char *str);
 #define ltable_h
 
 #define gnode(t,i)	(&(t)->node[i])
-#define gkey(n)		(&(n)->i_key.tvk)
 #define gval(n)		(&(n)->i_val)
 #define gnext(n)	((n)->i_key.nk.next)
+
+
+ 
+#define gkey(n)		cast(const TValue*, (&(n)->i_key.tvk))
+
+#define wgkey(n)		(&(n)->i_key.nk)
 
 #define invalidateTMcache(t)	((t)->flags = 0)
 
 
-LUAI_FUNC const TValue *luaH_getint (Table *t, int key);
-LUAI_FUNC void luaH_setint (lua_State *L, Table *t, int key, TValue *value);
+
+#define keyfromval(v) \
+  (gkey(cast(Node *, cast(char *, (v)) - offsetof(Node, i_val))))
+
+
+LUAI_FUNC const TValue *luaH_getint (Table *t, lua_Integer key);
+LUAI_FUNC void luaH_setint (lua_State *L, Table *t, lua_Integer key,
+                                                    TValue *value);
 LUAI_FUNC const TValue *luaH_getstr (Table *t, TString *key);
 LUAI_FUNC const TValue *luaH_get (Table *t, const TValue *key);
 LUAI_FUNC TValue *luaH_newkey (lua_State *L, Table *t, const TValue *key);
 LUAI_FUNC TValue *luaH_set (lua_State *L, Table *t, const TValue *key);
 LUAI_FUNC Table *luaH_new (lua_State *L);
-LUAI_FUNC void luaH_resize (lua_State *L, Table *t, int nasize, int nhsize);
-LUAI_FUNC void luaH_resizearray (lua_State *L, Table *t, int nasize);
+LUAI_FUNC void luaH_resize (lua_State *L, Table *t, unsigned int nasize,
+                                                    unsigned int nhsize);
+LUAI_FUNC void luaH_resizearray (lua_State *L, Table *t, unsigned int nasize);
 LUAI_FUNC void luaH_free (lua_State *L, Table *t);
 LUAI_FUNC int luaH_next (lua_State *L, Table *t, StkId key);
 LUAI_FUNC int luaH_getn (Table *t);
@@ -19896,23 +20203,42 @@ LUAI_FUNC int luaH_isdummy (Node *n);
 #define lvm_h
 
 
-#define tostring(L,o) (ttisstring(o) || (luaV_tostring(L, o)))
-
-#define tonumber(o,n)	(ttisnumber(o) || (((o) = luaV_tonumber(o,n)) != NULL))
-
-#define equalobj(L,o1,o2)  (ttisequal(o1, o2) && luaV_equalobj_(L, o1, o2))
-
-#define luaV_rawequalobj(o1,o2)		equalobj(NULL,o1,o2)
+#if !defined(LUA_NOCVTN2S)
+#define cvt2str(o)	ttisnumber(o)
+#else
+#define cvt2str(o)	0	
+#endif
 
 
+#if !defined(LUA_NOCVTS2N)
+#define cvt2num(o)	ttisstring(o)
+#else
+#define cvt2num(o)	0	
+#endif
 
-LUAI_FUNC int luaV_equalobj_ (lua_State *L, const TValue *t1, const TValue *t2);
 
 
+#if !defined(LUA_FLOORN2I)
+#define LUA_FLOORN2I		1 
+#endif
+
+
+#define tonumber(o,n) \
+	(ttisfloat(o) ? (*(n) = fltvalue(o), 1) : luaV_tonumber_(o,n))
+
+#define tointeger(o,i) \
+    (ttisinteger(o) ? (*(i) = ivalue(o), 1) : luaV_tointeger(o,i,LUA_FLOORN2I))
+
+#define intop(op,v1,v2) l_castU2S(l_castS2U(v1) op l_castS2U(v2))
+
+#define luaV_rawequalobj(t1,t2)		luaV_equalobj(NULL,t1,t2)
+
+
+LUAI_FUNC int luaV_equalobj (lua_State *L, const TValue *t1, const TValue *t2);
 LUAI_FUNC int luaV_lessthan (lua_State *L, const TValue *l, const TValue *r);
 LUAI_FUNC int luaV_lessequal (lua_State *L, const TValue *l, const TValue *r);
-LUAI_FUNC const TValue *luaV_tonumber (const TValue *obj, TValue *n);
-LUAI_FUNC int luaV_tostring (lua_State *L, StkId obj);
+LUAI_FUNC int luaV_tonumber_ (const TValue *obj, lua_Number *n);
+LUAI_FUNC int luaV_tointeger (const TValue *obj, lua_Integer *p, int mode);
 LUAI_FUNC void luaV_gettable (lua_State *L, const TValue *t, TValue *key,
                                             StkId val);
 LUAI_FUNC void luaV_settable (lua_State *L, const TValue *t, TValue *key,
@@ -19920,8 +20246,9 @@ LUAI_FUNC void luaV_settable (lua_State *L, const TValue *t, TValue *key,
 LUAI_FUNC void luaV_finishOp (lua_State *L);
 LUAI_FUNC void luaV_execute (lua_State *L);
 LUAI_FUNC void luaV_concat (lua_State *L, int total);
-LUAI_FUNC void luaV_arith (lua_State *L, StkId ra, const TValue *rb,
-                           const TValue *rc, TMS op);
+LUAI_FUNC lua_Integer luaV_div (lua_State *L, lua_Integer x, lua_Integer y);
+LUAI_FUNC lua_Integer luaV_mod (lua_State *L, lua_Integer x, lua_Integer y);
+LUAI_FUNC lua_Integer luaV_shiftl (lua_Integer x, lua_Integer y);
 LUAI_FUNC void luaV_objlen (lua_State *L, StkId ra, const TValue *rb);
 
 #endif
@@ -19955,14 +20282,37 @@ LUAI_FUNC void luaV_objlen (lua_State *L, StkId ra, const TValue *rb);
                          cast(int, sizeof(TValue *)*((n)-1)))
 
 
+
+#define isintwups(L)	(L->twups != L)
+
+
+
+#define MAXUPVAL	255
+
+
+
+struct UpVal {
+  TValue *v;  
+  lu_mem refcount;  
+  union {
+    struct {  
+      UpVal *next;  
+      int touched;  
+    } open;
+    TValue value;  
+  } u;
+};
+
+#define upisopen(up)	((up)->v != &(up)->u.value)
+
+
 LUAI_FUNC Proto *luaF_newproto (lua_State *L);
-LUAI_FUNC Closure *luaF_newCclosure (lua_State *L, int nelems);
-LUAI_FUNC Closure *luaF_newLclosure (lua_State *L, int nelems);
-LUAI_FUNC UpVal *luaF_newupval (lua_State *L);
+LUAI_FUNC CClosure *luaF_newCclosure (lua_State *L, int nelems);
+LUAI_FUNC LClosure *luaF_newLclosure (lua_State *L, int nelems);
+LUAI_FUNC void luaF_initupvals (lua_State *L, LClosure *cl);
 LUAI_FUNC UpVal *luaF_findupval (lua_State *L, StkId level);
 LUAI_FUNC void luaF_close (lua_State *L, StkId level);
 LUAI_FUNC void luaF_freeproto (lua_State *L, Proto *f);
-LUAI_FUNC void luaF_freeupval (lua_State *L, UpVal *uv);
 LUAI_FUNC const char *luaF_getlocalname (const Proto *func, int local_number,
                                          int pc);
 
@@ -19973,19 +20323,22 @@ LUAI_FUNC const char *luaF_getlocalname (const Proto *func, int local_number,
 #ifndef lundump_h
 #define lundump_h
 
-LUAI_FUNC Closure* luaU_undump (lua_State* L, ZIO* Z, Mbuffer* buff, const char* name);
+#define LUAC_DATA	"\x19\x93\r\n\x1a\n"
+
+#define LUAC_INT	0x5678
+#define LUAC_NUM	cast_num(370.5)
+
+#define MYINT(s)	(s[0]-'0')
+#define LUAC_VERSION	(MYINT(LUA_VERSION_MAJOR)*16+MYINT(LUA_VERSION_MINOR))
+#define LUAC_FORMAT	0	
 
 
-LUAI_FUNC void luaU_header (lu_byte* h);
+LUAI_FUNC LClosure* luaU_undump (lua_State* L, ZIO* Z, Mbuffer* buff,
+                                 const char* name);
 
 
-LUAI_FUNC int luaU_dump (lua_State* L, const Proto* f, lua_Writer w, void* data, int strip);
-
-
-#define LUAC_TAIL		"\x19\x93\r\n\x1a\n"
-
-
-#define LUAC_HEADERSIZE		(sizeof(LUA_SIGNATURE)-sizeof(char)+2+6+sizeof(LUAC_TAIL)-sizeof(char))
+LUAI_FUNC int luaU_dump (lua_State* L, const Proto* f, lua_Writer w,
+                         void* data, int strip);
 
 #endif
 
@@ -20001,6 +20354,10 @@ LUAI_FUNC int luaU_dump (lua_State* L, const Proto* f, lua_Writer w, void* data,
 #define FIRST_RESERVED	257
 
 
+#if !defined(LUA_ENV)
+#define LUA_ENV		"_ENV"
+#endif
+
 
 
 enum RESERVED {
@@ -20010,8 +20367,10 @@ enum RESERVED {
   TK_GOTO, TK_IF, TK_IN, TK_LOCAL, TK_NIL, TK_NOT, TK_OR, TK_REPEAT,
   TK_RETURN, TK_THEN, TK_TRUE, TK_UNTIL, TK_WHILE,
   
-  TK_CONCAT, TK_DOTS, TK_EQ, TK_GE, TK_LE, TK_NE, TK_DBCOLON, TK_EOS,
-  TK_NUMBER, TK_NAME, TK_STRING
+  TK_IDIV, TK_CONCAT, TK_DOTS, TK_EQ, TK_GE, TK_LE, TK_NE,
+  TK_SHL, TK_SHR,
+  TK_DBCOLON, TK_EOS,
+  TK_FLT, TK_INT, TK_NAME, TK_STRING
 };
 
 
@@ -20020,6 +20379,7 @@ enum RESERVED {
 
 typedef union {
   lua_Number r;
+  lua_Integer i;
   TString *ts;
 } SemInfo;  
 
@@ -20041,6 +20401,7 @@ typedef struct LexState {
   struct lua_State *L;
   ZIO *z;  
   Mbuffer *buff;  
+  Table *h;  
   struct Dyndata *dyd;  
   TString *source;  
   TString *envn;  
@@ -20202,10 +20563,17 @@ OP_SELF,
 OP_ADD,
 OP_SUB,
 OP_MUL,
-OP_DIV,
 OP_MOD,
 OP_POW,
+OP_DIV,
+OP_IDIV,
+OP_BAND,
+OP_BOR,
+OP_BXOR,
+OP_SHL,
+OP_SHR,
 OP_UNM,
+OP_BNOT,
 OP_NOT,
 OP_LEN,
 
@@ -20283,7 +20651,8 @@ typedef enum {
   VTRUE,
   VFALSE,
   VK,		
-  VKNUM,	
+  VKFLT,	
+  VKINT,	
   VNONRELOC,	
   VLOCAL,	
   VUPVAL,       
@@ -20308,6 +20677,7 @@ typedef struct expdesc {
     } ind;
     int info;  
     lua_Number nval;  
+    lua_Integer ival;    
   } u;
   int t;  
   int f;  
@@ -20356,7 +20726,6 @@ struct BlockCnt;
 
 typedef struct FuncState {
   Proto *f;  
-  Table *h;  
   struct FuncState *prev;  
   struct LexState *ls;  
   struct BlockCnt *bl;  
@@ -20373,8 +20742,8 @@ typedef struct FuncState {
 } FuncState;
 
 
-LUAI_FUNC Closure *luaY_parser (lua_State *L, ZIO *z, Mbuffer *buff,
-                                Dyndata *dyd, const char *name, int firstchar);
+LUAI_FUNC LClosure *luaY_parser (lua_State *L, ZIO *z, Mbuffer *buff,
+                                 Dyndata *dyd, const char *name, int firstchar);
 
 
 #endif
@@ -20383,7 +20752,11 @@ LUAI_FUNC Closure *luaY_parser (lua_State *L, ZIO *z, Mbuffer *buff,
 
 
 typedef enum BinOpr {
-  OPR_ADD, OPR_SUB, OPR_MUL, OPR_DIV, OPR_MOD, OPR_POW,
+  OPR_ADD, OPR_SUB, OPR_MUL, OPR_MOD, OPR_POW,
+  OPR_DIV,
+  OPR_IDIV,
+  OPR_BAND, OPR_BOR, OPR_BXOR,
+  OPR_SHL, OPR_SHR,
   OPR_CONCAT,
   OPR_EQ, OPR_LT, OPR_LE,
   OPR_NE, OPR_GT, OPR_GE,
@@ -20392,7 +20765,7 @@ typedef enum BinOpr {
 } BinOpr;
 
 
-typedef enum UnOpr { OPR_MINUS, OPR_NOT, OPR_LEN, OPR_NOUNOPR } UnOpr;
+typedef enum UnOpr { OPR_MINUS, OPR_BNOT, OPR_NOT, OPR_LEN, OPR_NOUNOPR } UnOpr;
 
 
 #define getcode(fs,e)	((fs)->f->code[(e)->u.info])
@@ -20411,7 +20784,7 @@ LUAI_FUNC void luaK_nil (FuncState *fs, int from, int n);
 LUAI_FUNC void luaK_reserveregs (FuncState *fs, int n);
 LUAI_FUNC void luaK_checkstack (FuncState *fs, int n);
 LUAI_FUNC int luaK_stringK (FuncState *fs, TString *s);
-LUAI_FUNC int luaK_numberK (FuncState *fs, lua_Number r);
+LUAI_FUNC int luaK_intK (FuncState *fs, lua_Integer n);
 LUAI_FUNC void luaK_dischargevars (FuncState *fs, expdesc *e);
 LUAI_FUNC int luaK_exp2anyreg (FuncState *fs, expdesc *e);
 LUAI_FUNC void luaK_exp2anyregup (FuncState *fs, expdesc *e);
@@ -20511,6 +20884,7 @@ LUAI_DDEC const lu_byte luai_ctype_[UCHAR_MAX + 2];
 #ifndef _luaintfint_h
 #define _luaintfint_h
 
+#define LUAINTF_VER 2
 
 
 #ifdef USE_AMALGAMATED_BAS
@@ -20525,90 +20899,83 @@ struct BasFuncs;
 struct BaTimer;
 
 typedef lua_State *(*Tlua_newstate) (lua_Alloc f, void *ud);
-typedef void       (*Tlua_close) (lua_State *L);
+typedef void (*Tlua_close) (lua_State *L);
 typedef lua_State *(*Tlua_newthread) (lua_State *L);
 typedef lua_CFunction (*Tlua_atpanic) (lua_State *L, lua_CFunction panicf);
 typedef const lua_Number *(*Tlua_version) (lua_State *L);
-typedef int   (*Tlua_absindex) (lua_State *L, int idx);
-typedef int   (*Tlua_gettop) (lua_State *L);
-typedef void  (*Tlua_settop) (lua_State *L, int idx);
-typedef void  (*Tlua_pushvalue) (lua_State *L, int idx);
-typedef void  (*Tlua_remove) (lua_State *L, int idx);
-typedef void  (*Tlua_insert) (lua_State *L, int idx);
-typedef void  (*Tlua_replace) (lua_State *L, int idx);
-typedef void  (*Tlua_copy) (lua_State *L, int fromidx, int toidx);
-typedef int   (*Tlua_checkstack) (lua_State *L, int sz);
-typedef void  (*Tlua_xmove) (lua_State *from, lua_State *to, int n);
-typedef int             (*Tlua_isnumber) (lua_State *L, int idx);
-typedef int             (*Tlua_isstring) (lua_State *L, int idx);
-typedef int             (*Tlua_iscfunction) (lua_State *L, int idx);
-typedef int             (*Tlua_isuserdata) (lua_State *L, int idx);
-typedef int             (*Tlua_type) (lua_State *L, int idx);
-typedef const char     *(*Tlua_typename) (lua_State *L, int tp);
-typedef lua_Number      (*Tlua_tonumberx) (lua_State *L, int idx, int *isnum);
-typedef lua_Integer     (*Tlua_tointegerx) (lua_State *L, int idx, int *isnum);
-typedef lua_Unsigned    (*Tlua_tounsignedx) (lua_State *L, int idx, int *isnum);
-typedef int             (*Tlua_toboolean) (lua_State *L, int idx);
-typedef const char     *(*Tlua_tolstring) (lua_State *L, int idx, size_t *len);
-typedef size_t          (*Tlua_rawlen) (lua_State *L, int idx);
-typedef lua_CFunction   (*Tlua_tocfunction) (lua_State *L, int idx);
-typedef void	       *(*Tlua_touserdata) (lua_State *L, int idx);
-typedef lua_State      *(*Tlua_tothread) (lua_State *L, int idx);
-typedef const void     *(*Tlua_topointer) (lua_State *L, int idx);
-typedef void  (*Tlua_arith) (lua_State *L, int op);
-typedef int   (*Tlua_rawequal) (lua_State *L, int idx1, int idx2);
-typedef int   (*Tlua_compare) (lua_State *L, int idx1, int idx2, int op);
-typedef void        (*Tlua_pushnil) (lua_State *L);
-typedef void        (*Tlua_pushnumber) (lua_State *L, lua_Number n);
-typedef void        (*Tlua_pushinteger) (lua_State *L, lua_Integer n);
-typedef void        (*Tlua_pushunsigned) (lua_State *L, lua_Unsigned n);
-typedef const char *(*Tlua_pushlstring) (lua_State *L, const char *s, size_t l);
+typedef int (*Tlua_absindex) (lua_State *L, int idx);
+typedef int (*Tlua_gettop) (lua_State *L);
+typedef void (*Tlua_settop) (lua_State *L, int idx);
+typedef void (*Tlua_pushvalue) (lua_State *L, int idx);
+typedef void (*Tlua_rotate) (lua_State *L, int idx, int n);
+typedef void (*Tlua_copy) (lua_State *L, int fromidx, int toidx);
+typedef int (*Tlua_checkstack) (lua_State *L, int n);
+typedef void (*Tlua_xmove) (lua_State *from, lua_State *to, int n);
+typedef int (*Tlua_isnumber) (lua_State *L, int idx);
+typedef int (*Tlua_isstring) (lua_State *L, int idx);
+typedef int (*Tlua_iscfunction) (lua_State *L, int idx);
+typedef int (*Tlua_isinteger) (lua_State *L, int idx);
+typedef int (*Tlua_isuserdata) (lua_State *L, int idx);
+typedef int (*Tlua_type) (lua_State *L, int idx);
+typedef const char *(*Tlua_typename) (lua_State *L, int tp);
+typedef lua_Number (*Tlua_tonumberx) (lua_State *L, int idx, int *isnum);
+typedef lua_Integer (*Tlua_tointegerx) (lua_State *L, int idx, int *isnum);
+typedef int (*Tlua_toboolean) (lua_State *L, int idx);
+typedef const char *(*Tlua_tolstring) (lua_State *L, int idx, size_t *len);
+typedef size_t (*Tlua_rawlen) (lua_State *L, int idx);
+typedef lua_CFunction (*Tlua_tocfunction) (lua_State *L, int idx);
+typedef void *(*Tlua_touserdata) (lua_State *L, int idx);
+typedef lua_State *(*Tlua_tothread) (lua_State *L, int idx);
+typedef const void *(*Tlua_topointer) (lua_State *L, int idx);
+typedef void (*Tlua_arith) (lua_State *L, int op);
+typedef int (*Tlua_rawequal) (lua_State *L, int idx1, int idx2);
+typedef int (*Tlua_compare) (lua_State *L, int idx1, int idx2, int op);
+typedef void (*Tlua_pushnil) (lua_State *L);
+typedef void (*Tlua_pushnumber) (lua_State *L, lua_Number n);
+typedef void (*Tlua_pushinteger) (lua_State *L, lua_Integer n);
+typedef const char *(*Tlua_pushlstring) (lua_State *L, const char *s, size_t len);
 typedef const char *(*Tlua_pushstring) (lua_State *L, const char *s);
-typedef const char *(*Tlua_pushvfstring) (lua_State *L, const char *fmt,
-                                          va_list argp);
-typedef void  (*Tlua_pushcclosure) (lua_State *L, lua_CFunction fn, int n);
-typedef void  (*Tlua_pushboolean) (lua_State *L, int b);
-typedef void  (*Tlua_pushlightuserdata) (lua_State *L, void *p);
-typedef int   (*Tlua_pushthread) (lua_State *L);
-typedef void  (*Tlua_getglobal) (lua_State *L, const char *var);
-typedef void  (*Tlua_gettable) (lua_State *L, int idx);
-typedef void  (*Tlua_getfield) (lua_State *L, int idx, const char *k);
-typedef void  (*Tlua_rawget) (lua_State *L, int idx);
-typedef void  (*Tlua_rawgeti) (lua_State *L, int idx, int n);
-typedef void  (*Tlua_rawgetp) (lua_State *L, int idx, const void *p);
-typedef void  (*Tlua_createtable) (lua_State *L, int narr, int nrec);
+typedef const char *(*Tlua_pushvfstring) (lua_State *L, const char *fmt,va_list argp);
+typedef void (*Tlua_pushcclosure) (lua_State *L, lua_CFunction fn, int n);
+typedef void (*Tlua_pushboolean) (lua_State *L, int b);
+typedef void (*Tlua_pushlightuserdata) (lua_State *L, void *p);
+typedef int (*Tlua_pushthread) (lua_State *L);
+typedef int (*Tlua_getglobal) (lua_State *L, const char *name);
+typedef int (*Tlua_gettable) (lua_State *L, int idx);
+typedef int (*Tlua_getfield) (lua_State *L, int idx, const char *k);
+typedef int (*Tlua_geti) (lua_State *L, int idx, lua_Integer n);
+typedef int (*Tlua_rawget) (lua_State *L, int idx);
+typedef int (*Tlua_rawgeti) (lua_State *L, int idx, lua_Integer n);
+typedef int (*Tlua_rawgetp) (lua_State *L, int idx, const void *p);
+typedef void (*Tlua_createtable) (lua_State *L, int narr, int nrec);
 typedef void *(*Tlua_newuserdata) (lua_State *L, size_t sz);
-typedef int   (*Tlua_getmetatable) (lua_State *L, int objindex);
-typedef void  (*Tlua_getuservalue) (lua_State *L, int idx);
-typedef void  (*Tlua_setglobal) (lua_State *L, const char *var);
-typedef void  (*Tlua_settable) (lua_State *L, int idx);
-typedef void  (*Tlua_setfield) (lua_State *L, int idx, const char *k);
-typedef void  (*Tlua_rawset) (lua_State *L, int idx);
-typedef void  (*Tlua_rawseti) (lua_State *L, int idx, int n);
-typedef void  (*Tlua_rawsetp) (lua_State *L, int idx, const void *p);
-typedef int   (*Tlua_setmetatable) (lua_State *L, int objindex);
-typedef void  (*Tlua_setuservalue) (lua_State *L, int idx);
-typedef void  (*Tlua_callk) (lua_State *L, int nargs, int nresults, int ctx,
-                             lua_CFunction k);
-typedef int   (*Tlua_getctx) (lua_State *L, int *ctx);
-typedef int   (*Tlua_pcallk) (
-   lua_State *L, int nargs, int nresults, int errfunc,
-   int ctx, lua_CFunction k);
-typedef int   (*Tlua_load) (lua_State *L, lua_Reader reader, void *dt,
-                            const char *chunkname,
-                            const char *mode);
-typedef int (*Tlua_dump) (lua_State *L, lua_Writer writer, void *data);
-typedef int  (*Tlua_yieldk) (lua_State *L, int nresults, int ctx,
-                             lua_CFunction k);
-typedef int  (*Tlua_resume) (lua_State *L, lua_State *from, int narg);
-typedef int  (*Tlua_status) (lua_State *L);
+typedef int (*Tlua_getmetatable) (lua_State *L, int objindex);
+typedef int (*Tlua_getuservalue) (lua_State *L, int idx);
+typedef void (*Tlua_setglobal) (lua_State *L, const char *name);
+typedef void (*Tlua_settable) (lua_State *L, int idx);
+typedef void (*Tlua_setfield) (lua_State *L, int idx, const char *k);
+typedef void (*Tlua_seti) (lua_State *L, int idx, lua_Integer n);
+typedef void (*Tlua_rawset) (lua_State *L, int idx);
+typedef void (*Tlua_rawseti) (lua_State *L, int idx, lua_Integer n);
+typedef void (*Tlua_rawsetp) (lua_State *L, int idx, const void *p);
+typedef int (*Tlua_setmetatable) (lua_State *L, int objindex);
+typedef void (*Tlua_setuservalue) (lua_State *L, int idx);
+typedef void (*Tlua_callk) (lua_State *L, int nargs, int nresults,lua_KContext ctx, lua_KFunction k);
+typedef int (*Tlua_pcallk) (lua_State *L, int nargs, int nresults, int errfunc,lua_KContext ctx, lua_KFunction k);
+typedef int (*Tlua_load) (lua_State *L, lua_Reader reader, void *dt,const char *chunkname, const char *mode);
+typedef int (*Tlua_dump) (lua_State *L, lua_Writer writer, void *data, int strip);
+typedef int (*Tlua_yieldk) (lua_State *L, int nresults, lua_KContext ctx,lua_KFunction k);
+typedef int (*Tlua_resume) (lua_State *L, lua_State *from, int narg);
+typedef int (*Tlua_status) (lua_State *L);
+typedef int (*Tlua_isyieldable) (lua_State *L);
 typedef int (*Tlua_gc) (lua_State *L, int what, int data);
-typedef int   (*Tlua_error) (lua_State *L);
-typedef int   (*Tlua_next) (lua_State *L, int idx);
-typedef void  (*Tlua_concat) (lua_State *L, int n);
-typedef void  (*Tlua_len)    (lua_State *L, int idx);
+typedef int (*Tlua_error) (lua_State *L);
+typedef int (*Tlua_next) (lua_State *L, int idx);
+typedef void (*Tlua_concat) (lua_State *L, int n);
+typedef void (*Tlua_len) (lua_State *L, int idx);
+typedef size_t (*Tlua_stringtonumber) (lua_State *L, const char *s);
 typedef lua_Alloc (*Tlua_getallocf) (lua_State *L, void **ud);
-typedef void      (*Tlua_setallocf) (lua_State *L, lua_Alloc f, void *ud);
+typedef void (*Tlua_setallocf) (lua_State *L, lua_Alloc f, void *ud);
 typedef int (*Tlua_getstack) (lua_State *L, int level, lua_Debug *ar);
 typedef int (*Tlua_getinfo) (lua_State *L, const char *what, lua_Debug *ar);
 typedef const char *(*Tlua_getlocal) (lua_State *L, const lua_Debug *ar, int n);
@@ -20616,68 +20983,45 @@ typedef const char *(*Tlua_setlocal) (lua_State *L, const lua_Debug *ar, int n);
 typedef const char *(*Tlua_getupvalue) (lua_State *L, int funcindex, int n);
 typedef const char *(*Tlua_setupvalue) (lua_State *L, int funcindex, int n);
 typedef void *(*Tlua_upvalueid) (lua_State *L, int fidx, int n);
-typedef void  (*Tlua_upvaluejoin) (lua_State *L, int fidx1, int n1,
-                                   int fidx2, int n2);
-typedef int (*Tlua_sethook) (lua_State *L, lua_Hook func, int mask, int count);
+typedef void (*Tlua_upvaluejoin) (lua_State *L, int fidx1, int n1,int fidx2, int n2);
+typedef void (*Tlua_sethook) (lua_State *L, lua_Hook func, int mask, int count);
 typedef lua_Hook (*Tlua_gethook) (lua_State *L);
 typedef int (*Tlua_gethookmask) (lua_State *L);
 typedef int (*Tlua_gethookcount) (lua_State *L);
-typedef int (*Tluaopen_base) (lua_State *L);
-typedef int (*Tluaopen_coroutine) (lua_State *L);
-typedef int (*Tluaopen_table) (lua_State *L);
-typedef int (*Tluaopen_io) (lua_State *L);
-typedef int (*Tluaopen_os) (lua_State *L);
-typedef int (*Tluaopen_string) (lua_State *L);
-typedef int (*Tluaopen_bit32) (lua_State *L);
-typedef int (*Tluaopen_math) (lua_State *L);
-typedef int (*Tluaopen_debug) (lua_State *L);
-typedef int (*Tluaopen_package) (lua_State *L);
-typedef void (*TluaL_checkversion_) (lua_State *L, lua_Number ver);
+typedef void (*TluaL_checkversion_) (lua_State *L, lua_Number ver, size_t sz);
 typedef int (*TluaL_getmetafield) (lua_State *L, int obj, const char *e);
 typedef int (*TluaL_callmeta) (lua_State *L, int obj, const char *e);
 typedef const char *(*TluaL_tolstring) (lua_State *L, int idx, size_t *len);
-typedef int (*TluaL_argerror) (lua_State *L, int numarg, const char *extramsg);
-typedef const char *(*TluaL_checklstring) (lua_State *L, int numArg,
-                                           size_t *l);
-typedef const char *(*TluaL_optlstring) (lua_State *L, int numArg,
-                                         const char *def, size_t *l);
-typedef lua_Number (*TluaL_checknumber) (lua_State *L, int numArg);
-typedef lua_Number (*TluaL_optnumber) (lua_State *L, int nArg, lua_Number def);
-typedef lua_Integer (*TluaL_checkinteger) (lua_State *L, int numArg);
-typedef lua_Integer (*TluaL_optinteger) (lua_State *L, int nArg,
-                                         lua_Integer def);
-typedef lua_Unsigned (*TluaL_checkunsigned) (lua_State *L, int numArg);
-typedef lua_Unsigned (*TluaL_optunsigned) (lua_State *L, int numArg,
-                                           lua_Unsigned def);
+typedef int (*TluaL_argerror) (lua_State *L, int arg, const char *extramsg);
+typedef const char *(*TluaL_checklstring) (lua_State *L, int arg,size_t *l);
+typedef const char *(*TluaL_optlstring) (lua_State *L, int arg,const char *def, size_t *l);
+typedef lua_Number (*TluaL_checknumber) (lua_State *L, int arg);
+typedef lua_Number (*TluaL_optnumber) (lua_State *L, int arg, lua_Number def);
+typedef lua_Integer (*TluaL_checkinteger) (lua_State *L, int arg);
+typedef lua_Integer (*TluaL_optinteger) (lua_State *L, int arg,lua_Integer def);
 typedef void (*TluaL_checkstack) (lua_State *L, int sz, const char *msg);
-typedef void (*TluaL_checktype) (lua_State *L, int narg, int t);
-typedef void (*TluaL_checkany) (lua_State *L, int narg);
-typedef int   (*TluaL_newmetatable) (lua_State *L, const char *tname);
-typedef void  (*TluaL_setmetatable) (lua_State *L, const char *tname);
+typedef void (*TluaL_checktype) (lua_State *L, int arg, int t);
+typedef void (*TluaL_checkany) (lua_State *L, int arg);
+typedef int (*TluaL_newmetatable) (lua_State *L, const char *tname);
+typedef void (*TluaL_setmetatable) (lua_State *L, const char *tname);
 typedef void *(*TluaL_testudata) (lua_State *L, int ud, const char *tname);
 typedef void *(*TluaL_checkudata) (lua_State *L, int ud, const char *tname);
 typedef void (*TluaL_where) (lua_State *L, int lvl);
-typedef int (*TluaL_checkoption) (lua_State *L, int narg, const char *def,
-                                  const char *const lst[]);
+typedef int (*TluaL_checkoption) (lua_State *L, int arg, const char *def,const char *const lst[]);
 typedef int (*TluaL_fileresult) (lua_State *L, int stat, const char *fname);
 typedef int (*TluaL_execresult) (lua_State *L, int stat);
 typedef int (*TluaL_ref) (lua_State *L, int t);
 typedef void (*TluaL_unref) (lua_State *L, int t, int ref);
-typedef int (*TluaL_loadfilex) (lua_State *L, const char *filename,
-                                const char *mode);
-typedef int (*TluaL_loadbufferx) (lua_State *L, const char *buff, size_t sz,
-                                  const char *name, const char *mode);
+typedef int (*TluaL_loadfilex) (lua_State *L, const char *filename,const char *mode);
+typedef int (*TluaL_loadbufferx) (lua_State *L, const char *buff, size_t sz,const char *name, const char *mode);
 typedef int (*TluaL_loadstring) (lua_State *L, const char *s);
 typedef lua_State *(*TluaL_newstate) (void);
-typedef int (*TluaL_len) (lua_State *L, int idx);
-typedef const char *(*TluaL_gsub) (lua_State *L, const char *s, const char *p,
-                                   const char *r);
+typedef lua_Integer (*TluaL_len) (lua_State *L, int idx);
+typedef const char *(*TluaL_gsub) (lua_State *L, const char *s, const char *p,const char *r);
 typedef void (*TluaL_setfuncs) (lua_State *L, const luaL_Reg *l, int nup);
 typedef int (*TluaL_getsubtable) (lua_State *L, int idx, const char *fname);
-typedef void (*TluaL_traceback) (lua_State *L, lua_State *L1,
-                                 const char *msg, int level);
-typedef void (*TluaL_requiref) (lua_State *L, const char *modname,
-                                lua_CFunction openf, int glb);
+typedef void (*TluaL_traceback) (lua_State *L, lua_State *L1,const char *msg, int level);
+typedef void (*TluaL_requiref) (lua_State *L, const char *modname,lua_CFunction openf, int glb);
 typedef void (*TluaL_buffinit) (lua_State *L, luaL_Buffer *B);
 typedef char *(*TluaL_prepbuffsize) (luaL_Buffer *B, size_t sz);
 typedef void (*TluaL_addlstring) (luaL_Buffer *B, const char *s, size_t l);
@@ -20694,155 +21038,145 @@ typedef struct BaTimer* (*TgetTimer)(lua_State* L);
 typedef const struct BasFuncs* (*TgetBasFuncs)(void);
 
 typedef struct {
-   Tlua_newstate lua_newstatefp;
-   Tlua_close lua_closefp;
-   Tlua_newthread lua_newthreadfp;
-   Tlua_atpanic lua_atpanicfp;
-   Tlua_version lua_versionfp;
-   Tlua_absindex lua_absindexfp;
-   Tlua_gettop lua_gettopfp;
-   Tlua_settop lua_settopfp;
-   Tlua_pushvalue lua_pushvaluefp;
-   Tlua_remove lua_removefp;
-   Tlua_insert lua_insertfp;
-   Tlua_replace lua_replacefp;
-   Tlua_copy lua_copyfp;
-   Tlua_checkstack lua_checkstackfp;
-   Tlua_xmove lua_xmovefp;
-   Tlua_isnumber lua_isnumberfp;
-   Tlua_isstring lua_isstringfp;
-   Tlua_iscfunction lua_iscfunctionfp;
-   Tlua_isuserdata lua_isuserdatafp;
-   Tlua_type lua_typefp;
-   Tlua_typename lua_typenamefp;
-   Tlua_tonumberx lua_tonumberxfp;
-   Tlua_tointegerx lua_tointegerxfp;
-   Tlua_tounsignedx lua_tounsignedxfp;
-   Tlua_toboolean lua_tobooleanfp;
-   Tlua_tolstring lua_tolstringfp;
-   Tlua_rawlen lua_rawlenfp;
-   Tlua_tocfunction lua_tocfunctionfp;
-   Tlua_touserdata lua_touserdatafp;
-   Tlua_tothread lua_tothreadfp;
-   Tlua_topointer lua_topointerfp;
-   Tlua_arith lua_arithfp;
-   Tlua_rawequal lua_rawequalfp;
-   Tlua_compare lua_comparefp;
-   Tlua_pushnil lua_pushnilfp;
-   Tlua_pushnumber lua_pushnumberfp;
-   Tlua_pushinteger lua_pushintegerfp;
-   Tlua_pushunsigned lua_pushunsignedfp;
-   Tlua_pushlstring lua_pushlstringfp;
-   Tlua_pushstring lua_pushstringfp;
-   Tlua_pushvfstring lua_pushvfstringfp;
-   Tlua_pushcclosure lua_pushcclosurefp;
-   Tlua_pushboolean lua_pushbooleanfp;
-   Tlua_pushlightuserdata lua_pushlightuserdatafp;
-   Tlua_pushthread lua_pushthreadfp;
-   Tlua_getglobal lua_getglobalfp;
-   Tlua_gettable lua_gettablefp;
-   Tlua_getfield lua_getfieldfp;
-   Tlua_rawget lua_rawgetfp;
-   Tlua_rawgeti lua_rawgetifp;
-   Tlua_rawgetp lua_rawgetpfp;
-   Tlua_createtable lua_createtablefp;
-   Tlua_newuserdata lua_newuserdatafp;
-   Tlua_getmetatable lua_getmetatablefp;
-   Tlua_getuservalue lua_getuservaluefp;
-   Tlua_setglobal lua_setglobalfp;
-   Tlua_settable lua_settablefp;
-   Tlua_setfield lua_setfieldfp;
-   Tlua_rawset lua_rawsetfp;
-   Tlua_rawseti lua_rawsetifp;
-   Tlua_rawsetp lua_rawsetpfp;
-   Tlua_setmetatable lua_setmetatablefp;
-   Tlua_setuservalue lua_setuservaluefp;
-   Tlua_callk lua_callkfp;
-   Tlua_getctx lua_getctxfp;
-   Tlua_pcallk lua_pcallkfp;
-   Tlua_load lua_loadfp;
-   Tlua_dump lua_dumpfp;
-   Tlua_yieldk lua_yieldkfp;
-   Tlua_resume lua_resumefp;
-   Tlua_status lua_statusfp;
-   Tlua_gc lua_gcfp;
-   Tlua_error lua_errorfp;
-   Tlua_next lua_nextfp;
-   Tlua_concat lua_concatfp;
-   Tlua_len lua_lenfp;
-   Tlua_getallocf lua_getallocffp;
-   Tlua_setallocf lua_setallocffp;
-   Tlua_getstack lua_getstackfp;
-   Tlua_getinfo lua_getinfofp;
-   Tlua_getlocal lua_getlocalfp;
-   Tlua_setlocal lua_setlocalfp;
-   Tlua_getupvalue lua_getupvaluefp;
-   Tlua_setupvalue lua_setupvaluefp;
-   Tlua_upvalueid lua_upvalueidfp;
-   Tlua_upvaluejoin lua_upvaluejoinfp;
-   Tlua_sethook lua_sethookfp;
-   Tlua_gethook lua_gethookfp;
-   Tlua_gethookmask lua_gethookmaskfp;
-   Tlua_gethookcount lua_gethookcountfp;
-   Tluaopen_base luaopen_basefp;
-   Tluaopen_coroutine luaopen_coroutinefp;
-   Tluaopen_table luaopen_tablefp;
-   Tluaopen_io luaopen_iofp;
-   Tluaopen_os luaopen_osfp;
-   Tluaopen_string luaopen_stringfp;
-   Tluaopen_bit32 luaopen_bit32fp;
-   Tluaopen_math luaopen_mathfp;
-   Tluaopen_debug luaopen_debugfp;
-   Tluaopen_package luaopen_packagefp;
-   TluaL_checkversion_ luaL_checkversion_fp;
-   TluaL_getmetafield luaL_getmetafieldfp;
-   TluaL_callmeta luaL_callmetafp;
-   TluaL_tolstring luaL_tolstringfp;
-   TluaL_argerror luaL_argerrorfp;
-   TluaL_checklstring luaL_checklstringfp;
-   TluaL_optlstring luaL_optlstringfp;
-   TluaL_checknumber luaL_checknumberfp;
-   TluaL_optnumber luaL_optnumberfp;
-   TluaL_checkinteger luaL_checkintegerfp;
-   TluaL_optinteger luaL_optintegerfp;
-   TluaL_checkunsigned luaL_checkunsignedfp;
-   TluaL_optunsigned luaL_optunsignedfp;
-   TluaL_checkstack luaL_checkstackfp;
-   TluaL_checktype luaL_checktypefp;
-   TluaL_checkany luaL_checkanyfp;
-   TluaL_newmetatable luaL_newmetatablefp;
-   TluaL_setmetatable luaL_setmetatablefp;
-   TluaL_testudata luaL_testudatafp;
-   TluaL_checkudata luaL_checkudatafp;
-   TluaL_where luaL_wherefp;
-   TluaL_checkoption luaL_checkoptionfp;
-   TluaL_fileresult luaL_fileresultfp;
-   TluaL_execresult luaL_execresultfp;
-   TluaL_ref luaL_reffp;
-   TluaL_unref luaL_unreffp;
-   TluaL_loadfilex luaL_loadfilexfp;
-   TluaL_loadbufferx luaL_loadbufferxfp;
-   TluaL_loadstring luaL_loadstringfp;
-   TluaL_newstate luaL_newstatefp;
-   TluaL_len luaL_lenfp;
-   TluaL_gsub luaL_gsubfp;
-   TluaL_setfuncs luaL_setfuncsfp;
-   TluaL_getsubtable luaL_getsubtablefp;
-   TluaL_traceback luaL_tracebackfp;
-   TluaL_requiref luaL_requireffp;
-   TluaL_buffinit luaL_buffinitfp;
-   TluaL_prepbuffsize luaL_prepbuffsizefp;
-   TluaL_addlstring luaL_addlstringfp;
-   TluaL_addstring luaL_addstringfp;
-   TluaL_addvalue luaL_addvaluefp;
-   TluaL_pushresult luaL_pushresultfp;
-   TluaL_pushresultsize luaL_pushresultsizefp;
-   TluaL_buffinitsize luaL_buffinitsizefp;
-   TgetDispMutex getDispMutexfp;
-   TThreadMutex_release ThreadMutex_releasefp;
-   TThreadMutex_set ThreadMutex_setfp;
-   TgetTimer getTimerfp;
-   TgetBasFuncs getBasFuncsfp;
+   int version;
+   Tlua_newstate lua_newstateFp;
+   Tlua_close lua_closeFp;
+   Tlua_newthread lua_newthreadFp;
+   Tlua_atpanic lua_atpanicFp;
+   Tlua_version lua_versionFp;
+   Tlua_absindex lua_absindexFp;
+   Tlua_gettop lua_gettopFp;
+   Tlua_settop lua_settopFp;
+   Tlua_pushvalue lua_pushvalueFp;
+   Tlua_rotate lua_rotateFp;
+   Tlua_copy lua_copyFp;
+   Tlua_checkstack lua_checkstackFp;
+   Tlua_xmove lua_xmoveFp;
+   Tlua_isnumber lua_isnumberFp;
+   Tlua_isstring lua_isstringFp;
+   Tlua_iscfunction lua_iscfunctionFp;
+   Tlua_isinteger lua_isintegerFp;
+   Tlua_isuserdata lua_isuserdataFp;
+   Tlua_type lua_typeFp;
+   Tlua_typename lua_typenameFp;
+   Tlua_tonumberx lua_tonumberxFp;
+   Tlua_tointegerx lua_tointegerxFp;
+   Tlua_toboolean lua_tobooleanFp;
+   Tlua_tolstring lua_tolstringFp;
+   Tlua_rawlen lua_rawlenFp;
+   Tlua_tocfunction lua_tocfunctionFp;
+   Tlua_touserdata lua_touserdataFp;
+   Tlua_tothread lua_tothreadFp;
+   Tlua_topointer lua_topointerFp;
+   Tlua_arith lua_arithFp;
+   Tlua_rawequal lua_rawequalFp;
+   Tlua_compare lua_compareFp;
+   Tlua_pushnil lua_pushnilFp;
+   Tlua_pushnumber lua_pushnumberFp;
+   Tlua_pushinteger lua_pushintegerFp;
+   Tlua_pushlstring lua_pushlstringFp;
+   Tlua_pushstring lua_pushstringFp;
+   Tlua_pushvfstring lua_pushvfstringFp;
+   Tlua_pushcclosure lua_pushcclosureFp;
+   Tlua_pushboolean lua_pushbooleanFp;
+   Tlua_pushlightuserdata lua_pushlightuserdataFp;
+   Tlua_pushthread lua_pushthreadFp;
+   Tlua_getglobal lua_getglobalFp;
+   Tlua_gettable lua_gettableFp;
+   Tlua_getfield lua_getfieldFp;
+   Tlua_geti lua_getiFp;
+   Tlua_rawget lua_rawgetFp;
+   Tlua_rawgeti lua_rawgetiFp;
+   Tlua_rawgetp lua_rawgetpFp;
+   Tlua_createtable lua_createtableFp;
+   Tlua_newuserdata lua_newuserdataFp;
+   Tlua_getmetatable lua_getmetatableFp;
+   Tlua_getuservalue lua_getuservalueFp;
+   Tlua_setglobal lua_setglobalFp;
+   Tlua_settable lua_settableFp;
+   Tlua_setfield lua_setfieldFp;
+   Tlua_seti lua_setiFp;
+   Tlua_rawset lua_rawsetFp;
+   Tlua_rawseti lua_rawsetiFp;
+   Tlua_rawsetp lua_rawsetpFp;
+   Tlua_setmetatable lua_setmetatableFp;
+   Tlua_setuservalue lua_setuservalueFp;
+   Tlua_callk lua_callkFp;
+   Tlua_pcallk lua_pcallkFp;
+   Tlua_load lua_loadFp;
+   Tlua_dump lua_dumpFp;
+   Tlua_yieldk lua_yieldkFp;
+   Tlua_resume lua_resumeFp;
+   Tlua_status lua_statusFp;
+   Tlua_isyieldable lua_isyieldableFp;
+   Tlua_gc lua_gcFp;
+   Tlua_error lua_errorFp;
+   Tlua_next lua_nextFp;
+   Tlua_concat lua_concatFp;
+   Tlua_len lua_lenFp;
+   Tlua_stringtonumber lua_stringtonumberFp;
+   Tlua_getallocf lua_getallocfFp;
+   Tlua_setallocf lua_setallocfFp;
+   Tlua_getstack lua_getstackFp;
+   Tlua_getinfo lua_getinfoFp;
+   Tlua_getlocal lua_getlocalFp;
+   Tlua_setlocal lua_setlocalFp;
+   Tlua_getupvalue lua_getupvalueFp;
+   Tlua_setupvalue lua_setupvalueFp;
+   Tlua_upvalueid lua_upvalueidFp;
+   Tlua_upvaluejoin lua_upvaluejoinFp;
+   Tlua_sethook lua_sethookFp;
+   Tlua_gethook lua_gethookFp;
+   Tlua_gethookmask lua_gethookmaskFp;
+   Tlua_gethookcount lua_gethookcountFp;
+   TluaL_checkversion_ luaL_checkversion_Fp;
+   TluaL_getmetafield luaL_getmetafieldFp;
+   TluaL_callmeta luaL_callmetaFp;
+   TluaL_tolstring luaL_tolstringFp;
+   TluaL_argerror luaL_argerrorFp;
+   TluaL_checklstring luaL_checklstringFp;
+   TluaL_optlstring luaL_optlstringFp;
+   TluaL_checknumber luaL_checknumberFp;
+   TluaL_optnumber luaL_optnumberFp;
+   TluaL_checkinteger luaL_checkintegerFp;
+   TluaL_optinteger luaL_optintegerFp;
+   TluaL_checkstack luaL_checkstackFp;
+   TluaL_checktype luaL_checktypeFp;
+   TluaL_checkany luaL_checkanyFp;
+   TluaL_newmetatable luaL_newmetatableFp;
+   TluaL_setmetatable luaL_setmetatableFp;
+   TluaL_testudata luaL_testudataFp;
+   TluaL_checkudata luaL_checkudataFp;
+   TluaL_where luaL_whereFp;
+   TluaL_checkoption luaL_checkoptionFp;
+   TluaL_fileresult luaL_fileresultFp;
+   TluaL_execresult luaL_execresultFp;
+   TluaL_ref luaL_refFp;
+   TluaL_unref luaL_unrefFp;
+   TluaL_loadfilex luaL_loadfilexFp;
+   TluaL_loadbufferx luaL_loadbufferxFp;
+   TluaL_loadstring luaL_loadstringFp;
+   TluaL_newstate luaL_newstateFp;
+   TluaL_len luaL_lenFp;
+   TluaL_gsub luaL_gsubFp;
+   TluaL_setfuncs luaL_setfuncsFp;
+   TluaL_getsubtable luaL_getsubtableFp;
+   TluaL_traceback luaL_tracebackFp;
+   TluaL_requiref luaL_requirefFp;
+   TluaL_buffinit luaL_buffinitFp;
+   TluaL_prepbuffsize luaL_prepbuffsizeFp;
+   TluaL_addlstring luaL_addlstringFp;
+   TluaL_addstring luaL_addstringFp;
+   TluaL_addvalue luaL_addvalueFp;
+   TluaL_pushresult luaL_pushresultFp;
+   TluaL_pushresultsize luaL_pushresultsizeFp;
+   TluaL_buffinitsize luaL_buffinitsizeFp;
+
+   TgetDispMutex getDispMutexFp;
+   TThreadMutex_release ThreadMutex_releaseFp;
+   TThreadMutex_set ThreadMutex_setFp;
+   TgetTimer getTimerFp;
+   TgetBasFuncs getBasFuncsFp;
 } LuaFuncs;
 
 
@@ -21085,7 +21419,10 @@ static void ThreadMutex_setWrapper(struct ThreadMutex* o)
 {
    if(o) ThreadMutex_set(o);
 }
+
+
 static const LuaFuncs luaFuncs={
+   LUAINTF_VER,
    lua_newstate,
    lua_close,
    lua_newthread,
@@ -21095,21 +21432,19 @@ static const LuaFuncs luaFuncs={
    lua_gettop,
    lua_settop,
    lua_pushvalue,
-   lua_remove,
-   lua_insert,
-   lua_replace,
+   lua_rotate,
    lua_copy,
    lua_checkstack,
    lua_xmove,
    lua_isnumber,
    lua_isstring,
    lua_iscfunction,
+   lua_isinteger,
    lua_isuserdata,
    lua_type,
    lua_typename,
    lua_tonumberx,
    lua_tointegerx,
-   lua_tounsignedx,
    lua_toboolean,
    lua_tolstring,
    lua_rawlen,
@@ -21123,7 +21458,6 @@ static const LuaFuncs luaFuncs={
    lua_pushnil,
    lua_pushnumber,
    lua_pushinteger,
-   lua_pushunsigned,
    lua_pushlstring,
    lua_pushstring,
    lua_pushvfstring,
@@ -21134,6 +21468,7 @@ static const LuaFuncs luaFuncs={
    lua_getglobal,
    lua_gettable,
    lua_getfield,
+   lua_geti,
    lua_rawget,
    lua_rawgeti,
    lua_rawgetp,
@@ -21144,24 +21479,26 @@ static const LuaFuncs luaFuncs={
    lua_setglobal,
    lua_settable,
    lua_setfield,
+   lua_seti,
    lua_rawset,
    lua_rawseti,
    lua_rawsetp,
    lua_setmetatable,
    lua_setuservalue,
    lua_callk,
-   lua_getctx,
    lua_pcallk,
    lua_load,
    lua_dump,
    lua_yieldk,
    lua_resume,
    lua_status,
+   lua_isyieldable,
    lua_gc,
    lua_error,
    lua_next,
    lua_concat,
    lua_len,
+   lua_stringtonumber,
    lua_getallocf,
    lua_setallocf,
    lua_getstack,
@@ -21176,16 +21513,6 @@ static const LuaFuncs luaFuncs={
    lua_gethook,
    lua_gethookmask,
    lua_gethookcount,
-   luaopen_base,
-   luaopen_coroutine,
-   luaopen_table,
-   luaopen_io,
-   luaopen_os,
-   luaopen_string,
-   luaopen_bit32,
-   luaopen_math,
-   luaopen_debug,
-   luaopen_package,
    luaL_checkversion_,
    luaL_getmetafield,
    luaL_callmeta,
@@ -21197,8 +21524,6 @@ static const LuaFuncs luaFuncs={
    luaL_optnumber,
    luaL_checkinteger,
    luaL_optinteger,
-   luaL_checkunsigned,
-   luaL_optunsigned,
    luaL_checkstack,
    luaL_checktype,
    luaL_checkany,
@@ -21230,11 +21555,12 @@ static const LuaFuncs luaFuncs={
    luaL_pushresult,
    luaL_pushresultsize,
    luaL_buffinitsize,
+
    getDispMutex,
    ThreadMutex_releaseWrapper,
    ThreadMutex_setWrapper,
    getTimer,
-   getBasFuncs,
+   getBasFuncs
 };
 #endif
 
