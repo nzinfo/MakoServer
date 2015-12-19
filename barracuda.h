@@ -2986,19 +2986,18 @@ typedef enum
 
 
 
-
 #if (!SHARKSSL_ECDSA_ONLY_VERIFY)
 
-SHARKSSL_API U8 sharkssl_ECDSA_siglen(SharkSslECCKey privkey);
+SHARKSSL_API U16 sharkssl_ECDSA_siglen(SharkSslECCKey privkey);
 
 
 SHARKSSL_API sharkssl_ECDSA_RetVal sharkssl_ECDSA_sign_hash(
-   SharkSslECCKey privkey, U8 *sig, U8 *siglen, U8 *hash, U8 hashlen);
+   SharkSslECCKey privkey, U8 *sig, U16 *siglen, U8 *hash, U8 hashlen);
 #endif
 
 
 SHARKSSL_API sharkssl_ECDSA_RetVal sharkssl_ECDSA_verify_hash(
-   SharkSslECCKey pubkey, U8 *sig, U8 siglen, U8 *hash, U8 hashlen);
+   SharkSslECCKey pubkey, U8 *sig, U16 siglen, U8 *hash, U8 hashlen);
 
 #endif
 
@@ -3388,7 +3387,7 @@ extern int basprintf(char* buf, const char* fmt, ...);
 
 
 
-#define BASLIB_VER "3804"
+#define BASLIB_VER "3825"
 
 
 
@@ -11182,7 +11181,11 @@ int SharkSslECDSAParam_ECDSA(const SharkSslECDSAParam*, U8 op);
 
 
 #define SHARKSSL_BUF_EXPANDSIZE                    1024
+#if (!SHARKSSL_ONLY_POLYCHACHA)
 #define SHARKSSL_BUF_HEADROOM_SIZE                 (SHARKSSL_MAX_DIGEST_BLOCK_LEN + SHARKSSL_SEQ_NUM_LEN)
+#else
+#define SHARKSSL_BUF_HEADROOM_SIZE                 (SHARKSSL_SEQ_NUM_LEN)
+#endif
 
 
 
@@ -11419,7 +11422,9 @@ struct SharkSslCon
    #if SHARKSSL_MAX_KEY_LEN
    U8 rKey[SHARKSSL_MAX_KEY_LEN];
    #endif
+   #if (!SHARKSSL_ONLY_POLYCHACHA)
    U8 rMacH[SHARKSSL_MAX_DIGEST_BLOCK_LEN + SHARKSSL_MAX_DIGEST_LEN];
+   #endif
 
    #if SHARKSSL_MAX_BLOCK_LEN
    #if ((SHARKSSL_MAX_BLOCK_LEN < 16) && (SHARKSSL_ENABLE_TLS_1_2 && ((SHARKSSL_USE_CHACHA20 && SHARKSSL_USE_POLY1305) || SHARKSSL_ENABLE_AES_GCM || SHARKSSL_ENABLE_AES_CCM)))
@@ -14149,6 +14154,8 @@ typedef struct SharkSslParseASN1
    U32 len,  datalen;
 } SharkSslParseASN1;
 
+typedef SharkSslParseASN1 SharkSslASN1;
+
 
 
 int SharkSslParseASN1_getLength(SharkSslParseASN1 *o);
@@ -14178,6 +14185,11 @@ int SharkSslParseASN1_getSetSeq(SharkSslParseASN1 *o, U8 ASN1id);
 #define SharkSslParseASN1_getSet(o)             SharkSslParseASN1_getSetSeq(o, SHARKSSL_ASN1_SET | SHARKSSL_ASN1_CONSTRUCTED)
 #define SharkSslParseASN1_getSequence(o)        SharkSslParseASN1_getSetSeq(o, SHARKSSL_ASN1_SEQUENCE | SHARKSSL_ASN1_CONSTRUCTED)
 
+
+
+int SharkSslASN1_adjustInt(SharkSslASN1 *o);     
+int SharkSslASN1_setLengthType(SharkSslASN1 *o, U8 ASN1type);  
+
 #endif
 
 #ifndef _SharkSslECC_h
@@ -14205,6 +14217,11 @@ typedef struct
 #define SHARKSSL_EC_CURVE_ID_UNKNOWN    0
 #define SHARKSSL_EC_POINT_UNCOMPRESSED  0x04
 
+#define SHARKSSL_SECP192R1_POINTLEN  24
+#define SHARKSSL_SECP224R1_POINTLEN  28
+#define SHARKSSL_SECP256R1_POINTLEN  32
+#define SHARKSSL_SECP384R1_POINTLEN  48
+#define SHARKSSL_SECP521R1_POINTLEN  66
 
 #ifdef __cplusplus
 extern "C" {
@@ -17885,7 +17902,11 @@ inline EventHandler* EhDir::getEventHandler() {
 
 
 #define SHARKSSL_BUF_EXPANDSIZE                    1024
+#if (!SHARKSSL_ONLY_POLYCHACHA)
 #define SHARKSSL_BUF_HEADROOM_SIZE                 (SHARKSSL_MAX_DIGEST_BLOCK_LEN + SHARKSSL_SEQ_NUM_LEN)
+#else
+#define SHARKSSL_BUF_HEADROOM_SIZE                 (SHARKSSL_SEQ_NUM_LEN)
+#endif
 
 
 
@@ -18122,7 +18143,9 @@ struct SharkSslCon
    #if SHARKSSL_MAX_KEY_LEN
    U8 rKey[SHARKSSL_MAX_KEY_LEN];
    #endif
+   #if (!SHARKSSL_ONLY_POLYCHACHA)
    U8 rMacH[SHARKSSL_MAX_DIGEST_BLOCK_LEN + SHARKSSL_MAX_DIGEST_LEN];
+   #endif
 
    #if SHARKSSL_MAX_BLOCK_LEN
    #if ((SHARKSSL_MAX_BLOCK_LEN < 16) && (SHARKSSL_ENABLE_TLS_1_2 && ((SHARKSSL_USE_CHACHA20 && SHARKSSL_USE_POLY1305) || SHARKSSL_ENABLE_AES_GCM || SHARKSSL_ENABLE_AES_CCM)))
@@ -20949,7 +20972,7 @@ LUAI_DDEC const lu_byte luai_ctype_[UCHAR_MAX + 2];
 #ifndef _luaintfint_h
 #define _luaintfint_h
 
-#define LUAINTF_VER 2
+#define LUAINTF_VER 3
 
 
 #ifdef USE_AMALGAMATED_BAS
